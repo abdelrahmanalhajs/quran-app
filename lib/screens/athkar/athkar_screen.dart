@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import '../../data/athkar_repository.dart';
 import '../../models/thikr.dart';
+import '../../widgets/responsive_center.dart';
 
 class AthkarScreen extends StatefulWidget {
   const AthkarScreen({super.key});
@@ -10,7 +11,8 @@ class AthkarScreen extends StatefulWidget {
   State<AthkarScreen> createState() => _AthkarScreenState();
 }
 
-class _AthkarScreenState extends State<AthkarScreen> with SingleTickerProviderStateMixin {
+class _AthkarScreenState extends State<AthkarScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   final AthkarRepository _repo = AthkarRepository();
 
@@ -64,11 +66,13 @@ class _AthkarList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         final items = snapshot.data!;
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 10),
-          itemBuilder: (context, index) => _ThikrCard(thikr: items[index]),
+        return ResponsiveCenter(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            itemBuilder: (context, index) => _ThikrCard(thikr: items[index]),
+          ),
         );
       },
     );
@@ -97,7 +101,9 @@ class _ThikrCardState extends State<_ThikrCard> {
   Widget build(BuildContext context) {
     final done = _remaining <= 0;
     return Card(
-      color: done ? Theme.of(context).colorScheme.surfaceContainerHighest : null,
+      color: done
+          ? Theme.of(context).colorScheme.surfaceContainerHighest
+          : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
@@ -114,7 +120,9 @@ class _ThikrCardState extends State<_ThikrCard> {
                 widget.thikr.ar,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(height: 1.7),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(height: 1.7),
               ),
               const SizedBox(height: 10),
               Text(

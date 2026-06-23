@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/surah.dart';
 import '../../state/quran_provider.dart';
+import '../../widgets/responsive_center.dart';
 import 'surah_detail_screen.dart';
 
 class SurahListScreen extends StatefulWidget {
@@ -27,25 +28,27 @@ class _SurahListScreenState extends State<SurahListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text('app_name'.tr())),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: TextField(
-              onChanged: provider.setQuery,
-              decoration: InputDecoration(
-                hintText: 'quran.search_hint'.tr(),
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
+      body: ResponsiveCenter(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: TextField(
+                onChanged: provider.setQuery,
+                decoration: InputDecoration(
+                  hintText: 'quran.search_hint'.tr(),
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(child: _buildBody(provider)),
-        ],
+            Expanded(child: _buildBody(provider)),
+          ],
+        ),
       ),
     );
   }
@@ -108,7 +111,9 @@ class _SurahTile extends StatelessWidget {
           '${surah.englishName} · ${surah.numberOfAyahs} ${'quran.ayahs'.tr()}',
         ),
         trailing: Text(
-          surah.revelationType == 'Meccan' ? 'quran.meccan'.tr() : 'quran.medinan'.tr(),
+          surah.revelationType == 'Meccan'
+              ? 'quran.meccan'.tr()
+              : 'quran.medinan'.tr(),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         onTap: () {

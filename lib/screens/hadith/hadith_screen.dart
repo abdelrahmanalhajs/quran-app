@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import '../../data/hadith_repository.dart';
 import '../../models/hadith.dart';
+import '../../widgets/responsive_center.dart';
 
 class HadithScreen extends StatefulWidget {
   const HadithScreen({super.key});
@@ -32,47 +33,54 @@ class _HadithScreenState extends State<HadithScreen> {
           }
           final h = snapshot.data!;
           final isArabic = context.locale.languageCode == 'ar';
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('hadith.today'.tr(), style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          h.ar,
-                          textAlign: TextAlign.right,
-                          textDirection: TextDirection.rtl,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(height: 1.8),
-                        ),
-                        const Divider(height: 28),
-                        Text(
-                          h.en,
-                          textAlign: TextAlign.left,
-                          textDirection: TextDirection.ltr,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Icon(Icons.menu_book_outlined, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${'hadith.source'.tr()}: ${isArabic ? h.sourceAr : h.source}',
-                            ),
-                          ],
-                        ),
-                      ],
+          return ResponsiveCenter(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'hadith.today'.tr(),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            h.ar,
+                            textAlign: TextAlign.right,
+                            textDirection: TextDirection.rtl,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(height: 1.8),
+                          ),
+                          const Divider(height: 28),
+                          Text(
+                            h.en,
+                            textAlign: TextAlign.left,
+                            textDirection: TextDirection.ltr,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              const Icon(Icons.menu_book_outlined, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${'hadith.source'.tr()}: ${isArabic ? h.sourceAr : h.source}',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },

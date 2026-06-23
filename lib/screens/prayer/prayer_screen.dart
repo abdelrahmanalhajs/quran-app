@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:provider/provider.dart';
 import '../../state/prayer_provider.dart';
+import '../../widgets/responsive_center.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -13,7 +14,8 @@ class PrayerScreen extends StatefulWidget {
   State<PrayerScreen> createState() => _PrayerScreenState();
 }
 
-class _PrayerScreenState extends State<PrayerScreen> with SingleTickerProviderStateMixin {
+class _PrayerScreenState extends State<PrayerScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
   @override
@@ -21,7 +23,9 @@ class _PrayerScreenState extends State<PrayerScreen> with SingleTickerProviderSt
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PrayerProvider>().load(arabicAthanLabels: context.locale.languageCode == 'ar');
+      context.read<PrayerProvider>().load(
+        arabicAthanLabels: context.locale.languageCode == 'ar',
+      );
     });
   }
 
@@ -44,12 +48,11 @@ class _PrayerScreenState extends State<PrayerScreen> with SingleTickerProviderSt
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _PrayerTimesTab(),
-          _QiblaTab(),
-        ],
+      body: ResponsiveCenter(
+        child: TabBarView(
+          controller: _tabController,
+          children: const [_PrayerTimesTab(), _QiblaTab()],
+        ),
       ),
     );
   }
@@ -86,10 +89,15 @@ class _PrayerTimesTab extends StatelessWidget {
               children: [
                 const Icon(Icons.location_off, size: 48),
                 const SizedBox(height: 12),
-                Text('prayer.location_permission'.tr(), textAlign: TextAlign.center),
+                Text(
+                  'prayer.location_permission'.tr(),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () => provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
+                  onPressed: () => provider.load(
+                    arabicAthanLabels: context.locale.languageCode == 'ar',
+                  ),
                   child: Text('prayer.enable_location'.tr()),
                 ),
               ],
@@ -103,7 +111,12 @@ class _PrayerTimesTab extends StatelessWidget {
             children: [
               Text(provider.errorMessage ?? 'Error'),
               const SizedBox(height: 12),
-              FilledButton(onPressed: () => provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'), child: const Icon(Icons.refresh)),
+              FilledButton(
+                onPressed: () => provider.load(
+                  arabicAthanLabels: context.locale.languageCode == 'ar',
+                ),
+                child: const Icon(Icons.refresh),
+              ),
             ],
           ),
         );
@@ -118,8 +131,9 @@ class _PrayerTimesTab extends StatelessWidget {
           ('prayer.isha', t.isha, Icons.bedtime_outlined),
         ];
         return RefreshIndicator(
-          onRefresh: () =>
-              provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
+          onRefresh: () => provider.load(
+            arabicAthanLabels: context.locale.languageCode == 'ar',
+          ),
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: entries.length,
@@ -130,7 +144,10 @@ class _PrayerTimesTab extends StatelessWidget {
                 child: ListTile(
                   leading: Icon(icon),
                   title: Text(key.tr()),
-                  trailing: Text(time, style: Theme.of(context).textTheme.titleMedium),
+                  trailing: Text(
+                    time,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
               );
             },
@@ -155,7 +172,8 @@ class _QiblaTabState extends State<_QiblaTab> {
   Widget build(BuildContext context) {
     final provider = context.watch<PrayerProvider>();
 
-    if (provider.status != PrayerLoadStatus.loaded || provider.qiblaDirection == null) {
+    if (provider.status != PrayerLoadStatus.loaded ||
+        provider.qiblaDirection == null) {
       return Center(
         child: provider.status == PrayerLoadStatus.permissionDenied
             ? Padding(
@@ -165,10 +183,15 @@ class _QiblaTabState extends State<_QiblaTab> {
                   children: [
                     const Icon(Icons.location_off, size: 48),
                     const SizedBox(height: 12),
-                    Text('prayer.location_permission'.tr(), textAlign: TextAlign.center),
+                    Text(
+                      'prayer.location_permission'.tr(),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
                     FilledButton(
-                      onPressed: () => provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
+                      onPressed: () => provider.load(
+                        arabicAthanLabels: context.locale.languageCode == 'ar',
+                      ),
                       child: Text('prayer.enable_location'.tr()),
                     ),
                   ],
@@ -189,7 +212,10 @@ class _QiblaTabState extends State<_QiblaTab> {
             children: [
               const Icon(Icons.explore_off_outlined, size: 48),
               const SizedBox(height: 12),
-              Text('prayer.compass_unavailable_web'.tr(), textAlign: TextAlign.center),
+              Text(
+                'prayer.compass_unavailable_web'.tr(),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 16),
               Text(
                 'prayer.degrees_from_north'.tr(args: ['${qibla.round()}°']),
@@ -213,7 +239,9 @@ class _QiblaTabState extends State<_QiblaTab> {
         final aligned = diff.abs() <= _alignmentThresholdDegrees;
 
         final angle = diff * (math.pi / 180);
-        final color = aligned ? Colors.green : Theme.of(context).colorScheme.primary;
+        final color = aligned
+            ? Colors.green
+            : Theme.of(context).colorScheme.primary;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -223,10 +251,10 @@ class _QiblaTabState extends State<_QiblaTab> {
               aligned ? 'prayer.facing_qiblah'.tr() : 'prayer.qibla_hint'.tr(),
               textAlign: TextAlign.center,
               style: aligned
-                  ? Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(color: Colors.green, fontWeight: FontWeight.bold)
+                  ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    )
                   : null,
             ),
             const SizedBox(height: 32),

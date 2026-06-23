@@ -51,7 +51,8 @@ const List<Reciter> kReciters = [
     nameEn: 'Yasser Al-Dosari',
     baseUrl: 'https://server11.mp3quran.net/yasser/',
     surahCount: 114,
-    ayahAudioBaseUrl: 'https://mirrors.quranicaudio.com/everyayah/Yasser_Ad-Dussary_128kbps/',
+    ayahAudioBaseUrl:
+        'https://mirrors.quranicaudio.com/everyayah/Yasser_Ad-Dussary_128kbps/',
   ),
   Reciter(
     id: 'abdulrahman_sudais',
@@ -67,7 +68,8 @@ const List<Reciter> kReciters = [
     nameEn: 'Mahmoud Khalil Al-Hussary',
     baseUrl: 'https://server13.mp3quran.net/husr/',
     surahCount: 114,
-    ayahAudioBaseUrl: 'https://mirrors.quranicaudio.com/everyayah/Husary_64kbps/',
+    ayahAudioBaseUrl:
+        'https://mirrors.quranicaudio.com/everyayah/Husary_64kbps/',
   ),
   Reciter(
     id: 'mohamed_minshawy',
@@ -93,5 +95,14 @@ const List<Reciter> kReciters = [
     baseUrl: 'https://server8.mp3quran.net/afs/',
     surahCount: 114,
     ayahAudioBaseUrl: 'https://verses.quran.com/Alafasy/mp3/',
+  ),
+  Reciter(
+    id: 'ahmed_ajamy',
+    nameAr: 'الشيخ أحمد العجمي',
+    nameEn: 'Sheikh Ahmed Al-Ajamy',
+    baseUrl: 'https://server10.mp3quran.net/ajm/',
+    surahCount: 114,
+    ayahAudioBaseUrl:
+        'https://everyayah.com/data/ahmed_ibn_ali_al_ajamy_128kbps/',
   ),
 ];
