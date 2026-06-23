@@ -1,0 +1,64 @@
+{
+  "app_name": "القرآن الكريم",
+  "nav": {
+    "quran": "القرآن",
+    "prayer": "الصلاة",
+    "athkar": "الأذكار",
+    "hadith": "الحديث",
+    "settings": "الإعدادات"
+  },
+  "quran": {
+    "search_hint": "ابحث عن سورة...",
+    "ayahs": "آيات",
+    "meccan": "مكية",
+    "medinan": "مدنية",
+    "reciter": "القارئ",
+    "translation": "الترجمة",
+    "tafsir": "التفسير",
+    "loading": "جار التحميل...",
+    "error": "حدث خطأ ما. اسحب لإعادة المحاولة.",
+    "no_results": "لا توجد سور مطابقة",
+    "play_surah": "تشغيل السورة",
+    "choose_reciter": "اختر القارئ"
+  },
+  "prayer": {
+    "title": "مواقيت الصلاة والقبلة",
+    "qibla": "اتجاه القبلة",
+    "qibla_hint": "ضع هاتفك بشكل مستوٍ وقم بتدويره حتى يشير السهم للأعلى",
+    "fajr": "الفجر",
+    "sunrise": "الشروق",
+    "dhuhr": "الظهر",
+    "asr": "العصر",
+    "maghrib": "المغرب",
+    "isha": "العشاء",
+    "location_permission": "يلزم إذن الموقع لحساب مواقيت الصلاة والقبلة في موقعك",
+    "enable_location": "تفعيل الموقع",
+    "fetching_location": "جاري تحديد موقعك...",
+    "degrees_from_north": "{} من الشمال"
+  },
+  "athkar": {
+    "title": "الأذكار",
+    "morning": "الصباح",
+    "evening": "المساء",
+    "repeat": "التكرار",
+    "times": "مرات",
+    "tap_to_count": "اضغط للعد"
+  },
+  "hadith": {
+    "title": "حديث اليوم",
+    "today": "حديث اليوم",
+    "narrator": "الراوي",
+    "source": "المصدر"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "theme": "المظهر",
+    "theme_light": "فاتح",
+    "theme_dark": "داكن",
+    "theme_system": "النظام",
+    "quran_font_size": "حجم خط القرآن",
+    "about": "حول التطبيق",
+    "notifications": "إشعار حديث اليوم"
+  }
+}

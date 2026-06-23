@@ -1,0 +1,64 @@
+{
+  "app_name": "Quran",
+  "nav": {
+    "quran": "Quran",
+    "prayer": "Prayer",
+    "athkar": "Athkar",
+    "hadith": "Hadith",
+    "settings": "Settings"
+  },
+  "quran": {
+    "search_hint": "Search for a surah...",
+    "ayahs": "Ayahs",
+    "meccan": "Meccan",
+    "medinan": "Medinan",
+    "reciter": "Reciter",
+    "translation": "Translation",
+    "tafsir": "Tafsir",
+    "loading": "Loading...",
+    "error": "Something went wrong. Pull to retry.",
+    "no_results": "No surahs found",
+    "play_surah": "Play surah",
+    "choose_reciter": "Choose reciter"
+  },
+  "prayer": {
+    "title": "Prayer Times & Qiblah",
+    "qibla": "Qibla Direction",
+    "qibla_hint": "Point your phone flat and rotate until the arrow points up",
+    "fajr": "Fajr",
+    "sunrise": "Sunrise",
+    "dhuhr": "Dhuhr",
+    "asr": "Asr",
+    "maghrib": "Maghrib",
+    "isha": "Isha",
+    "location_permission": "Location permission is needed to calculate prayer times and qiblah for your location",
+    "enable_location": "Enable Location",
+    "fetching_location": "Fetching your location...",
+    "degrees_from_north": "{} from North"
+  },
+  "athkar": {
+    "title": "Athkar",
+    "morning": "Morning",
+    "evening": "Evening",
+    "repeat": "Repeat",
+    "times": "times",
+    "tap_to_count": "Tap to count"
+  },
+  "hadith": {
+    "title": "Hadith of the Day",
+    "today": "Today's Hadith",
+    "narrator": "Narrator",
+    "source": "Source"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
+    "quran_font_size": "Quran Text Size",
+    "about": "About",
+    "notifications": "Daily Hadith Notification"
+  }
+}
