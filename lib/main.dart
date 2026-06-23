@@ -25,6 +25,7 @@ Future<void> main() async {
       supportedLocales: const [Locale('en'), Locale('ar')],
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
+      useOnlyLangCode: true,
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: settings),

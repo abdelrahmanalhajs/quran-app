@@ -117,7 +117,12 @@ class _ThikrCardState extends State<_ThikrCard> {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(height: 1.7),
               ),
               const SizedBox(height: 10),
-              Text(widget.thikr.en, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                widget.thikr.en,
+                textAlign: TextAlign.left,
+                textDirection: TextDirection.ltr,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [

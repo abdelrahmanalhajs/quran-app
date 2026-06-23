@@ -175,7 +175,12 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
               const Divider(height: 28),
               Text('quran.translation'.tr(), style: Theme.of(ctx).textTheme.titleSmall),
               const SizedBox(height: 6),
-              Text(widget.ayah.textEn ?? '-', style: Theme.of(ctx).textTheme.bodyLarge),
+              Text(
+                widget.ayah.textEn ?? '-',
+                textAlign: TextAlign.left,
+                textDirection: TextDirection.ltr,
+                style: Theme.of(ctx).textTheme.bodyLarge,
+              ),
               const Divider(height: 28),
               Text('quran.tafsir'.tr(), style: Theme.of(ctx).textTheme.titleSmall),
               const SizedBox(height: 6),

@@ -51,7 +51,12 @@ class _HadithScreenState extends State<HadithScreen> {
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(height: 1.8),
                         ),
                         const Divider(height: 28),
-                        Text(h.en, style: Theme.of(context).textTheme.bodyLarge),
+                        Text(
+                          h.en,
+                          textAlign: TextAlign.left,
+                          textDirection: TextDirection.ltr,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
