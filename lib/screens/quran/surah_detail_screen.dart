@@ -131,12 +131,14 @@ class _AyahCard extends StatelessWidget {
 }
 
 void _showAyahSheet(BuildContext context, Ayah ayah) {
-  showModalBottomSheet(
+  showDialog(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    constraints: const BoxConstraints(maxWidth: 560),
-    builder: (ctx) => _AyahDetailSheet(ayah: ayah),
+    builder: (ctx) => Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 640),
+        child: _AyahDetailSheet(ayah: ayah),
+      ),
+    ),
   );
 }
 
@@ -158,41 +160,49 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final isArabic = context.locale.languageCode == 'ar';
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.35,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (ctx, scrollController) {
-        return SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.ayah.textAr,
-                textAlign: TextAlign.right,
-                textDirection: TextDirection.rtl,
-                style: AppTheme.quranTextStyle(ctx, fontSize: 24),
-              ),
-              const Divider(height: 28),
-              Text('quran.translation'.tr(), style: Theme.of(ctx).textTheme.titleSmall),
-              const SizedBox(height: 6),
-              Text(
-                widget.ayah.textEn ?? '-',
-                textAlign: TextAlign.left,
-                textDirection: TextDirection.ltr,
-                style: Theme.of(ctx).textTheme.bodyLarge,
-              ),
-              const Divider(height: 28),
-              Text('quran.tafsir'.tr(), style: Theme.of(ctx).textTheme.titleSmall),
-              const SizedBox(height: 6),
-              _buildTafsirBody(isArabic),
-            ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4, right: 4),
+            child: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ),
-        );
-      },
+        ),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.ayah.textAr,
+                  textAlign: TextAlign.right,
+                  textDirection: TextDirection.rtl,
+                  style: AppTheme.quranTextStyle(context, fontSize: 24),
+                ),
+                const Divider(height: 28),
+                Text('quran.translation'.tr(), style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 6),
+                Text(
+                  widget.ayah.textEn ?? '-',
+                  textAlign: TextAlign.left,
+                  textDirection: TextDirection.ltr,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const Divider(height: 28),
+                Text('quran.tafsir'.tr(), style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 6),
+                _buildTafsirBody(isArabic),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
