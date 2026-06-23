@@ -61,16 +61,6 @@ class _HadithScreenState extends State<HadithScreen> {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            const Icon(Icons.person_outline, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${'hadith.narrator'.tr()}: ${isArabic ? h.narratorAr : h.narrator}',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
                             const Icon(Icons.menu_book_outlined, size: 16),
                             const SizedBox(width: 6),
                             Text(
