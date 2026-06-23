@@ -88,13 +88,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           final ayahs = snapshot.data!;
           final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
           if (settings.quranViewMode == QuranViewMode.page) {
-            return ResponsiveCenter(
-              child: _MushafPageView(
-                ayahs: ayahs,
-                surahNameAr: widget.surah.nameAr,
-                activeAyahNumber: activeAyah,
-                fontSize: settings.quranFontSize,
-              ),
+            return _MushafPageView(
+              ayahs: ayahs,
+              surahNameAr: widget.surah.nameAr,
+              activeAyahNumber: activeAyah,
+              fontSize: settings.quranFontSize,
             );
           }
           return ResponsiveCenter(
@@ -156,7 +154,7 @@ class _AyahCard extends StatelessWidget {
     final audio = context.watch<AudioProvider>();
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => _showAyahSheet(context, ayah),
+      onTap: () => _showAyahSheet(context, ayah, totalAyahs, surahNameAr),
       child: Card(
         color: isActive
             ? Theme.of(
@@ -227,13 +225,22 @@ class _AyahCard extends StatelessWidget {
   }
 }
 
-void _showAyahSheet(BuildContext context, Ayah ayah) {
+void _showAyahSheet(
+  BuildContext context,
+  Ayah ayah,
+  int totalAyahs,
+  String surahNameAr,
+) {
   showDialog(
     context: context,
     builder: (ctx) => Dialog(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560, maxHeight: 640),
-        child: _AyahDetailSheet(ayah: ayah),
+        child: _AyahDetailSheet(
+          ayah: ayah,
+          totalAyahs: totalAyahs,
+          surahNameAr: surahNameAr,
+        ),
       ),
     ),
   );
@@ -241,8 +248,14 @@ void _showAyahSheet(BuildContext context, Ayah ayah) {
 
 class _AyahDetailSheet extends StatefulWidget {
   final Ayah ayah;
+  final int totalAyahs;
+  final String surahNameAr;
 
-  const _AyahDetailSheet({required this.ayah});
+  const _AyahDetailSheet({
+    required this.ayah,
+    required this.totalAyahs,
+    required this.surahNameAr,
+  });
 
   @override
   State<_AyahDetailSheet> createState() => _AyahDetailSheetState();
@@ -281,6 +294,25 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
                   style: AppTheme.quranTextStyle(context, fontSize: 24),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.tonalIcon(
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: Text('quran.play_from_here'.tr()),
+                    onPressed: () async {
+                      final audio = context.read<AudioProvider>();
+                      final reciter = context.read<SettingsProvider>().reciter;
+                      await audio.playFromAyah(
+                        surahNumber: widget.ayah.surahNumber,
+                        ayahNumberInSurah: widget.ayah.numberInSurah,
+                        totalAyahsInSurah: widget.totalAyahs,
+                        reciter: reciter,
+                        surahTitle: widget.surahNameAr,
+                      );
+                    },
+                  ),
                 ),
                 const Divider(height: 28),
                 Text(
@@ -361,9 +393,11 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   }
 }
 
-/// A continuous, justified Arabic text flow with inline ayah-number markers,
-/// matching the look of a real printed Quran page rather than a list of
-/// separate ayah cards.
+/// A continuous, justified Arabic text flow with an ornate border, surah
+/// banner and inline ayah-number roundels, matching the look of a real
+/// printed Quran page rather than a list of separate ayah cards. Colors are
+/// fixed (cream/green/black) regardless of app theme, since that's the
+/// recognizable look of a physical Mushaf page.
 class _MushafPageView extends StatefulWidget {
   final List<Ayah> ayahs;
   final String surahNameAr;
@@ -382,6 +416,10 @@ class _MushafPageView extends StatefulWidget {
 }
 
 class _MushafPageViewState extends State<_MushafPageView> {
+  static const _pageBg = Color(0xFFFBF3E0);
+  static const _frameGreen = Color(0xFF1F5C4A);
+  static const _ink = Color(0xFF161410);
+
   final List<TapGestureRecognizer> _recognizers = [];
 
   void _clearRecognizers() {
@@ -400,25 +438,15 @@ class _MushafPageViewState extends State<_MushafPageView> {
   @override
   Widget build(BuildContext context) {
     _clearRecognizers();
-    final theme = Theme.of(context);
-    final baseStyle = AppTheme.quranTextStyle(
-      context,
-      fontSize: widget.fontSize,
-    ).copyWith(height: 2.1);
+    final totalAyahs = widget.ayahs.length;
+    final baseStyle = AppTheme.quranTextStyle(context, fontSize: widget.fontSize)
+        .copyWith(height: 2.1, color: _ink);
 
-    final spans = <InlineSpan>[
-      TextSpan(
-        text: '${widget.surahNameAr}\n\n',
-        style: baseStyle.copyWith(
-          fontWeight: FontWeight.bold,
-          fontSize: widget.fontSize + 4,
-        ),
-      ),
-    ];
-
+    final spans = <InlineSpan>[];
     for (final ayah in widget.ayahs) {
       final recognizer = TapGestureRecognizer()
-        ..onTap = () => _showAyahSheet(context, ayah);
+        ..onTap = () =>
+            _showAyahSheet(context, ayah, totalAyahs, widget.surahNameAr);
       _recognizers.add(recognizer);
       final isActive = widget.activeAyahNumber == ayah.numberInSurah;
 
@@ -427,10 +455,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
           text: '${ayah.textAr} ',
           style: baseStyle.copyWith(
             background: isActive
-                ? (Paint()
-                  ..color = theme.colorScheme.secondaryContainer.withValues(
-                    alpha: 0.5,
-                  ))
+                ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
                 : null,
           ),
           recognizer: recognizer,
@@ -440,21 +465,33 @@ class _MushafPageViewState extends State<_MushafPageView> {
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 3),
             child: Container(
               width: 24,
               height: 24,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: theme.colorScheme.primary, width: 1.2),
+                border: Border.all(color: _frameGreen, width: 1.4),
+                color: _pageBg,
               ),
-              child: Text(
-                '${ayah.numberInSurah}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+              child: Container(
+                width: 17,
+                height: 17,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.fromBorderSide(
+                    BorderSide(color: _frameGreen, width: 0.7),
+                  ),
+                ),
+                child: Text(
+                  '${ayah.numberInSurah}',
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: _frameGreen,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -464,12 +501,127 @@ class _MushafPageViewState extends State<_MushafPageView> {
       spans.add(const TextSpan(text: ' '));
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
-      child: Text.rich(
-        TextSpan(children: spans),
-        textAlign: TextAlign.justify,
-        textDirection: TextDirection.rtl,
+    return ResponsiveCenter(
+      maxWidth: 760,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+        child: _OrnateFrame(
+          color: _frameGreen,
+          background: _pageBg,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.ayahs.isNotEmpty)
+                  Center(
+                    child: Text(
+                      'quran.juz_label'.tr(
+                        args: ['${widget.ayahs.first.juz}'],
+                      ),
+                      style: const TextStyle(
+                        color: _frameGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
+                const SizedBox(height: 18),
+                Text.rich(
+                  TextSpan(children: spans),
+                  textAlign: TextAlign.justify,
+                  textDirection: TextDirection.rtl,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SurahBanner extends StatelessWidget {
+  final String name;
+  final Color color;
+
+  const _SurahBanner({required this.name, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: color, width: 1.6),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: Text(
+          name,
+          textDirection: TextDirection.rtl,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A double-line border with small diamond ornaments at each corner,
+/// evoking the decorative frame printed around a Mushaf page.
+class _OrnateFrame extends StatelessWidget {
+  final Widget child;
+  final Color color;
+  final Color background;
+
+  const _OrnateFrame({
+    required this.child,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(color: background),
+      padding: const EdgeInsets.all(10),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: color, width: 2.4),
+            ),
+            padding: const EdgeInsets.all(6),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: color, width: 1),
+              ),
+              child: child,
+            ),
+          ),
+          for (final alignment in const [
+            Alignment.topLeft,
+            Alignment.topRight,
+            Alignment.bottomLeft,
+            Alignment.bottomRight,
+          ])
+            Align(
+              alignment: alignment,
+              child: Transform.rotate(
+                angle: 0.785398, // 45deg
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  color: color,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
