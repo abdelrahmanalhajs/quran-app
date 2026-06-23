@@ -11,9 +11,10 @@ class QuranProvider extends ChangeNotifier {
   LoadStatus _status = LoadStatus.idle;
   String _query = '';
 
-  // Arabic diacritics: tanween/harakat/shadda/sukun (U+064B-U+0652),
-  // superscript alef (U+0670), and tatweel (U+0640).
-  static final RegExp _diacritics = RegExp('[ً-ْٰـ]');
+  // Any Unicode combining mark (tanween, harakat, shadda, sukun, superscript
+  // alef, Quranic annotation signs, etc.) plus tatweel (U+0640), which isn't
+  // a combining mark itself but is purely stylistic and should also be stripped.
+  static final RegExp _diacritics = RegExp(r'[\p{Mn}ـ]', unicode: true);
   // Alef variants (madda U+0622, hamza-above U+0623, hamza-below U+0625,
   // wasla U+0671) that should collapse to a plain alef (U+0627).
   static final RegExp _alefVariants = RegExp('[آأإٱ]');

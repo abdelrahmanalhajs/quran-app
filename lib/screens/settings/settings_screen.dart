@@ -3,7 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/athan.dart';
+import '../../core/services/athan_settings.dart';
 import '../../core/services/notification_service.dart';
+import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -18,6 +21,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const _kZikrNotif = 'hourly_zikr_notifications_enabled';
   bool _notifEnabled = true;
   bool _zikrEnabled = false;
+  bool _athanEnabled = false;
+  AthanOption _athanReciter = kAthanMakkah;
 
   @override
   void initState() {
@@ -27,15 +32,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadNotifPref() async {
     final prefs = await SharedPreferences.getInstance();
+    final athanEnabled = await AthanSettings.isEnabled();
+    final athanReciter = await AthanSettings.getReciter();
     setState(() {
       _notifEnabled = prefs.getBool(_kHadithNotif) ?? true;
       _zikrEnabled = prefs.getBool(_kZikrNotif) ?? false;
+      _athanEnabled = athanEnabled;
+      _athanReciter = athanReciter;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final isArabic = context.locale.languageCode == 'ar';
 
     return Scaffold(
       appBar: AppBar(title: Text('settings.title'.tr())),
@@ -44,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             title: Text('settings.language'.tr()),
             trailing: LanguageToggle(
-              isArabic: context.locale.languageCode == 'ar',
+              isArabic: isArabic,
               onChangedArabic: (isArabic) async {
                 await context.setLocale(isArabic ? const Locale('ar') : const Locale('en'));
               },
@@ -94,7 +104,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text('settings.notifications'.tr()),
             value: _notifEnabled,
             onChanged: (value) async {
-              final isArabic = context.locale.languageCode == 'ar';
               setState(() => _notifEnabled = value);
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool(_kHadithNotif, value);
@@ -113,7 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text('settings.hourly_zikr'.tr()),
             value: _zikrEnabled,
             onChanged: (value) async {
-              final isArabic = context.locale.languageCode == 'ar';
               setState(() => _zikrEnabled = value);
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool(_kZikrNotif, value);
@@ -128,6 +136,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
           ),
+          const Divider(),
+          SwitchListTile(
+            title: Text('settings.athan_notifications'.tr()),
+            subtitle: Text('settings.athan_notifications_hint'.tr()),
+            value: _athanEnabled,
+            onChanged: (value) async {
+              final prayerProvider = context.read<PrayerProvider>();
+              setState(() => _athanEnabled = value);
+              await AthanSettings.setEnabled(value);
+              if (kIsWeb) return;
+              if (value) {
+                final granted = await NotificationService.requestPermission();
+                if (granted) {
+                  await prayerProvider.load(arabicAthanLabels: isArabic);
+                }
+              } else {
+                await NotificationService.cancelPrayerAthans();
+              }
+            },
+          ),
+          if (_athanEnabled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: kAthanOptions.map((athan) {
+                  final selected = athan.id == _athanReciter.id;
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                      color: selected ? Theme.of(context).colorScheme.primary : null,
+                    ),
+                    title: Text(isArabic ? athan.nameAr : athan.nameEn),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.play_circle_outline),
+                      tooltip: 'settings.preview_athan'.tr(),
+                      onPressed: () => NotificationService.playAthan(athan),
+                    ),
+                    onTap: () async {
+                      final prayerProvider = context.read<PrayerProvider>();
+                      setState(() => _athanReciter = athan);
+                      await AthanSettings.setReciter(athan);
+                      if (kIsWeb) return;
+                      await prayerProvider.load(arabicAthanLabels: isArabic);
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
         ],
       ),
     );

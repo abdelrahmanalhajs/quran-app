@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../core/services/athan_settings.dart';
+import '../core/services/notification_service.dart';
 import '../data/prayer_repository.dart';
 import '../models/prayer_times.dart';
 
@@ -19,7 +21,7 @@ class PrayerProvider extends ChangeNotifier {
   double? get qiblaDirection => _qiblaDirection;
   String? get errorMessage => _errorMessage;
 
-  Future<void> load() async {
+  Future<void> load({bool arabicAthanLabels = false}) async {
     _status = PrayerLoadStatus.loadingLocation;
     notifyListeners();
     try {
@@ -37,6 +39,15 @@ class PrayerProvider extends ChangeNotifier {
       _times = results[0] as PrayerTimes;
       _qiblaDirection = results[1] as double;
       _status = PrayerLoadStatus.loaded;
+
+      if (!kIsWeb && await AthanSettings.isEnabled()) {
+        final athan = await AthanSettings.getReciter();
+        await NotificationService.schedulePrayerAthans(
+          times: _times!.obligatoryPrayers,
+          athan: athan,
+          arabic: arabicAthanLabels,
+        );
+      }
     } catch (e) {
       _errorMessage = e.toString();
       _status = e.toString().contains('permission')

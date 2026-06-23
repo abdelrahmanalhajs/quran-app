@@ -26,4 +26,14 @@ class PrayerTimes {
       isha: clean('Isha'),
     );
   }
+
+  /// The five obligatory prayers (excludes sunrise, which has no athan),
+  /// keyed to match [kPrayerNotificationNames].
+  Map<String, String> get obligatoryPrayers => {
+        'fajr': fajr,
+        'dhuhr': dhuhr,
+        'asr': asr,
+        'maghrib': maghrib,
+        'isha': isha,
+      };
 }

@@ -27,6 +27,7 @@
     "times": "Prayer Times",
     "qibla": "Qibla Direction",
     "qibla_hint": "Point your phone flat and rotate until the arrow points up",
+    "compass_unavailable_web": "The compass sensor isn't available in a web browser. Install the app on your phone to use the live Qiblah compass.",
     "facing_qiblah": "You are facing the Qiblah",
     "fajr": "Fajr",
     "sunrise": "Sunrise",
@@ -63,6 +64,9 @@
     "quran_font_size": "Quran Text Size",
     "about": "About",
     "notifications": "Daily Hadith Notification",
-    "hourly_zikr": "Hourly Zikr Reminder"
+    "hourly_zikr": "Hourly Zikr Reminder",
+    "athan_notifications": "Athan Notifications",
+    "athan_notifications_hint": "Get notified with the athan sound at each of the 5 daily prayer times",
+    "preview_athan": "Preview"
   }
 }

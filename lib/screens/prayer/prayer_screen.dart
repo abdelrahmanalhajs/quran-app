@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,7 @@ class _PrayerScreenState extends State<PrayerScreen> with SingleTickerProviderSt
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PrayerProvider>().load();
+      context.read<PrayerProvider>().load(arabicAthanLabels: context.locale.languageCode == 'ar');
     });
   }
 
@@ -88,7 +89,7 @@ class _PrayerTimesTab extends StatelessWidget {
                 Text('prayer.location_permission'.tr(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () => provider.load(),
+                  onPressed: () => provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
                   child: Text('prayer.enable_location'.tr()),
                 ),
               ],
@@ -102,7 +103,7 @@ class _PrayerTimesTab extends StatelessWidget {
             children: [
               Text(provider.errorMessage ?? 'Error'),
               const SizedBox(height: 12),
-              FilledButton(onPressed: () => provider.load(), child: const Icon(Icons.refresh)),
+              FilledButton(onPressed: () => provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'), child: const Icon(Icons.refresh)),
             ],
           ),
         );
@@ -117,7 +118,8 @@ class _PrayerTimesTab extends StatelessWidget {
           ('prayer.isha', t.isha, Icons.bedtime_outlined),
         ];
         return RefreshIndicator(
-          onRefresh: provider.load,
+          onRefresh: () =>
+              provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: entries.length,
@@ -166,7 +168,7 @@ class _QiblaTabState extends State<_QiblaTab> {
                     Text('prayer.location_permission'.tr(), textAlign: TextAlign.center),
                     const SizedBox(height: 16),
                     FilledButton(
-                      onPressed: () => provider.load(),
+                      onPressed: () => provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
                       child: Text('prayer.enable_location'.tr()),
                     ),
                   ],
@@ -177,6 +179,27 @@ class _QiblaTabState extends State<_QiblaTab> {
     }
 
     final qibla = provider.qiblaDirection!;
+
+    if (kIsWeb) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.explore_off_outlined, size: 48),
+              const SizedBox(height: 12),
+              Text('prayer.compass_unavailable_web'.tr(), textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              Text(
+                'prayer.degrees_from_north'.tr(args: ['${qibla.round()}°']),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return StreamBuilder<CompassEvent>(
       stream: FlutterCompass.events,
