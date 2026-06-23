@@ -38,7 +38,7 @@ class _PrayerScreenState extends State<PrayerScreen> with SingleTickerProviderSt
         bottom: TabBar(
           controller: _tabController,
           tabs: [
-            Tab(text: 'prayer.title'.tr()),
+            Tab(text: 'prayer.times'.tr()),
             Tab(text: 'prayer.qibla'.tr()),
           ],
         ),
@@ -146,6 +146,7 @@ class _QiblaTab extends StatefulWidget {
 }
 
 class _QiblaTabState extends State<_QiblaTab> {
+  static const double _alignmentThresholdDegrees = 8;
   double? _heading;
 
   @override
@@ -157,7 +158,19 @@ class _QiblaTabState extends State<_QiblaTab> {
         child: provider.status == PrayerLoadStatus.permissionDenied
             ? Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('prayer.location_permission'.tr(), textAlign: TextAlign.center),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_off, size: 48),
+                    const SizedBox(height: 12),
+                    Text('prayer.location_permission'.tr(), textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => provider.load(),
+                      child: Text('prayer.enable_location'.tr()),
+                    ),
+                  ],
+                ),
               )
             : const CircularProgressIndicator(),
       );
@@ -170,20 +183,40 @@ class _QiblaTabState extends State<_QiblaTab> {
       builder: (context, snapshot) {
         final heading = snapshot.data?.heading ?? _heading ?? 0;
         _heading = heading;
-        final angle = (qibla - heading) * (math.pi / 180);
+
+        var diff = (qibla - heading) % 360;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+        final aligned = diff.abs() <= _alignmentThresholdDegrees;
+
+        final angle = diff * (math.pi / 180);
+        final color = aligned ? Colors.green : Theme.of(context).colorScheme.primary;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(),
-            Text('prayer.qibla_hint'.tr(), textAlign: TextAlign.center),
+            Text(
+              aligned ? 'prayer.facing_qiblah'.tr() : 'prayer.qibla_hint'.tr(),
+              textAlign: TextAlign.center,
+              style: aligned
+                  ? Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: Colors.green, fontWeight: FontWeight.bold)
+                  : null,
+            ),
             const SizedBox(height: 32),
-            Transform.rotate(
-              angle: angle,
-              child: Icon(
-                Icons.navigation,
-                size: 140,
-                color: Theme.of(context).colorScheme.primary,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 3),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Transform.rotate(
+                angle: angle,
+                child: Icon(Icons.navigation, size: 100, color: color),
               ),
             ),
             const SizedBox(height: 24),

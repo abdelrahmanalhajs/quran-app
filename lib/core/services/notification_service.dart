@@ -7,6 +7,17 @@ import '../../data/hadith_repository.dart';
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static const int _dailyHadithId = 1001;
+  static const int _hourlyZikrId = 1002;
+
+  static const List<Map<String, String>> _zikrPhrases = [
+    {'ar': 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', 'en': 'Glory be to Allah and praise be to Him.'},
+    {'ar': 'لَا إِلَهَ إِلَّا اللَّهُ', 'en': 'There is no deity except Allah.'},
+    {'ar': 'اللَّهُ أَكْبَرُ', 'en': 'Allah is the Greatest.'},
+    {'ar': 'الْحَمْدُ لِلَّهِ', 'en': 'Praise be to Allah.'},
+    {'ar': 'أَسْتَغْفِرُ اللَّهَ', 'en': 'I seek the forgiveness of Allah.'},
+    {'ar': 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', 'en': 'There is no power and no strength except with Allah.'},
+    {'ar': 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ', 'en': 'Allah is sufficient for me; there is no deity except Him.'},
+  ];
 
   static Future<void> init() async {
     tz_data.initializeTimeZones();
@@ -61,6 +72,29 @@ class NotificationService {
   }
 
   static Future<void> cancelDailyHadith() => _plugin.cancel(_dailyHadithId);
+
+  static Future<void> scheduleHourlyZikr({bool arabic = true}) async {
+    final phrase = _zikrPhrases[DateTime.now().hour % _zikrPhrases.length];
+    await _plugin.periodicallyShow(
+      _hourlyZikrId,
+      arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
+      arabic ? phrase['ar'] : phrase['en'],
+      RepeatInterval.hourly,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'hourly_zikr',
+          'Hourly Zikr',
+          channelDescription: 'A short remembrance of Allah every hour',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  static Future<void> cancelHourlyZikr() => _plugin.cancel(_hourlyZikrId);
 
   static tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);

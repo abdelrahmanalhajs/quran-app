@@ -40,7 +40,12 @@ class AppTheme {
         color: scheme.surfaceContainerHigh,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      textTheme: GoogleFonts.tajawalTextTheme(),
+      textTheme: GoogleFonts.tajawalTextTheme(
+        ThemeData(brightness: scheme.brightness).textTheme,
+      ).apply(
+        bodyColor: scheme.onSurface,
+        displayColor: scheme.onSurface,
+      ),
     );
   }
 

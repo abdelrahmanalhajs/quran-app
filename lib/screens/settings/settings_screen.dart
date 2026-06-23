@@ -15,7 +15,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   static const _kHadithNotif = 'hadith_notifications_enabled';
+  static const _kZikrNotif = 'hourly_zikr_notifications_enabled';
   bool _notifEnabled = true;
+  bool _zikrEnabled = false;
 
   @override
   void initState() {
@@ -25,7 +27,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadNotifPref() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() => _notifEnabled = prefs.getBool(_kHadithNotif) ?? true);
+    setState(() {
+      _notifEnabled = prefs.getBool(_kHadithNotif) ?? true;
+      _zikrEnabled = prefs.getBool(_kZikrNotif) ?? false;
+    });
   }
 
   @override
@@ -100,6 +105,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               } else {
                 await NotificationService.cancelDailyHadith();
+              }
+            },
+          ),
+          SwitchListTile(
+            title: Text('settings.hourly_zikr'.tr()),
+            value: _zikrEnabled,
+            onChanged: (value) async {
+              final isArabic = context.locale.languageCode == 'ar';
+              setState(() => _zikrEnabled = value);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool(_kZikrNotif, value);
+              if (kIsWeb) return;
+              if (value) {
+                final granted = await NotificationService.requestPermission();
+                if (granted) {
+                  await NotificationService.scheduleHourlyZikr(arabic: isArabic);
+                }
+              } else {
+                await NotificationService.cancelHourlyZikr();
               }
             },
           ),

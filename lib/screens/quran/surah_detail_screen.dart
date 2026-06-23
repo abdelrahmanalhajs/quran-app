@@ -40,16 +40,19 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       appBar: AppBar(
         title: Text(widget.surah.nameAr),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'quran.reciter'.tr(),
-            onPressed: () async {
-              final settingsProvider = context.read<SettingsProvider>();
-              final picked = await showReciterPicker(context, reciter);
-              if (picked != null) {
-                await settingsProvider.setReciter(picked);
-              }
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: TextButton.icon(
+              icon: const Icon(Icons.headphones_outlined, size: 18),
+              label: Text('quran.reciter'.tr()),
+              onPressed: () async {
+                final settingsProvider = context.read<SettingsProvider>();
+                final picked = await showReciterPicker(context, reciter);
+                if (picked != null) {
+                  await settingsProvider.setReciter(picked);
+                }
+              },
+            ),
           ),
         ],
       ),
@@ -132,6 +135,7 @@ void _showAyahSheet(BuildContext context, Ayah ayah) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
+    constraints: const BoxConstraints(maxWidth: 560),
     builder: (ctx) => _AyahDetailSheet(ayah: ayah),
   );
 }

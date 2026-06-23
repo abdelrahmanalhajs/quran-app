@@ -6,15 +6,17 @@ Future<Reciter?> showReciterPicker(BuildContext context, Reciter current) {
   return showModalBottomSheet<Reciter>(
     context: context,
     showDragHandle: true,
+    constraints: const BoxConstraints(maxWidth: 480),
     builder: (ctx) {
       return SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Text(
-                'quran.choose_reciter'.tr(),
+                'quran.choose_reciter_hint'.tr(),
+                textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.titleMedium,
               ),
             ),

@@ -19,12 +19,15 @@
     "error": "Something went wrong. Pull to retry.",
     "no_results": "No surahs found",
     "play_surah": "Play surah",
-    "choose_reciter": "Choose reciter"
+    "choose_reciter": "Choose reciter",
+    "choose_reciter_hint": "Here you can choose the reciter for this surah"
   },
   "prayer": {
     "title": "Prayer Times & Qiblah",
+    "times": "Prayer Times",
     "qibla": "Qibla Direction",
     "qibla_hint": "Point your phone flat and rotate until the arrow points up",
+    "facing_qiblah": "You are facing the Qiblah",
     "fajr": "Fajr",
     "sunrise": "Sunrise",
     "dhuhr": "Dhuhr",
@@ -59,6 +62,7 @@
     "theme_system": "System",
     "quran_font_size": "Quran Text Size",
     "about": "About",
-    "notifications": "Daily Hadith Notification"
+    "notifications": "Daily Hadith Notification",
+    "hourly_zikr": "Hourly Zikr Reminder"
   }
 }
