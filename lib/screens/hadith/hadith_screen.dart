@@ -31,6 +31,7 @@ class _HadithScreenState extends State<HadithScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final h = snapshot.data!;
+          final isArabic = context.locale.languageCode == 'ar';
           return Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -62,7 +63,9 @@ class _HadithScreenState extends State<HadithScreen> {
                           children: [
                             const Icon(Icons.person_outline, size: 16),
                             const SizedBox(width: 6),
-                            Text('${'hadith.narrator'.tr()}: ${h.narrator}'),
+                            Text(
+                              '${'hadith.narrator'.tr()}: ${isArabic ? h.narratorAr : h.narrator}',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -70,7 +73,9 @@ class _HadithScreenState extends State<HadithScreen> {
                           children: [
                             const Icon(Icons.menu_book_outlined, size: 16),
                             const SizedBox(width: 6),
-                            Text('${'hadith.source'.tr()}: ${h.source}'),
+                            Text(
+                              '${'hadith.source'.tr()}: ${isArabic ? h.sourceAr : h.source}',
+                            ),
                           ],
                         ),
                       ],

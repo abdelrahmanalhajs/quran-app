@@ -45,15 +45,15 @@ class NotificationService {
     return (androidGranted ?? true) && (iosGranted ?? true);
   }
 
-  static Future<void> scheduleDailyHadith({int hour = 8, int minute = 0}) async {
+  static Future<void> scheduleDailyHadith({int hour = 8, int minute = 0, bool arabic = false}) async {
     final repo = HadithRepository();
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final hadith = await repo.getHadithForDay(tomorrow);
 
     await _plugin.zonedSchedule(
       _dailyHadithId,
-      'Hadith of the Day',
-      hadith.en,
+      arabic ? 'حديث اليوم' : 'Hadith of the Day',
+      arabic ? hadith.ar : hadith.en,
       _nextInstanceOf(hour, minute),
       const NotificationDetails(
         android: AndroidNotificationDetails(

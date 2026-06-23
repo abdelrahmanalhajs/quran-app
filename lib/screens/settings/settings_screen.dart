@@ -94,6 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text('settings.notifications'.tr()),
             value: _notifEnabled,
             onChanged: (value) async {
+              final isArabic = context.locale.languageCode == 'ar';
               setState(() => _notifEnabled = value);
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool(_kHadithNotif, value);
@@ -101,7 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (value) {
                 final granted = await NotificationService.requestPermission();
                 if (granted) {
-                  await NotificationService.scheduleDailyHadith();
+                  await NotificationService.scheduleDailyHadith(arabic: isArabic);
                 }
               } else {
                 await NotificationService.cancelDailyHadith();
