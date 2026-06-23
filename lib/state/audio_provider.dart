@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -66,7 +67,12 @@ class AudioProvider extends ChangeNotifier {
     return null;
   }
 
-  Future<void> playSurah(int surahNumber, Reciter reciter, {bool resume = false}) async {
+  Future<void> playSurah(
+    int surahNumber,
+    Reciter reciter, {
+    bool resume = false,
+    String? surahTitle,
+  }) async {
     if (!reciter.hasSurah(surahNumber)) {
       throw Exception('This reciter has no recording for this surah');
     }
@@ -87,7 +93,16 @@ class AudioProvider extends ChangeNotifier {
     _ayahPlaylistStart = null;
     notifyListeners();
     try {
-      await _player.setUrl(reciter.audioUrlForSurah(surahNumber));
+      await _player.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(reciter.audioUrlForSurah(surahNumber)),
+          tag: MediaItem(
+            id: 'surah_${surahNumber}_${reciter.id}',
+            title: surahTitle ?? 'Surah $surahNumber',
+            artist: reciter.nameEn,
+          ),
+        ),
+      );
       if (resume) {
         final saved = await savedPositionFor(surahNumber, reciter);
         if (saved != null) {
@@ -111,9 +126,10 @@ class AudioProvider extends ChangeNotifier {
     required int ayahNumberInSurah,
     required int totalAyahsInSurah,
     required Reciter reciter,
+    String? surahTitle,
   }) async {
     if (!reciter.supportsAyahPlayback) {
-      await playSurah(surahNumber, reciter);
+      await playSurah(surahNumber, reciter, surahTitle: surahTitle);
       return;
     }
 
@@ -124,9 +140,17 @@ class AudioProvider extends ChangeNotifier {
     _ayahPlaylistStart = ayahNumberInSurah;
     notifyListeners();
     try {
+      final title = surahTitle ?? 'Surah $surahNumber';
       final sources = [
         for (var ayah = ayahNumberInSurah; ayah <= totalAyahsInSurah; ayah++)
-          AudioSource.uri(Uri.parse(reciter.audioUrlForAyah(surahNumber, ayah)!)),
+          AudioSource.uri(
+            Uri.parse(reciter.audioUrlForAyah(surahNumber, ayah)!),
+            tag: MediaItem(
+              id: 'ayah_${surahNumber}_${ayah}_${reciter.id}',
+              title: '$title · ${ayah.toString()}',
+              artist: reciter.nameEn,
+            ),
+          ),
       ];
       await _player.setAudioSource(ConcatenatingAudioSource(children: sources));
       await _player.play();

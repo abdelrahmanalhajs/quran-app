@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
@@ -44,6 +45,21 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       appBar: AppBar(
         title: Text(widget.surah.nameAr),
         actions: [
+          IconButton(
+            icon: Icon(
+              settings.quranViewMode == QuranViewMode.page
+                  ? Icons.view_agenda_outlined
+                  : Icons.menu_book_outlined,
+            ),
+            tooltip: settings.quranViewMode == QuranViewMode.page
+                ? 'quran.view_list'.tr()
+                : 'quran.view_page'.tr(),
+            onPressed: () => settings.setQuranViewMode(
+              settings.quranViewMode == QuranViewMode.page
+                  ? QuranViewMode.list
+                  : QuranViewMode.page,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: TextButton.icon(
@@ -70,6 +86,17 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             return Center(child: Text('quran.error'.tr()));
           }
           final ayahs = snapshot.data!;
+          final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
+          if (settings.quranViewMode == QuranViewMode.page) {
+            return ResponsiveCenter(
+              child: _MushafPageView(
+                ayahs: ayahs,
+                surahNameAr: widget.surah.nameAr,
+                activeAyahNumber: activeAyah,
+                fontSize: settings.quranFontSize,
+              ),
+            );
+          }
           return ResponsiveCenter(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -77,9 +104,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               itemBuilder: (context, index) => _AyahCard(
                 ayah: ayahs[index],
                 totalAyahs: widget.surah.numberOfAyahs,
-                isActive:
-                    playingThis &&
-                    audio.currentAbsoluteAyah == ayahs[index].numberInSurah,
+                isActive: activeAyah == ayahs[index].numberInSurah,
+                surahNameAr: widget.surah.nameAr,
               ),
             ),
           );
@@ -99,6 +125,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             widget.surah.number,
             reciter,
             resume: true,
+            surahTitle: widget.surah.nameAr,
           );
         },
         icon: Icon(
@@ -114,11 +141,13 @@ class _AyahCard extends StatelessWidget {
   final Ayah ayah;
   final int totalAyahs;
   final bool isActive;
+  final String surahNameAr;
 
   const _AyahCard({
     required this.ayah,
     required this.totalAyahs,
     required this.isActive,
+    required this.surahNameAr,
   });
 
   @override
@@ -174,7 +203,11 @@ class _AyahCard extends StatelessWidget {
                   final settingsState = context.read<SettingsProvider>();
                   final reciter = settingsState.reciter;
                   if (isActive) {
-                    await audio.playSurah(ayah.surahNumber, reciter);
+                    await audio.playSurah(
+                      ayah.surahNumber,
+                      reciter,
+                      surahTitle: surahNameAr,
+                    );
                     return;
                   }
                   await context.read<AudioProvider>().playFromAyah(
@@ -182,6 +215,7 @@ class _AyahCard extends StatelessWidget {
                     ayahNumberInSurah: ayah.numberInSurah,
                     totalAyahsInSurah: totalAyahs,
                     reciter: reciter,
+                    surahTitle: surahNameAr,
                   );
                 },
               ),
@@ -324,5 +358,119 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
         _loadingTafsir = false;
       });
     }
+  }
+}
+
+/// A continuous, justified Arabic text flow with inline ayah-number markers,
+/// matching the look of a real printed Quran page rather than a list of
+/// separate ayah cards.
+class _MushafPageView extends StatefulWidget {
+  final List<Ayah> ayahs;
+  final String surahNameAr;
+  final int? activeAyahNumber;
+  final double fontSize;
+
+  const _MushafPageView({
+    required this.ayahs,
+    required this.surahNameAr,
+    required this.activeAyahNumber,
+    required this.fontSize,
+  });
+
+  @override
+  State<_MushafPageView> createState() => _MushafPageViewState();
+}
+
+class _MushafPageViewState extends State<_MushafPageView> {
+  final List<TapGestureRecognizer> _recognizers = [];
+
+  void _clearRecognizers() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  @override
+  void dispose() {
+    _clearRecognizers();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _clearRecognizers();
+    final theme = Theme.of(context);
+    final baseStyle = AppTheme.quranTextStyle(
+      context,
+      fontSize: widget.fontSize,
+    ).copyWith(height: 2.1);
+
+    final spans = <InlineSpan>[
+      TextSpan(
+        text: '${widget.surahNameAr}\n\n',
+        style: baseStyle.copyWith(
+          fontWeight: FontWeight.bold,
+          fontSize: widget.fontSize + 4,
+        ),
+      ),
+    ];
+
+    for (final ayah in widget.ayahs) {
+      final recognizer = TapGestureRecognizer()
+        ..onTap = () => _showAyahSheet(context, ayah);
+      _recognizers.add(recognizer);
+      final isActive = widget.activeAyahNumber == ayah.numberInSurah;
+
+      spans.add(
+        TextSpan(
+          text: '${ayah.textAr} ',
+          style: baseStyle.copyWith(
+            background: isActive
+                ? (Paint()
+                  ..color = theme.colorScheme.secondaryContainer.withValues(
+                    alpha: 0.5,
+                  ))
+                : null,
+          ),
+          recognizer: recognizer,
+        ),
+      );
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: theme.colorScheme.primary, width: 1.2),
+              ),
+              child: Text(
+                '${ayah.numberInSurah}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      spans.add(const TextSpan(text: ' '));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
+      child: Text.rich(
+        TextSpan(children: spans),
+        textAlign: TextAlign.justify,
+        textDirection: TextDirection.rtl,
+      ),
+    );
   }
 }

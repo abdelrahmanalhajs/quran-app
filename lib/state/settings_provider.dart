@@ -2,18 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/reciters.dart';
 
+/// `page` renders a continuous, justified Mushaf-style page (like a printed
+/// Quran); `list` renders each ayah as its own separate card. `page` is the
+/// default since it matches the look of a real Quran page.
+enum QuranViewMode { page, list }
+
 class SettingsProvider extends ChangeNotifier {
   static const _kThemeMode = 'theme_mode';
   static const _kReciterId = 'reciter_id';
   static const _kQuranFontSize = 'quran_font_size';
+  static const _kQuranViewMode = 'quran_view_mode';
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
   double _quranFontSize = 26;
+  QuranViewMode _quranViewMode = QuranViewMode.page;
 
   ThemeMode get themeMode => _themeMode;
   Reciter get reciter => _reciter;
   double get quranFontSize => _quranFontSize;
+  QuranViewMode get quranViewMode => _quranViewMode;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -30,6 +38,8 @@ class SettingsProvider extends ChangeNotifier {
     }
 
     _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 26;
+    final viewModeStr = prefs.getString(_kQuranViewMode);
+    _quranViewMode = viewModeStr == 'list' ? QuranViewMode.list : QuranViewMode.page;
     notifyListeners();
   }
 
@@ -59,5 +69,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_kQuranFontSize, size);
+  }
+
+  Future<void> setQuranViewMode(QuranViewMode mode) async {
+    _quranViewMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kQuranViewMode, mode == QuranViewMode.list ? 'list' : 'page');
   }
 }

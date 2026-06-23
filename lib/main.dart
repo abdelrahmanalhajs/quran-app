@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
@@ -15,6 +16,13 @@ Future<void> main() async {
   await EasyLocalization.ensureInitialized();
   if (!kIsWeb) {
     await NotificationService.init();
+    // Lets the OS show lock-screen / notification-center play-pause-seek
+    // controls for the Quran audio player; has no effect on web.
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.abdelrahmanalhajs.quranapp.audio',
+      androidNotificationChannelName: 'Quran audio playback',
+      androidNotificationOngoing: true,
+    );
   }
 
   final settings = SettingsProvider();
