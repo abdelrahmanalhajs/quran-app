@@ -19,6 +19,7 @@
     "error": "Something went wrong. Pull to retry.",
     "no_results": "No surahs found",
     "play_surah": "Play surah",
+    "play_from_here": "Play from this ayah",
     "choose_reciter": "Choose reciter",
     "choose_reciter_hint": "Here you can choose the reciter for this surah"
   },

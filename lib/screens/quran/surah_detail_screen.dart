@@ -69,7 +69,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
             itemCount: ayahs.length,
-            itemBuilder: (context, index) => _AyahCard(ayah: ayahs[index]),
+            itemBuilder: (context, index) => _AyahCard(
+              ayah: ayahs[index],
+              totalAyahs: widget.surah.numberOfAyahs,
+              isActive: playingThis && audio.currentAbsoluteAyah == ayahs[index].numberInSurah,
+            ),
           );
         },
       ),
@@ -81,7 +85,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             );
             return;
           }
-          await context.read<AudioProvider>().playSurah(widget.surah.number, reciter);
+          await context.read<AudioProvider>().playSurah(widget.surah.number, reciter, resume: true);
         },
         icon: Icon(playingThis && audio.isPlaying ? Icons.pause : Icons.play_arrow),
         label: Text('quran.play_surah'.tr()),
@@ -92,16 +96,20 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
 class _AyahCard extends StatelessWidget {
   final Ayah ayah;
+  final int totalAyahs;
+  final bool isActive;
 
-  const _AyahCard({required this.ayah});
+  const _AyahCard({required this.ayah, required this.totalAyahs, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final audio = context.watch<AudioProvider>();
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => _showAyahSheet(context, ayah),
       child: Card(
+        color: isActive ? Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.35) : null,
         margin: const EdgeInsets.only(bottom: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -121,6 +129,27 @@ class _AyahCard extends StatelessWidget {
                   textDirection: TextDirection.rtl,
                   style: AppTheme.quranTextStyle(context, fontSize: settings.quranFontSize),
                 ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isActive && audio.isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline,
+                  size: 22,
+                ),
+                tooltip: 'quran.play_from_here'.tr(),
+                onPressed: () async {
+                  final settingsState = context.read<SettingsProvider>();
+                  final reciter = settingsState.reciter;
+                  if (isActive) {
+                    await audio.playSurah(ayah.surahNumber, reciter);
+                    return;
+                  }
+                  await context.read<AudioProvider>().playFromAyah(
+                        surahNumber: ayah.surahNumber,
+                        ayahNumberInSurah: ayah.numberInSurah,
+                        totalAyahsInSurah: totalAyahs,
+                        reciter: reciter,
+                      );
+                },
               ),
             ],
           ),

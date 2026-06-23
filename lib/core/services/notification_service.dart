@@ -62,6 +62,13 @@ class NotificationService {
     await _athanPlayer.play();
   }
 
+  static bool get isAthanPlaying => _athanPlayer.playing;
+
+  /// Stops the in-app athan playback. Called whenever the user interacts
+  /// with any button while the real prayer-time athan is sounding, so it
+  /// doubles as a "dismiss" action without needing a dedicated stop button.
+  static Future<void> stopAthan() => _athanPlayer.stop();
+
   static Future<bool> requestPermission() async {
     final androidGranted = await _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()

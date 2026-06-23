@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/reciters.dart';
 
 class AudioProvider extends ChangeNotifier {
@@ -7,9 +8,24 @@ class AudioProvider extends ChangeNotifier {
   int? _currentSurah;
   Reciter? _currentReciter;
   bool _isLoading = false;
+  int? _currentAyahIndex; // 0-based index into the playing-from-ayah playlist
+  int? _ayahPlaylistStart; // 1-based ayah number the current playlist started at
+
+  static const _kLastSurah = 'audio_last_surah';
+  static const _kLastReciter = 'audio_last_reciter';
+  static const _kLastPositionMs = 'audio_last_position_ms';
 
   AudioProvider() {
     _player.playerStateStream.listen((_) => notifyListeners());
+    _player.positionStream.listen((pos) {
+      if (_currentSurah != null && _currentReciter != null && _player.playing) {
+        _savePosition(pos);
+      }
+    });
+    _player.currentIndexStream.listen((index) {
+      _currentAyahIndex = index;
+      notifyListeners();
+    });
   }
 
   AudioPlayer get player => _player;
@@ -17,12 +33,40 @@ class AudioProvider extends ChangeNotifier {
   Reciter? get currentReciter => _currentReciter;
   bool get isLoading => _isLoading;
   bool get isPlaying => _player.playing;
+  int? get currentAyahIndex => _currentAyahIndex;
+  int? get currentAbsoluteAyah =>
+      (_ayahPlaylistStart != null && _currentAyahIndex != null) ? _ayahPlaylistStart! + _currentAyahIndex! : null;
 
   bool isCurrentlyPlaying(int surahNumber, Reciter reciter) {
     return _currentSurah == surahNumber && _currentReciter?.id == reciter.id && _player.playing;
   }
 
-  Future<void> playSurah(int surahNumber, Reciter reciter) async {
+  DateTime? _lastSaveTime;
+  void _savePosition(Duration pos) {
+    final now = DateTime.now();
+    if (_lastSaveTime != null && now.difference(_lastSaveTime!) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastSaveTime = now;
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt(_kLastSurah, _currentSurah!);
+      prefs.setString(_kLastReciter, _currentReciter!.id);
+      prefs.setInt(_kLastPositionMs, pos.inMilliseconds);
+    });
+  }
+
+  /// Returns the saved playback position for [surahNumber]/[reciter], if the
+  /// app was closed or navigated away while that surah was playing.
+  Future<Duration?> savedPositionFor(int surahNumber, Reciter reciter) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getInt(_kLastSurah) == surahNumber && prefs.getString(_kLastReciter) == reciter.id) {
+      final ms = prefs.getInt(_kLastPositionMs);
+      if (ms != null && ms > 0) return Duration(milliseconds: ms);
+    }
+    return null;
+  }
+
+  Future<void> playSurah(int surahNumber, Reciter reciter, {bool resume = false}) async {
     if (!reciter.hasSurah(surahNumber)) {
       throw Exception('This reciter has no recording for this surah');
     }
@@ -39,9 +83,52 @@ class AudioProvider extends ChangeNotifier {
     _isLoading = true;
     _currentSurah = surahNumber;
     _currentReciter = reciter;
+    _currentAyahIndex = null;
+    _ayahPlaylistStart = null;
     notifyListeners();
     try {
       await _player.setUrl(reciter.audioUrlForSurah(surahNumber));
+      if (resume) {
+        final saved = await savedPositionFor(surahNumber, reciter);
+        if (saved != null) {
+          await _player.seek(saved);
+        }
+      }
+      await _player.play();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Plays [surahNumber] starting from [ayahNumberInSurah] (1-based) through
+  /// to the end of the surah, using per-ayah audio files chained as a
+  /// playlist so playback continues seamlessly into the following ayahs.
+  /// Falls back to playing the whole surah from the start if [reciter] has
+  /// no per-ayah audio source.
+  Future<void> playFromAyah({
+    required int surahNumber,
+    required int ayahNumberInSurah,
+    required int totalAyahsInSurah,
+    required Reciter reciter,
+  }) async {
+    if (!reciter.supportsAyahPlayback) {
+      await playSurah(surahNumber, reciter);
+      return;
+    }
+
+    _isLoading = true;
+    _currentSurah = surahNumber;
+    _currentReciter = reciter;
+    _currentAyahIndex = 0;
+    _ayahPlaylistStart = ayahNumberInSurah;
+    notifyListeners();
+    try {
+      final sources = [
+        for (var ayah = ayahNumberInSurah; ayah <= totalAyahsInSurah; ayah++)
+          AudioSource.uri(Uri.parse(reciter.audioUrlForAyah(surahNumber, ayah)!)),
+      ];
+      await _player.setAudioSource(ConcatenatingAudioSource(children: sources));
       await _player.play();
     } finally {
       _isLoading = false;
@@ -53,6 +140,8 @@ class AudioProvider extends ChangeNotifier {
     await _player.stop();
     _currentSurah = null;
     _currentReciter = null;
+    _currentAyahIndex = null;
+    _ayahPlaylistStart = null;
     notifyListeners();
   }
 

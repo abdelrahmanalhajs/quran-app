@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/athan.dart';
@@ -24,10 +25,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
 
+  // Separate player for the in-settings athan preview, independent of the
+  // real prayer-time athan player, so previewing here never triggers the
+  // "stop athan on any tap" behavior used for actual prayer notifications.
+  final AudioPlayer _previewPlayer = AudioPlayer();
+  String? _previewingAthanId;
+
   @override
   void initState() {
     super.initState();
     _loadNotifPref();
+    _previewPlayer.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        setState(() => _previewingAthanId = null);
+      } else {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _previewPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _togglePreview(AthanOption athan) async {
+    if (_previewingAthanId == athan.id) {
+      if (_previewPlayer.playing) {
+        await _previewPlayer.pause();
+      } else {
+        await _previewPlayer.play();
+      }
+      return;
+    }
+    setState(() => _previewingAthanId = athan.id);
+    await _previewPlayer.setAsset(athan.assetPath);
+    await _previewPlayer.play();
   }
 
   Future<void> _loadNotifPref() async {
@@ -171,9 +205,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     title: Text(isArabic ? athan.nameAr : athan.nameEn),
                     trailing: IconButton(
-                      icon: const Icon(Icons.play_circle_outline),
+                      icon: Icon(
+                        _previewingAthanId == athan.id && _previewPlayer.playing
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                      ),
                       tooltip: 'settings.preview_athan'.tr(),
-                      onPressed: () => NotificationService.playAthan(athan),
+                      onPressed: () => _togglePreview(athan),
                     ),
                     onTap: () async {
                       final prayerProvider = context.read<PrayerProvider>();

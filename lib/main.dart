@@ -55,6 +55,16 @@ class QuranApp extends StatelessWidget {
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
       home: const HomeShell(),
+      builder: (context, child) {
+        return Listener(
+          onPointerDown: (_) {
+            if (!kIsWeb && NotificationService.isAthanPlaying) {
+              NotificationService.stopAthan();
+            }
+          },
+          child: child!,
+        );
+      },
     );
   }
 }
