@@ -466,34 +466,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
           alignment: PlaceholderAlignment.middle,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: Container(
-              width: 24,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: _frameGreen, width: 1.4),
-                color: _pageBg,
-              ),
-              child: Container(
-                width: 17,
-                height: 17,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.fromBorderSide(
-                    BorderSide(color: _frameGreen, width: 0.7),
-                  ),
-                ),
-                child: Text(
-                  '${ayah.numberInSurah}',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: _frameGreen,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+            child: _AyahFlowerMarker(
+              number: ayah.numberInSurah,
+              color: _frameGreen,
+              background: _pageBg,
             ),
           ),
         ),
@@ -505,38 +481,45 @@ class _MushafPageViewState extends State<_MushafPageView> {
       maxWidth: 760,
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-        child: _OrnateFrame(
-          color: _frameGreen,
-          background: _pageBg,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.ayahs.isNotEmpty)
-                  Center(
-                    child: Text(
-                      'quran.juz_label'.tr(
-                        args: ['${widget.ayahs.first.juz}'],
-                      ),
-                      style: const TextStyle(
-                        color: _frameGreen,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.ayahs.isNotEmpty)
+              Container(
+                color: _frameGreen,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Center(
+                  child: Text(
+                    'quran.juz_label'.tr(args: ['${widget.ayahs.first.juz}']),
+                    style: const TextStyle(
+                      color: _pageBg,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                const SizedBox(height: 10),
-                _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
-                const SizedBox(height: 18),
-                Text.rich(
-                  TextSpan(children: spans),
-                  textAlign: TextAlign.justify,
-                  textDirection: TextDirection.rtl,
                 ),
-              ],
+              ),
+            _OrnateFrame(
+              color: _frameGreen,
+              background: _pageBg,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
+                    const SizedBox(height: 18),
+                    Text.rich(
+                      TextSpan(children: spans),
+                      textAlign: TextAlign.justify,
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -556,17 +539,86 @@ class _SurahBanner extends StatelessWidget {
         border: Border.all(color: color, width: 1.6),
         borderRadius: BorderRadius.circular(6),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: Text(
-          name,
-          textDirection: TextDirection.rtl,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('❁', style: TextStyle(color: color, fontSize: 16)),
+          const SizedBox(width: 10),
+          Text(
+            name,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
-        ),
+          const SizedBox(width: 10),
+          Text('❁', style: TextStyle(color: color, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+}
+
+/// An 8-petal flower badge (two overlapping rotated squares) with the ayah
+/// number centered, evoking the ornate "end of ayah" rosette printed in a
+/// Mushaf, rather than a plain circle.
+class _AyahFlowerMarker extends StatelessWidget {
+  final int number;
+  final Color color;
+  final Color background;
+
+  const _AyahFlowerMarker({
+    required this.number,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 26,
+      height: 26,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Transform.rotate(
+            angle: 0,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                border: Border.all(color: color, width: 1.1),
+              ),
+            ),
+          ),
+          Transform.rotate(
+            angle: 0.785398,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                border: Border.all(color: color, width: 1.1),
+              ),
+            ),
+          ),
+          Container(
+            width: 15,
+            height: 15,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: background),
+            alignment: Alignment.center,
+            child: Text(
+              '$number',
+              style: TextStyle(
+                fontSize: 8.5,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
