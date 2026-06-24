@@ -11,6 +11,8 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static const int _dailyHadithId = 1001;
   static const int _hourlyZikrId = 1002;
+  static const int _sleepReminderId = 1003;
+  static const int _jumaaReminderId = 1004;
   // Prayer athan ids: 2001 (fajr) .. 2005 (isha), one per entry in kPrayerNotificationNames.
   static const int _athanIdBase = 2001;
 
@@ -217,4 +219,69 @@ class NotificationService {
     }
     return scheduled;
   }
+
+  /// Next occurrence of [weekday] (1=Monday .. 7=Sunday, per [DateTime])
+  /// at the given time.
+  static tz.TZDateTime _nextInstanceOfWeekday(int weekday, int hour, int minute) {
+    var scheduled = _nextInstanceOf(hour, minute);
+    while (scheduled.weekday != weekday) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
+  }
+
+  /// Daily reminder (default 10 PM) to recite the sleep athkar before bed.
+  static Future<void> scheduleSleepReminder({int hour = 22, int minute = 0, bool arabic = false}) async {
+    await _plugin.zonedSchedule(
+      _sleepReminderId,
+      arabic ? 'أذكار النوم' : 'Sleep Athkar',
+      arabic
+          ? 'لا تنس أذكار النوم قبل أن تأوي إلى فراشك'
+          : "Don't forget your sleep athkar before going to bed",
+      _nextInstanceOf(hour, minute),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'sleep_reminder',
+          'Sleep Athkar Reminder',
+          channelDescription: 'A nightly reminder to recite the sleep athkar',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      matchDateTimeComponents: DateTimeComponents.time,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  static Future<void> cancelSleepReminder() => _plugin.cancel(_sleepReminderId);
+
+  /// Weekly reminder (Friday, default 9 AM) to read the Jumu'ah athkar
+  /// (including Surah Al-Kahf and abundant salawat upon the Prophet ﷺ).
+  static Future<void> scheduleJumaaReminder({int hour = 9, int minute = 0, bool arabic = false}) async {
+    await _plugin.zonedSchedule(
+      _jumaaReminderId,
+      arabic ? 'أذكار الجمعة' : "Jumu'ah Athkar",
+      arabic
+          ? 'يوم الجمعة المبارك: لا تنس قراءة سورة الكهف والإكثار من الصلاة على النبي ﷺ'
+          : "It's Jumu'ah: don't forget to recite Surah Al-Kahf and send abundant blessings upon the Prophet ﷺ",
+      _nextInstanceOfWeekday(DateTime.friday, hour, minute),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'jumaa_reminder',
+          "Jumu'ah Athkar Reminder",
+          channelDescription: "A weekly Friday reminder for Jumu'ah athkar",
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  static Future<void> cancelJumaaReminder() => _plugin.cancel(_jumaaReminderId);
 }

@@ -67,7 +67,7 @@ class QuranRepository {
   }
 
   Future<List<Ayah>> getSurahAyahs(int surahNumber, {bool withTranslation = true}) async {
-    final cacheKey = 'surah_v2_$surahNumber';
+    final cacheKey = 'surah_v3_$surahNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
       return _ayahsFromCache(cached, surahNumber);
@@ -121,6 +121,7 @@ class QuranRepository {
                 'textEn': a.textEn,
                 'juz': a.juz,
                 'page': a.page,
+                'hizbQuarter': a.hizbQuarter,
                 'sajda': a.sajda,
               })
           .toList(),
@@ -140,6 +141,7 @@ class QuranRepository {
         textEn: m['textEn'] as String?,
         juz: m['juz'] as int,
         page: m['page'] as int,
+        hizbQuarter: m['hizbQuarter'] as int,
         sajda: m['sajda'] as bool,
       );
     }).toList();

@@ -21,8 +21,12 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   static const _kHadithNotif = 'hadith_notifications_enabled';
   static const _kZikrNotif = 'hourly_zikr_notifications_enabled';
+  static const _kSleepNotif = 'sleep_athkar_notifications_enabled';
+  static const _kJumaaNotif = 'jumaa_athkar_notifications_enabled';
   bool _notifEnabled = true;
   bool _zikrEnabled = false;
+  bool _sleepEnabled = false;
+  bool _jumaaEnabled = false;
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
 
@@ -72,6 +76,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _notifEnabled = prefs.getBool(_kHadithNotif) ?? true;
       _zikrEnabled = prefs.getBool(_kZikrNotif) ?? false;
+      _sleepEnabled = prefs.getBool(_kSleepNotif) ?? false;
+      _jumaaEnabled = prefs.getBool(_kJumaaNotif) ?? false;
       _athanEnabled = athanEnabled;
       _athanReciter = athanReciter;
     });
@@ -179,6 +185,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 } else {
                   await NotificationService.cancelHourlyZikr();
+                }
+              },
+            ),
+            SwitchListTile(
+              title: Text('settings.sleep_athkar_notif'.tr()),
+              value: _sleepEnabled,
+              onChanged: (value) async {
+                setState(() => _sleepEnabled = value);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool(_kSleepNotif, value);
+                if (kIsWeb) return;
+                if (value) {
+                  final granted = await NotificationService.requestPermission();
+                  if (granted) {
+                    await NotificationService.scheduleSleepReminder(
+                      arabic: isArabic,
+                    );
+                  }
+                } else {
+                  await NotificationService.cancelSleepReminder();
+                }
+              },
+            ),
+            SwitchListTile(
+              title: Text('settings.jumaa_athkar_notif'.tr()),
+              value: _jumaaEnabled,
+              onChanged: (value) async {
+                setState(() => _jumaaEnabled = value);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool(_kJumaaNotif, value);
+                if (kIsWeb) return;
+                if (value) {
+                  final granted = await NotificationService.requestPermission();
+                  if (granted) {
+                    await NotificationService.scheduleJumaaReminder(
+                      arabic: isArabic,
+                    );
+                  }
+                } else {
+                  await NotificationService.cancelJumaaReminder();
                 }
               },
             ),

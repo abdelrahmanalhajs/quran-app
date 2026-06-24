@@ -19,7 +19,7 @@ class _AthkarScreenState extends State<AthkarScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -35,9 +35,14 @@ class _AthkarScreenState extends State<AthkarScreen>
         title: Text('athkar.title'.tr()),
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: [
             Tab(text: 'athkar.morning'.tr()),
             Tab(text: 'athkar.evening'.tr()),
+            Tab(text: 'athkar.after_prayer'.tr()),
+            Tab(text: 'athkar.jumaa'.tr()),
+            Tab(text: 'athkar.sleep'.tr()),
+            Tab(text: 'athkar.general'.tr()),
           ],
         ),
       ),
@@ -46,6 +51,10 @@ class _AthkarScreenState extends State<AthkarScreen>
         children: [
           _AthkarList(future: _repo.getMorningAthkar()),
           _AthkarList(future: _repo.getEveningAthkar()),
+          _AthkarList(future: _repo.getAfterPrayerAthkar()),
+          _AthkarList(future: _repo.getJumaaAthkar()),
+          _AthkarList(future: _repo.getSleepAthkar()),
+          _AthkarList(future: _repo.getGeneralDuaa(), classified: true),
         ],
       ),
     );
@@ -54,11 +63,13 @@ class _AthkarScreenState extends State<AthkarScreen>
 
 class _AthkarList extends StatelessWidget {
   final Future<List<Thikr>> future;
+  final bool classified;
 
-  const _AthkarList({required this.future});
+  const _AthkarList({required this.future, this.classified = false});
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
     return FutureBuilder<List<Thikr>>(
       future: future,
       builder: (context, snapshot) {
@@ -66,15 +77,63 @@ class _AthkarList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         final items = snapshot.data!;
+        if (!classified) {
+          return ResponsiveCenter(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) => _ThikrCard(thikr: items[index]),
+            ),
+          );
+        }
+
+        // Build a flat list of section-header / item widgets grouped by
+        // category, preserving the order categories first appear in.
+        final widgets = <Widget>[];
+        String? lastCategory;
+        for (final item in items) {
+          final category = isArabic ? item.categoryAr : item.categoryEn;
+          if (category != null && category != lastCategory) {
+            if (lastCategory != null) widgets.add(const SizedBox(height: 6));
+            widgets.add(_CategoryHeader(title: category));
+            lastCategory = category;
+          }
+          widgets.add(Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _ThikrCard(thikr: item),
+          ));
+        }
         return ResponsiveCenter(
-          child: ListView.separated(
+          child: ListView(
             padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
-            itemBuilder: (context, index) => _ThikrCard(thikr: items[index]),
+            children: widgets,
           ),
         );
       },
+    );
+  }
+}
+
+class _CategoryHeader extends StatelessWidget {
+  final String title;
+
+  const _CategoryHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title,
+        textAlign: isArabic ? TextAlign.right : TextAlign.left,
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+      ),
     );
   }
 }
@@ -101,17 +160,20 @@ class _ThikrCardState extends State<_ThikrCard> {
   Widget build(BuildContext context) {
     final done = _remaining <= 0;
     final isArabic = context.locale.languageCode == 'ar';
+    final isSunnah = widget.thikr.isSunnah;
     return Card(
-      color: done
+      color: done && !isSunnah
           ? Theme.of(context).colorScheme.surfaceContainerHighest
           : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          if (_remaining > 0) {
-            setState(() => _remaining--);
-          }
-        },
+        onTap: isSunnah
+            ? null
+            : () {
+                if (_remaining > 0) {
+                  setState(() => _remaining--);
+                }
+              },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -138,15 +200,21 @@ class _ThikrCardState extends State<_ThikrCard> {
               Row(
                 children: [
                   Icon(
-                    done ? Icons.check_circle : Icons.touch_app_outlined,
+                    isSunnah
+                        ? Icons.star_outline
+                        : (done ? Icons.check_circle : Icons.touch_app_outlined),
                     size: 18,
-                    color: done ? Colors.green : null,
+                    color: isSunnah
+                        ? Theme.of(context).colorScheme.primary
+                        : (done ? Colors.green : null),
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    done
-                        ? 'athkar.repeat'.tr()
-                        : '${'athkar.tap_to_count'.tr()} ($_remaining/${widget.thikr.repeat})',
+                    isSunnah
+                        ? 'athkar.sunnah'.tr()
+                        : (done
+                            ? 'athkar.repeat'.tr()
+                            : '${'athkar.tap_to_count'.tr()} ($_remaining/${widget.thikr.repeat})'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/surah.dart';
 import '../../state/quran_provider.dart';
 import '../../widgets/responsive_center.dart';
@@ -105,7 +106,7 @@ class _SurahTile extends StatelessWidget {
         ),
         title: Text(
           surah.nameAr,
-          style: Theme.of(context).textTheme.titleMedium,
+          style: AppTheme.quranNameStyle(context, fontSize: 18),
         ),
         subtitle: Text(
           '${surah.englishName} · ${surah.numberOfAyahs} ${'quran.ayahs'.tr()}',

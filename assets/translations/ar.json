@@ -23,6 +23,9 @@
     "view_page": "التبديل إلى عرض صفحة القرآن",
     "view_list": "التبديل إلى عرض القائمة",
     "juz_label": "جزء {}",
+    "page_footer": "الجزء {} • الحزب {} • صفحة {}",
+    "next_surah": "السورة التالية",
+    "previous_surah": "السورة السابقة",
     "choose_reciter": "اختر القارئ",
     "choose_reciter_hint": "من هنا يمكنك اختيار القارئ لهذه السورة"
   },
@@ -48,9 +51,14 @@
     "title": "الأذكار",
     "morning": "الصباح",
     "evening": "المساء",
+    "after_prayer": "أذكار الصلاة",
+    "jumaa": "الجمعة",
+    "sleep": "النوم",
+    "general": "عام",
     "repeat": "التكرار",
     "times": "مرات",
-    "tap_to_count": "اضغط للعد"
+    "tap_to_count": "اضغط للعد",
+    "sunnah": "سنّة"
   },
   "hadith": {
     "title": "حديث اليوم",
@@ -69,6 +77,8 @@
     "about": "حول التطبيق",
     "notifications": "إشعار حديث اليوم",
     "hourly_zikr": "تذكير بالذكر كل ساعة",
+    "sleep_athkar_notif": "تذكير بأذكار النوم (١٠ مساءً يوميًا)",
+    "jumaa_athkar_notif": "تذكير بأذكار الجمعة (٩ صباحًا كل جمعة)",
     "athan_notifications": "إشعارات الأذان",
     "athan_notifications_hint": "تلقَّ إشعارًا بصوت الأذان عند دخول كل وقت من أوقات الصلاة الخمس",
     "preview_athan": "استماع"

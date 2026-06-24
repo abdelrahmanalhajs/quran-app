@@ -23,6 +23,9 @@
     "view_page": "Switch to Quran page view",
     "view_list": "Switch to list view",
     "juz_label": "Juz' {}",
+    "page_footer": "Juz {} · Hizb {} · Page {}",
+    "next_surah": "Next surah",
+    "previous_surah": "Previous surah",
     "choose_reciter": "Choose reciter",
     "choose_reciter_hint": "Here you can choose the reciter for this surah"
   },
@@ -48,9 +51,14 @@
     "title": "Athkar",
     "morning": "Morning",
     "evening": "Evening",
+    "after_prayer": "After Prayer",
+    "jumaa": "Jumu'ah",
+    "sleep": "Sleep",
+    "general": "General",
     "repeat": "Repeat",
     "times": "times",
-    "tap_to_count": "Tap to count"
+    "tap_to_count": "Tap to count",
+    "sunnah": "Sunnah"
   },
   "hadith": {
     "title": "Hadith of the Day",
@@ -69,6 +77,8 @@
     "about": "About",
     "notifications": "Daily Hadith Notification",
     "hourly_zikr": "Hourly Zikr Reminder",
+    "sleep_athkar_notif": "Sleep Athkar Reminder (10 PM daily)",
+    "jumaa_athkar_notif": "Jumu'ah Athkar Reminder (Friday 9 AM)",
     "athan_notifications": "Athan Notifications",
     "athan_notifications_hint": "Get notified with the athan sound at each of the 5 daily prayer times",
     "preview_athan": "Preview"

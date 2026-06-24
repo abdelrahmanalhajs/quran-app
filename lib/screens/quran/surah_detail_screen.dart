@@ -33,6 +33,26 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
+  Future<void> _goToAdjacentSurah(BuildContext context, int delta) async {
+    final targetNumber = widget.surah.number + delta;
+    if (targetNumber < 1 || targetNumber > 114) return;
+    final list = await context.read<QuranProvider>().repository.getSurahList();
+    SurahSummary? target;
+    for (final s in list) {
+      if (s.number == targetNumber) {
+        target = s;
+        break;
+      }
+    }
+    if (target == null || !context.mounted) return;
+    final resolvedTarget = target;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => SurahDetailScreen(surah: resolvedTarget),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
@@ -44,7 +64,14 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.surah.nameAr),
+        title: Text(
+          widget.surah.nameAr,
+          style: AppTheme.quranNameStyle(
+            context,
+            fontSize: 20,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -94,6 +121,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               surahNameAr: widget.surah.nameAr,
               activeAyahNumber: activeAyah,
               fontSize: settings.quranFontSize,
+              onAdjacentSurah: (delta) => _goToAdjacentSurah(context, delta),
             );
           }
           final showBismillah = QuranRepository.hasSeparateBismillah(
@@ -427,22 +455,45 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   }
 }
 
+/// Splits a surah's ayahs into chunks matching real Mushaf page breaks
+/// (using each ayah's [Ayah.page]), so they render as separate swipeable
+/// pages instead of one continuous flow. Since this only has one surah's
+/// ayahs to work with, a Mushaf page that's shared between this surah and an
+/// adjacent one will only show this surah's lines for that page number —
+/// swiping past the edge moves to the adjacent surah instead.
+List<List<Ayah>> _groupByMushafPage(List<Ayah> ayahs) {
+  final pages = <List<Ayah>>[];
+  for (final ayah in ayahs) {
+    if (pages.isEmpty || pages.last.first.page != ayah.page) {
+      pages.add([ayah]);
+    } else {
+      pages.last.add(ayah);
+    }
+  }
+  return pages;
+}
+
 /// A continuous, justified Arabic text flow with an ornate border, surah
 /// banner and inline ayah-number roundels, matching the look of a real
-/// printed Quran page rather than a list of separate ayah cards. Colors are
-/// fixed (cream/green/black) regardless of app theme, since that's the
+/// printed Quran page rather than a list of separate ayah cards. Content is
+/// split into real Mushaf page breaks and presented as horizontally
+/// swipeable pages, like flipping through a physical Mushaf, with a
+/// Juz/Hizb/page footer at the end of each page. Colors are fixed
+/// (cream/green/black) regardless of app theme, since that's the
 /// recognizable look of a physical Mushaf page.
 class _MushafPageView extends StatefulWidget {
   final List<Ayah> ayahs;
   final String surahNameAr;
   final int? activeAyahNumber;
   final double fontSize;
+  final void Function(int delta) onAdjacentSurah;
 
   const _MushafPageView({
     required this.ayahs,
     required this.surahNameAr,
     required this.activeAyahNumber,
     required this.fontSize,
+    required this.onAdjacentSurah,
   });
 
   @override
@@ -453,8 +504,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
   static const _pageBg = Color(0xFFFBF3E0);
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
+  static const _quarterMarks = ['', '¼', '½', '¾'];
 
   final List<TapGestureRecognizer> _recognizers = [];
+  final PageController _pageController = PageController();
 
   void _clearRecognizers() {
     for (final r in _recognizers) {
@@ -466,6 +519,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   @override
   void dispose() {
     _clearRecognizers();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -473,11 +527,41 @@ class _MushafPageViewState extends State<_MushafPageView> {
   Widget build(BuildContext context) {
     _clearRecognizers();
     final totalAyahs = widget.ayahs.length;
+    final mushafPages = _groupByMushafPage(widget.ayahs);
+
+    return ResponsiveCenter(
+      maxWidth: 760,
+      child: PageView.builder(
+        controller: _pageController,
+        reverse: true, // RTL: swiping left advances to the next page.
+        itemCount: mushafPages.length,
+        itemBuilder: (context, index) {
+          final pageAyahs = mushafPages[index];
+          final isFirstPage = index == 0;
+          final isLastPage = index == mushafPages.length - 1;
+          return _buildMushafPage(
+            context,
+            pageAyahs,
+            totalAyahs: totalAyahs,
+            isFirstPage: isFirstPage,
+            isLastPage: isLastPage,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMushafPage(
+    BuildContext context,
+    List<Ayah> pageAyahs,
+    {required int totalAyahs, required bool isFirstPage, required bool isLastPage}
+  ) {
     final baseStyle = AppTheme.quranTextStyle(context, fontSize: widget.fontSize)
         .copyWith(height: 2.1, color: _ink);
+    final showsSurahStart = pageAyahs.any((a) => a.numberInSurah == 1);
 
     final spans = <InlineSpan>[];
-    for (final ayah in widget.ayahs) {
+    for (final ayah in pageAyahs) {
       final recognizer = TapGestureRecognizer()
         ..onTap = () =>
             _showAyahSheet(context, ayah, totalAyahs, widget.surahNameAr);
@@ -511,68 +595,102 @@ class _MushafPageViewState extends State<_MushafPageView> {
       spans.add(const TextSpan(text: ' '));
     }
 
-    return ResponsiveCenter(
-      maxWidth: 760,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (widget.ayahs.isNotEmpty)
-              Container(
-                color: _frameGreen,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Center(
-                  child: Text(
-                    'quran.juz_label'.tr(
-                      args: [
-                        _localizedNumber(context, widget.ayahs.first.juz),
-                      ],
-                    ),
-                    style: const TextStyle(
-                      color: _pageBg,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                    ),
+    final lastAyah = pageAyahs.last;
+    final hizbLabel =
+        '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (pageAyahs.isNotEmpty)
+            Container(
+              color: _frameGreen,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Center(
+                child: Text(
+                  'quran.juz_label'.tr(
+                    args: [_localizedNumber(context, pageAyahs.first.juz)],
+                  ),
+                  style: const TextStyle(
+                    color: _pageBg,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
-            _OrnateFrame(
-              color: _frameGreen,
-              background: _pageBg,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+            ),
+          _OrnateFrame(
+            color: _frameGreen,
+            background: _pageBg,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (showsSurahStart) ...[
                     _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
-                    if (widget.ayahs.isNotEmpty &&
-                        QuranRepository.hasSeparateBismillah(
-                          widget.ayahs.first.surahNumber,
-                        )) ...[
+                    if (QuranRepository.hasSeparateBismillah(
+                      pageAyahs.first.surahNumber,
+                    )) ...[
                       const SizedBox(height: 14),
                       Text(
                         'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
                         textAlign: TextAlign.center,
                         textDirection: TextDirection.rtl,
-                        style: baseStyle.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: baseStyle.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                     const SizedBox(height: 18),
-                    Text.rich(
-                      TextSpan(children: spans),
-                      textAlign: TextAlign.justify,
-                      textDirection: TextDirection.rtl,
-                    ),
                   ],
-                ),
+                  Text.rich(
+                    TextSpan(children: spans),
+                    textAlign: TextAlign.justify,
+                    textDirection: TextDirection.rtl,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'quran.page_footer'.tr(
+                      args: [
+                        _localizedNumber(context, lastAyah.juz),
+                        hizbLabel,
+                        _localizedNumber(context, lastAyah.page),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _frameGreen,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+          if (isFirstPage || isLastPage) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isFirstPage)
+                  TextButton.icon(
+                    onPressed: () => widget.onAdjacentSurah(-1),
+                    icon: const Icon(Icons.arrow_back, size: 16),
+                    label: Text('quran.previous_surah'.tr()),
+                  ),
+                if (isLastPage)
+                  TextButton.icon(
+                    onPressed: () => widget.onAdjacentSurah(1),
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: Text('quran.next_surah'.tr()),
+                  ),
+              ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -600,10 +718,11 @@ class _SurahBanner extends StatelessWidget {
           Text(
             name,
             textDirection: TextDirection.rtl,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
+            style: AppTheme.quranNameStyle(
+              context,
               fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
           const SizedBox(width: 10),
