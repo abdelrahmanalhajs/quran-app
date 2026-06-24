@@ -841,6 +841,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
         final banner = _SurahBanner(
           name: surahInfo?.nameAr ?? '',
           color: _frameGreen,
+          fontSize: widget.fontSize,
         );
         if (r == 0) {
           topBanner = banner;
@@ -1095,8 +1096,13 @@ class _AdjacentSurahTransitionPage extends StatelessWidget {
 class _SurahBanner extends StatelessWidget {
   final String name;
   final Color color;
+  final double fontSize;
 
-  const _SurahBanner({required this.name, required this.color});
+  const _SurahBanner({
+    required this.name,
+    required this.color,
+    required this.fontSize,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1111,14 +1117,19 @@ class _SurahBanner extends StatelessWidget {
         children: [
           Text('❁', style: TextStyle(color: color, fontSize: 16)),
           const SizedBox(width: 10),
-          Text(
-            name,
-            textDirection: TextDirection.rtl,
-            style: AppTheme.quranNameStyle(
-              context,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                name,
+                textDirection: TextDirection.rtl,
+                style: AppTheme.quranNameStyle(
+                  context,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 10),
