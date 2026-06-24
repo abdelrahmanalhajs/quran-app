@@ -72,6 +72,7 @@
   "hadith": {
     "title": "Hadith of the Day",
     "today": "Today's Hadith",
+    "yesterday": "Yesterday",
     "narrator": "Narrator",
     "source": "Source"
   },

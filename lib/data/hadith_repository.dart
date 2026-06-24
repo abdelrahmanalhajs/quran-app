@@ -24,4 +24,19 @@ class HadithRepository {
   }
 
   Future<Hadith> getTodayHadith() => getHadithForDay(DateTime.now());
+
+  /// Today's hadith plus the previous [days] - 1 days', newest first, so the
+  /// Hadith tab keeps showing older entries as new ones are added each day
+  /// instead of replacing them.
+  Future<List<({DateTime day, Hadith hadith})>> getRecentHadiths({
+    int days = 14,
+  }) async {
+    final today = DateTime.now();
+    final result = <({DateTime day, Hadith hadith})>[];
+    for (var i = 0; i < days; i++) {
+      final day = DateTime(today.year, today.month, today.day - i);
+      result.add((day: day, hadith: await getHadithForDay(day)));
+    }
+    return result;
+  }
 }

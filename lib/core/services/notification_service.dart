@@ -112,7 +112,7 @@ class NotificationService {
   }
 
   static Future<void> scheduleDailyHadith({
-    int hour = 18,
+    int hour = 17,
     int minute = 0,
     bool arabic = false,
   }) async {
