@@ -38,6 +38,12 @@ class _AthkarScreenState extends State<AthkarScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          // Material 3's default for scrollable tabs (TabAlignment.startOffset)
+          // insets the first tab ~52px from the edge instead of hugging it,
+          // which reads as "not aligned" — TabAlignment.start hugs the true
+          // leading edge instead, flipping correctly with text direction
+          // (left in English, right in Arabic) since "start" is direction-aware.
+          tabAlignment: TabAlignment.start,
           tabs: [
             Tab(text: 'athkar.morning'.tr()),
             Tab(text: 'athkar.evening'.tr()),
