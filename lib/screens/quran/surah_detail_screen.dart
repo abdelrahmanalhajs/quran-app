@@ -498,6 +498,172 @@ List<List<Ayah>> _groupByMushafPage(List<Ayah> ayahs) {
   return pages;
 }
 
+double _measureTextHeight(
+  BuildContext context,
+  String text,
+  TextStyle style,
+  double maxWidth,
+) {
+  final tp = TextPainter(
+    text: TextSpan(text: text, style: style),
+    textDirection: TextDirection.rtl,
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout(maxWidth: maxWidth);
+  return tp.height;
+}
+
+double _measureAyahBlockHeight(
+  BuildContext context,
+  List<Ayah> ayahs,
+  TextStyle baseStyle,
+  double maxWidth,
+) {
+  final spans = <InlineSpan>[];
+  for (final ayah in ayahs) {
+    spans.add(TextSpan(text: ayah.textAr, style: baseStyle));
+    spans.add(
+      TextSpan(
+        text: '۝${_arabicIndicNumber(ayah.numberInSurah)}',
+        style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+    spans.add(const TextSpan(text: ' '));
+  }
+  final tp = TextPainter(
+    text: TextSpan(children: spans),
+    textDirection: TextDirection.rtl,
+    textAlign: TextAlign.justify,
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout(maxWidth: maxWidth);
+  return tp.height;
+}
+
+/// Sum of every fixed-height element around the ayah text block in
+/// [_buildMushafPage] (Juz banner, ornate frame's own padding, the footer)
+/// — i.e. everything except the surah banner/Bismillah, which only appears
+/// on a Mushaf page's first screen and is accounted for separately.
+double _decorativeOverheadHeight(BuildContext context, double contentWidth) {
+  final juzBannerHeight =
+      _measureTextHeight(
+        context,
+        'quran.juz_label'.tr(args: ['٠']),
+        const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          letterSpacing: 0.5,
+        ),
+        contentWidth,
+      ) +
+      16; // Juz banner Container's vertical:8 padding, both sides
+  final footerHeight = _measureTextHeight(
+    context,
+    'quran.page_footer'.tr(args: ['٠', '٠', '٠']),
+    const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+    contentWidth,
+  );
+  // _OrnateFrame outer padding (10*2) + inner padding (6*2) + the content
+  // Padding's own vertical fromLTRB(_, 20, _, 24), plus the SizedBox(14)
+  // gap between the ayah text and the footer.
+  const frameAndContentPadding = 20.0 + 12.0 + 44.0;
+  return juzBannerHeight + footerHeight + frameAndContentPadding + 14;
+}
+
+/// How much extra height the surah banner (and Bismillah, where it applies)
+/// adds on top of [_decorativeOverheadHeight] — only relevant for the first
+/// screen of a Mushaf page that starts a new surah.
+double _surahBannerOverheadHeight(
+  BuildContext context,
+  String surahNameAr,
+  int surahNumber,
+  double contentWidth,
+  TextStyle baseStyle,
+) {
+  var height =
+      _measureTextHeight(
+        context,
+        surahNameAr,
+        AppTheme.quranNameStyle(
+          context,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        contentWidth,
+      ) +
+      20 + // _SurahBanner's own vertical:10 padding, both sides
+      18; // SizedBox(height: 18) after the banner block
+  if (QuranRepository.hasSeparateBismillah(surahNumber)) {
+    height +=
+        _measureTextHeight(
+          context,
+          'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+          baseStyle.copyWith(fontWeight: FontWeight.bold),
+          contentWidth,
+        ) +
+        14; // SizedBox(height: 14) before the Bismillah text
+  }
+  return height;
+}
+
+/// Splits one real Mushaf page's ayahs across as many screens as it
+/// actually takes to render them at the user's chosen font size without
+/// overflowing — instead of forcing everything onto a single screen and
+/// shrinking the text to fit, which made the font-size setting feel like it
+/// had no effect on denser pages. Never splits in the middle of an ayah:
+/// each screen always holds whole ayahs, so a single very long ayah that
+/// alone exceeds the available height is left to [_buildMushafPage]'s own
+/// FittedBox safety net rather than being cut off.
+List<List<Ayah>> _splitMushafPageToScreens(
+  BuildContext context,
+  List<Ayah> pageAyahs,
+  BoxConstraints constraints,
+  double fontSize,
+  String surahNameAr,
+) {
+  if (pageAyahs.isEmpty) return const [];
+  final baseStyle = AppTheme.quranTextStyle(
+    context,
+    fontSize: fontSize,
+  ).copyWith(height: 2.1);
+  // _OrnateFrame outer padding (10*2) + inner padding (6*2) + the content
+  // Padding's own horizontal fromLTRB(18, _, 18, _).
+  final contentWidth = constraints.maxWidth - 20 - 12 - 36;
+  final fixedOverhead = _decorativeOverheadHeight(context, contentWidth);
+  final showsSurahStart = pageAyahs.first.numberInSurah == 1;
+  final surahBannerOverhead = showsSurahStart
+      ? _surahBannerOverheadHeight(
+          context,
+          surahNameAr,
+          pageAyahs.first.surahNumber,
+          contentWidth,
+          baseStyle,
+        )
+      : 0.0;
+
+  final screens = <List<Ayah>>[];
+  var current = <Ayah>[];
+  for (final ayah in pageAyahs) {
+    final trial = [...current, ayah];
+    final textHeight = _measureAyahBlockHeight(
+      context,
+      trial,
+      baseStyle,
+      contentWidth,
+    );
+    final budget =
+        constraints.maxHeight -
+        fixedOverhead -
+        (screens.isEmpty ? surahBannerOverhead : 0);
+    if (current.isNotEmpty && textHeight > budget) {
+      screens.add(current);
+      current = [ayah];
+    } else {
+      current = trial;
+    }
+  }
+  if (current.isNotEmpty) screens.add(current);
+  return screens;
+}
+
 /// A continuous, justified Arabic text flow with an ornate border, surah
 /// banner and inline ayah-number roundels, matching the look of a real
 /// printed Quran page rather than a list of separate ayah cards. Content is
@@ -536,9 +702,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
   final List<TapGestureRecognizer> _recognizers = [];
   late final PageController _pageController;
   late int _realPagesStart;
+  late List<List<Ayah>> _screenPages;
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
   bool _navigating = false;
+  bool _initialized = false;
   int _currentIndex = 0;
   int _itemCount = 0;
 
@@ -549,23 +717,50 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _recognizers.clear();
   }
 
-  @override
-  void initState() {
-    super.initState();
+  /// Splitting a Mushaf page across screens depends on the actual available
+  /// width/height, which is only known once the surrounding layout runs —
+  /// so this is done lazily on the first build (via the [LayoutBuilder] in
+  /// [build]) rather than in [initState]. It deliberately doesn't redo the
+  /// split on later layout changes (e.g. a mid-session rotation): the
+  /// surrounding [PageController]/sentinel indices are keyed to whichever
+  /// split ran first, and reconciling a resplit with the page the user is
+  /// currently on isn't worth the complexity for what's a rare case anyway.
+  void _ensureInitialized(BoxConstraints constraints) {
+    if (_initialized) return;
+    _initialized = true;
+
+    final mushafPages = _groupByMushafPage(widget.ayahs);
+    final screenPages = <List<Ayah>>[];
+    for (final pageAyahs in mushafPages) {
+      screenPages.addAll(
+        _splitMushafPageToScreens(
+          context,
+          pageAyahs,
+          constraints,
+          widget.fontSize,
+          widget.surahNameAr,
+        ),
+      );
+    }
+    _screenPages = screenPages;
+
     final surahNumber = widget.ayahs.isNotEmpty
         ? widget.ayahs.first.surahNumber
         : null;
     final hasPrevSurah = surahNumber != null && surahNumber > 1;
     final hasNextSurah = surahNumber != null && surahNumber < 114;
-    final mushafPageCount = _groupByMushafPage(widget.ayahs).length;
 
     _realPagesStart = hasPrevSurah ? 1 : 0;
     _prevSentinelIndex = hasPrevSurah ? 0 : null;
     _nextSentinelIndex = hasNextSurah
-        ? _realPagesStart + mushafPageCount
+        ? _realPagesStart + screenPages.length
         : null;
-    final initialPage = widget.startAtLastPage && mushafPageCount > 0
-        ? _realPagesStart + mushafPageCount - 1
+    _itemCount =
+        screenPages.length +
+        (_prevSentinelIndex != null ? 1 : 0) +
+        (_nextSentinelIndex != null ? 1 : 0);
+    final initialPage = widget.startAtLastPage && screenPages.isNotEmpty
+        ? _realPagesStart + screenPages.length - 1
         : _realPagesStart;
     _currentIndex = initialPage;
     _pageController = PageController(initialPage: initialPage);
@@ -574,7 +769,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   @override
   void dispose() {
     _clearRecognizers();
-    _pageController.dispose();
+    if (_initialized) _pageController.dispose();
     super.dispose();
   }
 
@@ -614,36 +809,44 @@ class _MushafPageViewState extends State<_MushafPageView> {
   Widget build(BuildContext context) {
     _clearRecognizers();
     final totalAyahs = widget.ayahs.length;
-    final mushafPages = _groupByMushafPage(widget.ayahs);
-    _itemCount =
-        mushafPages.length +
-        (_prevSentinelIndex != null ? 1 : 0) +
-        (_nextSentinelIndex != null ? 1 : 0);
 
     return ResponsiveCenter(
       maxWidth: 760,
-      child: GestureDetector(
-        // Without this, a drag starting on empty space (e.g. the
-        // letterboxed margins FittedBox leaves around a shrunk-to-fit page)
-        // wouldn't be hit-tested at all, since the default `deferToChild`
-        // behavior only recognizes gestures where a child actually paints.
-        behavior: HitTestBehavior.opaque,
-        onHorizontalDragEnd: _handleHorizontalDragEnd,
-        child: PageView.builder(
-          controller: _pageController,
-          reverse: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _itemCount,
-          onPageChanged: _onPageChanged,
-          itemBuilder: (context, index) {
-            if (index == _prevSentinelIndex) {
-              return const _AdjacentSurahTransitionPage(forward: false);
-            }
-            if (index == _nextSentinelIndex) {
-              return const _AdjacentSurahTransitionPage(forward: true);
-            }
-            final pageAyahs = mushafPages[index - _realPagesStart];
-            return _buildMushafPage(context, pageAyahs, totalAyahs: totalAyahs);
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            _ensureInitialized(constraints);
+            return GestureDetector(
+              // Without this, a drag starting on empty space (e.g. the
+              // letterboxed margins FittedBox leaves around a shrunk page)
+              // wouldn't be hit-tested at all, since the default
+              // `deferToChild` behavior only recognizes gestures where a
+              // child actually paints.
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragEnd: _handleHorizontalDragEnd,
+              child: PageView.builder(
+                controller: _pageController,
+                reverse: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _itemCount,
+                onPageChanged: _onPageChanged,
+                itemBuilder: (context, index) {
+                  if (index == _prevSentinelIndex) {
+                    return const _AdjacentSurahTransitionPage(forward: false);
+                  }
+                  if (index == _nextSentinelIndex) {
+                    return const _AdjacentSurahTransitionPage(forward: true);
+                  }
+                  final pageAyahs = _screenPages[index - _realPagesStart];
+                  return _buildMushafPage(
+                    context,
+                    pageAyahs,
+                    totalAyahs: totalAyahs,
+                  );
+                },
+              ),
+            );
           },
         ),
       ),
@@ -707,14 +910,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final hizbLabel =
         '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
 
-    // A real Mushaf page never scrolls — everything on it is sized to fit
-    // the physical page exactly. LayoutBuilder + FittedBox(scaleDown)
-    // reproduces that: the page content lays out at its natural size for
-    // the available width, then the whole frame (banner, ayahs, footer)
-    // scales down uniformly to fit the available height, instead of
-    // overflowing into a scrollable area. The bottom padding reserves room
-    // for the floating "play surah" button so the scaled content doesn't
-    // sit underneath it.
+    // pageAyahs has already been split (see _splitMushafPageToScreens) to
+    // fit the available height at this font size without scrolling, so
+    // this FittedBox should rarely need to shrink anything — it's a safety
+    // net for estimation error in that split, and for the rare single ayah
+    // long enough to overflow on its own (ayahs are never split mid-text).
     final page = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -788,18 +988,15 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: SizedBox(width: constraints.maxWidth, child: page),
-            ),
-          );
-        },
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(width: constraints.maxWidth, child: page),
+          ),
+        );
+      },
     );
   }
 }
