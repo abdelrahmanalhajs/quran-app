@@ -933,55 +933,45 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    final framedContent = _OrnateFrame(
+    // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit
+    // without scrolling: FittedBox(scaleDown) only ever shrinks (never
+    // enlarges) the text to guarantee that. Sizes 4-5 skip that shrink,
+    // since they're deliberately large enough to commonly overflow and are
+    // meant to be read by scrolling instead.
+    //
+    // The frame itself is *always* the full screen size (via the Expanded
+    // below) at every size, on phone or tablet, in any orientation — never
+    // shrunk or centered down to the text's own size. The text is aligned
+    // to the top of the frame's interior rather than centered, so the
+    // frame's top border sits right above it with no built-in gap; if a
+    // page is short at this font size, any leftover room is just more of
+    // the same cream background beneath the text, the way a real Mushaf
+    // page's last, partly-filled page looks, rather than empty space
+    // floating the text away from the border on every side.
+    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
+    final innerArea = LayoutBuilder(
+      builder: (context, constraints) {
+        final scaled = allowScroll
+            ? SizedBox(width: constraints.maxWidth, child: content)
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(width: constraints.maxWidth, child: content),
+              );
+        return SingleChildScrollView(
+          physics: allowScroll
+              ? const ClampingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          child: Align(alignment: Alignment.topCenter, child: scaled),
+        );
+      },
+    );
+
+    final pageArea = _OrnateFrame(
       color: _frameGreen,
       background: _pageBg,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-        child: content,
-      ),
-    );
-
-    // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit
-    // without scrolling: FittedBox(scaleDown) only ever shrinks (never
-    // enlarges), and here it scales the frame *together with* the text as
-    // one unit, so the decorative border always hugs the text tightly.
-    // Sizes 4-5 skip that shrink, since they're deliberately large enough
-    // to commonly overflow and are meant to be read by scrolling.
-    //
-    // Either way, ConstrainedBox(minHeight) + Center is what actually keeps
-    // the frame hugging the text in *every* case, including sizes 4-5 on a
-    // page that happens to fit at that size anyway: it centers the
-    // frame+text as one block when it's shorter than the screen (instead
-    // of stretching the frame the rest of the way to the screen edges with
-    // the text floating inside it), and only when the block is genuinely
-    // taller than the screen does it overflow into the SingleChildScrollView
-    // — which sizes 1-3 can never do, since FittedBox already guaranteed it
-    // fits before this point.
-    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
-    final pageArea = Container(
-      color: _pageBg,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final scaled = allowScroll
-              ? SizedBox(width: constraints.maxWidth, child: framedContent)
-              : FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(
-                    width: constraints.maxWidth,
-                    child: framedContent,
-                  ),
-                );
-          return SingleChildScrollView(
-            physics: allowScroll
-                ? const ClampingScrollPhysics()
-                : const NeverScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(child: scaled),
-            ),
-          );
-        },
+        child: innerArea,
       ),
     );
 
