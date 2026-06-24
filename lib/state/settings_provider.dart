@@ -39,7 +39,9 @@ class SettingsProvider extends ChangeNotifier {
 
     _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 26;
     final viewModeStr = prefs.getString(_kQuranViewMode);
-    _quranViewMode = viewModeStr == 'list' ? QuranViewMode.list : QuranViewMode.page;
+    _quranViewMode = viewModeStr == 'list'
+        ? QuranViewMode.list
+        : QuranViewMode.page;
     notifyListeners();
   }
 
@@ -52,8 +54,8 @@ class SettingsProvider extends ChangeNotifier {
       mode == ThemeMode.light
           ? 'light'
           : mode == ThemeMode.dark
-              ? 'dark'
-              : 'system',
+          ? 'dark'
+          : 'system',
     );
   }
 
@@ -75,6 +77,9 @@ class SettingsProvider extends ChangeNotifier {
     _quranViewMode = mode;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kQuranViewMode, mode == QuranViewMode.list ? 'list' : 'page');
+    await prefs.setString(
+      _kQuranViewMode,
+      mode == QuranViewMode.list ? 'list' : 'page',
+    );
   }
 }

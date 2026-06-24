@@ -9,7 +9,9 @@ class TafsirRepository {
     required int ayahNumberInSurah,
     required bool arabic,
   }) async {
-    final resourceId = arabic ? ApiConstants.tafsirMuyassarAr : ApiConstants.tafsirIbnKathirEn;
+    final resourceId = arabic
+        ? ApiConstants.tafsirMuyassarAr
+        : ApiConstants.tafsirIbnKathirEn;
     final verseKey = '$surahNumber:$ayahNumberInSurah';
     final cacheKey = 'tafsir_${resourceId}_$verseKey';
 
@@ -18,7 +20,9 @@ class TafsirRepository {
       return cached['text'] as String;
     }
 
-    final uri = Uri.parse('${ApiConstants.tafsirBase}/tafsirs/$resourceId/by_ayah/$verseKey');
+    final uri = Uri.parse(
+      '${ApiConstants.tafsirBase}/tafsirs/$resourceId/by_ayah/$verseKey',
+    );
     final res = await http.get(uri);
     if (res.statusCode != 200) {
       throw Exception('Failed to load tafsir');

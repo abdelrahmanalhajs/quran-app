@@ -43,14 +43,14 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.tajawalTextTheme(
         ThemeData(brightness: scheme.brightness).textTheme,
-      ).apply(
-        bodyColor: scheme.onSurface,
-        displayColor: scheme.onSurface,
-      ),
+      ).apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface),
     );
   }
 
-  static TextStyle quranTextStyle(BuildContext context, {double fontSize = 26}) {
+  static TextStyle quranTextStyle(
+    BuildContext context, {
+    double fontSize = 26,
+  }) {
     return GoogleFonts.amiri(
       fontSize: responsiveFontSize(context, fontSize),
       height: 1.9,

@@ -9,7 +9,9 @@ class HadithRepository {
     if (_cache != null) return _cache!;
     final raw = await rootBundle.loadString('assets/data/hadith.json');
     final list = jsonDecode(raw) as List;
-    _cache = list.map((e) => Hadith.fromJson(e as Map<String, dynamic>)).toList();
+    _cache = list
+        .map((e) => Hadith.fromJson(e as Map<String, dynamic>))
+        .toList();
     return _cache!;
   }
 

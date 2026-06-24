@@ -8,7 +8,8 @@ import '../../data/hadith_repository.dart';
 import '../constants/athan.dart';
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   static const int _dailyHadithId = 1001;
   static const int _hourlyZikrId = 1002;
   static const int _sleepReminderId = 1003;
@@ -21,13 +22,25 @@ class NotificationService {
   static final AudioPlayer _athanPlayer = AudioPlayer();
 
   static const List<Map<String, String>> _zikrPhrases = [
-    {'ar': 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', 'en': 'Glory be to Allah and praise be to Him.'},
-    {'ar': 'لَا إِلَهَ إِلَّا اللَّهُ', 'en': 'There is no deity except Allah.'},
+    {
+      'ar': 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
+      'en': 'Glory be to Allah and praise be to Him.',
+    },
+    {
+      'ar': 'لَا إِلَهَ إِلَّا اللَّهُ',
+      'en': 'There is no deity except Allah.',
+    },
     {'ar': 'اللَّهُ أَكْبَرُ', 'en': 'Allah is the Greatest.'},
     {'ar': 'الْحَمْدُ لِلَّهِ', 'en': 'Praise be to Allah.'},
     {'ar': 'أَسْتَغْفِرُ اللَّهَ', 'en': 'I seek the forgiveness of Allah.'},
-    {'ar': 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', 'en': 'There is no power and no strength except with Allah.'},
-    {'ar': 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ', 'en': 'Allah is sufficient for me; there is no deity except Him.'},
+    {
+      'ar': 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ',
+      'en': 'There is no power and no strength except with Allah.',
+    },
+    {
+      'ar': 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ',
+      'en': 'Allah is sufficient for me; there is no deity except Him.',
+    },
   ];
 
   static Future<void> init() async {
@@ -86,15 +99,23 @@ class NotificationService {
 
   static Future<bool> requestPermission() async {
     final androidGranted = await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
     final iosGranted = await _plugin
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
     return (androidGranted ?? true) && (iosGranted ?? true);
   }
 
-  static Future<void> scheduleDailyHadith({int hour = 8, int minute = 0, bool arabic = false}) async {
+  static Future<void> scheduleDailyHadith({
+    int hour = 18,
+    int minute = 0,
+    bool arabic = false,
+  }) async {
     final repo = HadithRepository();
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final hadith = await repo.getHadithForDay(tomorrow);
@@ -116,7 +137,8 @@ class NotificationService {
       ),
       matchDateTimeComponents: DateTimeComponents.time,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -203,7 +225,9 @@ class NotificationService {
                 : 'Prayer time notification with athan sound',
             importance: Importance.max,
             priority: Priority.high,
-            sound: RawResourceAndroidNotificationSound(athan.androidRawResource),
+            sound: RawResourceAndroidNotificationSound(
+              athan.androidRawResource,
+            ),
             audioAttributesUsage: AudioAttributesUsage.alarm,
           ),
           iOS: const DarwinNotificationDetails(
@@ -212,7 +236,8 @@ class NotificationService {
         ),
         matchDateTimeComponents: DateTimeComponents.time,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
         payload: athan.id,
       );
     }
@@ -226,7 +251,14 @@ class NotificationService {
 
   static tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
@@ -235,7 +267,11 @@ class NotificationService {
 
   /// Next occurrence of [weekday] (1=Monday .. 7=Sunday, per [DateTime])
   /// at the given time.
-  static tz.TZDateTime _nextInstanceOfWeekday(int weekday, int hour, int minute) {
+  static tz.TZDateTime _nextInstanceOfWeekday(
+    int weekday,
+    int hour,
+    int minute,
+  ) {
     var scheduled = _nextInstanceOf(hour, minute);
     while (scheduled.weekday != weekday) {
       scheduled = scheduled.add(const Duration(days: 1));
@@ -244,7 +280,11 @@ class NotificationService {
   }
 
   /// Daily reminder (default 10 PM) to recite the sleep athkar before bed.
-  static Future<void> scheduleSleepReminder({int hour = 22, int minute = 0, bool arabic = false}) async {
+  static Future<void> scheduleSleepReminder({
+    int hour = 22,
+    int minute = 0,
+    bool arabic = false,
+  }) async {
     await _plugin.zonedSchedule(
       _sleepReminderId,
       arabic ? 'أذكار النوم' : 'Sleep Athkar',
@@ -264,7 +304,8 @@ class NotificationService {
       ),
       matchDateTimeComponents: DateTimeComponents.time,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -272,7 +313,11 @@ class NotificationService {
 
   /// Weekly reminder (Friday, default 9 AM) to read the Jumu'ah athkar
   /// (including Surah Al-Kahf and abundant salawat upon the Prophet ﷺ).
-  static Future<void> scheduleJumaaReminder({int hour = 9, int minute = 0, bool arabic = false}) async {
+  static Future<void> scheduleJumaaReminder({
+    int hour = 9,
+    int minute = 0,
+    bool arabic = false,
+  }) async {
     await _plugin.zonedSchedule(
       _jumaaReminderId,
       arabic ? 'أذكار الجمعة' : "Jumu'ah Athkar",
@@ -292,7 +337,8 @@ class NotificationService {
       ),
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -300,7 +346,10 @@ class NotificationService {
 
   /// Adds [offsetMinutes] to a "HH:mm" time string and returns the
   /// resulting hour/minute, wrapping past midnight if needed.
-  static ({int hour, int minute})? _addMinutes(String? timeStr, int offsetMinutes) {
+  static ({int hour, int minute})? _addMinutes(
+    String? timeStr,
+    int offsetMinutes,
+  ) {
     if (timeStr == null) return null;
     final parts = timeStr.split(':');
     if (parts.length != 2) return null;
@@ -333,7 +382,8 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'morning_athkar_reminder',
             'Morning Athkar Reminder',
-            channelDescription: 'A reminder after Fajr to recite the morning athkar',
+            channelDescription:
+                'A reminder after Fajr to recite the morning athkar',
             importance: Importance.high,
             priority: Priority.high,
           ),
@@ -341,7 +391,8 @@ class NotificationService {
         ),
         matchDateTimeComponents: DateTimeComponents.time,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
       );
     }
 
@@ -358,7 +409,8 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'evening_athkar_reminder',
             'Evening Athkar Reminder',
-            channelDescription: 'A reminder after Asr to recite the evening athkar',
+            channelDescription:
+                'A reminder after Asr to recite the evening athkar',
             importance: Importance.high,
             priority: Priority.high,
           ),
@@ -366,7 +418,8 @@ class NotificationService {
         ),
         matchDateTimeComponents: DateTimeComponents.time,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
       );
     }
   }

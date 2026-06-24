@@ -18,7 +18,10 @@ class AthanSettings {
   static Future<AthanOption> getReciter() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString(_kReciterId);
-    return kAthanOptions.firstWhere((a) => a.id == id, orElse: () => kAthanMakkah);
+    return kAthanOptions.firstWhere(
+      (a) => a.id == id,
+      orElse: () => kAthanMakkah,
+    );
   }
 
   static Future<void> setReciter(AthanOption athan) async {

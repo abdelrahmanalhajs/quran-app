@@ -107,10 +107,12 @@ class _AthkarList extends StatelessWidget {
             widgets.add(_CategoryHeader(title: category));
             lastCategory = category;
           }
-          widgets.add(Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _ThikrCard(thikr: item),
-          ));
+          widgets.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _ThikrCard(thikr: item),
+            ),
+          );
         }
         return ResponsiveCenter(
           child: ListView(
@@ -138,9 +140,9 @@ class _CategoryHeader extends StatelessWidget {
         textAlign: isArabic ? TextAlign.right : TextAlign.left,
         textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }
@@ -208,7 +210,9 @@ class _ThikrCardState extends State<_ThikrCard> {
                   Icon(
                     isSunnah
                         ? Icons.star_outline
-                        : (done ? Icons.check_circle : Icons.touch_app_outlined),
+                        : (done
+                              ? Icons.check_circle
+                              : Icons.touch_app_outlined),
                     size: 18,
                     color: isSunnah
                         ? Theme.of(context).colorScheme.primary
@@ -219,8 +223,8 @@ class _ThikrCardState extends State<_ThikrCard> {
                     isSunnah
                         ? 'athkar.sunnah'.tr()
                         : (done
-                            ? 'athkar.repeat'.tr()
-                            : '${'athkar.tap_to_count'.tr()} ($_remaining/${widget.thikr.repeat})'),
+                              ? 'athkar.repeat'.tr()
+                              : '${'athkar.tap_to_count'.tr()} ($_remaining/${widget.thikr.repeat})'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

@@ -10,7 +10,8 @@ class AudioProvider extends ChangeNotifier {
   Reciter? _currentReciter;
   bool _isLoading = false;
   int? _currentAyahIndex; // 0-based index into the playing-from-ayah playlist
-  int? _ayahPlaylistStart; // 1-based ayah number the current playlist started at
+  int?
+  _ayahPlaylistStart; // 1-based ayah number the current playlist started at
 
   static const _kLastSurah = 'audio_last_surah';
   static const _kLastReciter = 'audio_last_reciter';
@@ -36,16 +37,21 @@ class AudioProvider extends ChangeNotifier {
   bool get isPlaying => _player.playing;
   int? get currentAyahIndex => _currentAyahIndex;
   int? get currentAbsoluteAyah =>
-      (_ayahPlaylistStart != null && _currentAyahIndex != null) ? _ayahPlaylistStart! + _currentAyahIndex! : null;
+      (_ayahPlaylistStart != null && _currentAyahIndex != null)
+      ? _ayahPlaylistStart! + _currentAyahIndex!
+      : null;
 
   bool isCurrentlyPlaying(int surahNumber, Reciter reciter) {
-    return _currentSurah == surahNumber && _currentReciter?.id == reciter.id && _player.playing;
+    return _currentSurah == surahNumber &&
+        _currentReciter?.id == reciter.id &&
+        _player.playing;
   }
 
   DateTime? _lastSaveTime;
   void _savePosition(Duration pos) {
     final now = DateTime.now();
-    if (_lastSaveTime != null && now.difference(_lastSaveTime!) < const Duration(seconds: 2)) {
+    if (_lastSaveTime != null &&
+        now.difference(_lastSaveTime!) < const Duration(seconds: 2)) {
       return;
     }
     _lastSaveTime = now;
@@ -60,7 +66,8 @@ class AudioProvider extends ChangeNotifier {
   /// app was closed or navigated away while that surah was playing.
   Future<Duration?> savedPositionFor(int surahNumber, Reciter reciter) async {
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getInt(_kLastSurah) == surahNumber && prefs.getString(_kLastReciter) == reciter.id) {
+    if (prefs.getInt(_kLastSurah) == surahNumber &&
+        prefs.getString(_kLastReciter) == reciter.id) {
       final ms = prefs.getInt(_kLastPositionMs);
       if (ms != null && ms > 0) return Duration(milliseconds: ms);
     }

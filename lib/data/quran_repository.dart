@@ -62,11 +62,16 @@ class QuranRepository {
         .map((e) => SurahSummary.fromJson(e as Map<String, dynamic>))
         .toList();
     _surahCache = list;
-    await FileCache.write('surah_list', {'data': list.map((e) => e.toJson()).toList()});
+    await FileCache.write('surah_list', {
+      'data': list.map((e) => e.toJson()).toList(),
+    });
     return list;
   }
 
-  Future<List<Ayah>> getSurahAyahs(int surahNumber, {bool withTranslation = true}) async {
+  Future<List<Ayah>> getSurahAyahs(
+    int surahNumber, {
+    bool withTranslation = true,
+  }) async {
     final cacheKey = 'surah_v3_$surahNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
@@ -101,29 +106,31 @@ class QuranRepository {
 
     final ayahs = <Ayah>[];
     for (var i = 0; i < arAyahs.length; i++) {
-      final translation = translations != null && i < translations.length ? translations[i] : null;
+      final translation = translations != null && i < translations.length
+          ? translations[i]
+          : null;
       ayahs.add(arAyahs[i].copyWithTranslation(translation));
     }
 
     if (hasSeparateBismillah(surahNumber) && ayahs.isNotEmpty) {
       final first = ayahs[0];
-      ayahs[0] = first.copyWithArabicText(
-        _stripBismillahPrefix(first.textAr),
-      );
+      ayahs[0] = first.copyWithArabicText(_stripBismillahPrefix(first.textAr));
     }
 
     await FileCache.write(cacheKey, {
       'ayahs': ayahs
-          .map((a) => {
-                'number': a.number,
-                'numberInSurah': a.numberInSurah,
-                'textAr': a.textAr,
-                'textEn': a.textEn,
-                'juz': a.juz,
-                'page': a.page,
-                'hizbQuarter': a.hizbQuarter,
-                'sajda': a.sajda,
-              })
+          .map(
+            (a) => {
+              'number': a.number,
+              'numberInSurah': a.numberInSurah,
+              'textAr': a.textAr,
+              'textEn': a.textEn,
+              'juz': a.juz,
+              'page': a.page,
+              'hizbQuarter': a.hizbQuarter,
+              'sajda': a.sajda,
+            },
+          )
           .toList(),
     });
 

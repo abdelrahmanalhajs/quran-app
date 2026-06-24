@@ -66,9 +66,8 @@ class _PrayerScreenState extends State<PrayerScreen>
 /// (fetching location, permission issues, service disabled, timeout,
 /// generic error), so this is built once and reused by both.
 Widget? buildPrayerStatusScreen(BuildContext context, PrayerProvider provider) {
-  void reload() => provider.load(
-        arabicAthanLabels: context.locale.languageCode == 'ar',
-      );
+  void reload() =>
+      provider.load(arabicAthanLabels: context.locale.languageCode == 'ar');
 
   switch (provider.status) {
     case PrayerLoadStatus.idle:
@@ -177,9 +176,8 @@ class _PrayerTimesTab extends StatelessWidget {
       ('prayer.isha', t.isha, Icons.bedtime_outlined),
     ];
     return RefreshIndicator(
-      onRefresh: () => provider.load(
-        arabicAthanLabels: context.locale.languageCode == 'ar',
-      ),
+      onRefresh: () =>
+          provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
       child: ListView.separated(
         padding: EdgeInsets.all(responsiveHorizontalPadding(context)),
         itemCount: entries.length,
@@ -291,8 +289,9 @@ class _QiblaTabState extends State<_QiblaTab> {
     final aligned = diff.abs() <= _alignmentThresholdDegrees;
 
     final angle = diff * (math.pi / 180);
-    final color =
-        aligned ? Colors.green : Theme.of(context).colorScheme.primary;
+    final color = aligned
+        ? Colors.green
+        : Theme.of(context).colorScheme.primary;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,

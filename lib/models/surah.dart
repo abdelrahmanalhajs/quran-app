@@ -27,11 +27,11 @@ class SurahSummary {
   }
 
   Map<String, dynamic> toJson() => {
-        'number': number,
-        'name': nameAr,
-        'englishName': englishName,
-        'englishNameTranslation': englishNameTranslation,
-        'numberOfAyahs': numberOfAyahs,
-        'revelationType': revelationType,
-      };
+    'number': number,
+    'name': nameAr,
+    'englishName': englishName,
+    'englishNameTranslation': englishNameTranslation,
+    'numberOfAyahs': numberOfAyahs,
+    'revelationType': revelationType,
+  };
 }

@@ -49,7 +49,8 @@ class PrayerRepository {
     if (perm == LocationPermission.deniedForever) {
       throw LocationPermissionDeniedForeverException();
     }
-    if (perm != LocationPermission.always && perm != LocationPermission.whileInUse) {
+    if (perm != LocationPermission.always &&
+        perm != LocationPermission.whileInUse) {
       throw LocationPermissionDeniedException();
     }
   }
@@ -64,14 +65,18 @@ class PrayerRepository {
       throw Exception('Failed to load prayer times (HTTP ${res.statusCode})');
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
-    return PrayerTimes.fromJson(body['data']['timings'] as Map<String, dynamic>);
+    return PrayerTimes.fromJson(
+      body['data']['timings'] as Map<String, dynamic>,
+    );
   }
 
   Future<double> getQiblaDirection(double lat, double lng) async {
     final uri = Uri.parse('${ApiConstants.prayerBase}/qibla/$lat/$lng');
     final res = await http.get(uri).timeout(_kHttpTimeout);
     if (res.statusCode != 200) {
-      throw Exception('Failed to load qibla direction (HTTP ${res.statusCode})');
+      throw Exception(
+        'Failed to load qibla direction (HTTP ${res.statusCode})',
+      );
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return (body['data']['direction'] as num).toDouble();

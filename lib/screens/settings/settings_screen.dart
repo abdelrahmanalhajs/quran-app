@@ -3,11 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/athan.dart';
 import '../../core/responsive.dart';
 import '../../core/services/athan_settings.dart';
 import '../../core/services/athkar_prayer_reminder_settings.dart';
+import '../../core/services/notification_prefs.dart';
 import '../../core/services/notification_service.dart';
 import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
@@ -21,10 +21,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _kHadithNotif = 'hadith_notifications_enabled';
-  static const _kZikrNotif = 'hourly_zikr_notifications_enabled';
-  static const _kSleepNotif = 'sleep_athkar_notifications_enabled';
-  static const _kJumaaNotif = 'jumaa_athkar_notifications_enabled';
   bool _notifEnabled = true;
   bool _zikrEnabled = false;
   bool _sleepEnabled = false;
@@ -73,15 +69,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadNotifPref() async {
-    final prefs = await SharedPreferences.getInstance();
     final athanEnabled = await AthanSettings.isEnabled();
     final athanReciter = await AthanSettings.getReciter();
-    final athkarPrayerRemindersEnabled = await AthkarPrayerReminderSettings.isEnabled();
+    final athkarPrayerRemindersEnabled =
+        await AthkarPrayerReminderSettings.isEnabled();
+    final notifEnabled = await hadithNotificationSetting.isEnabled();
+    final zikrEnabled = await hourlyZikrNotificationSetting.isEnabled();
+    final sleepEnabled = await sleepAthkarNotificationSetting.isEnabled();
+    final jumaaEnabled = await jumaaAthkarNotificationSetting.isEnabled();
     setState(() {
-      _notifEnabled = prefs.getBool(_kHadithNotif) ?? true;
-      _zikrEnabled = prefs.getBool(_kZikrNotif) ?? false;
-      _sleepEnabled = prefs.getBool(_kSleepNotif) ?? false;
-      _jumaaEnabled = prefs.getBool(_kJumaaNotif) ?? false;
+      _notifEnabled = notifEnabled;
+      _zikrEnabled = zikrEnabled;
+      _sleepEnabled = sleepEnabled;
+      _jumaaEnabled = jumaaEnabled;
       _athanEnabled = athanEnabled;
       _athanReciter = athanReciter;
       _athkarPrayerRemindersEnabled = athkarPrayerRemindersEnabled;
@@ -161,8 +161,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: _notifEnabled,
               onChanged: (value) async {
                 setState(() => _notifEnabled = value);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool(_kHadithNotif, value);
+                await hadithNotificationSetting.setEnabled(value);
                 if (kIsWeb) return;
                 if (value) {
                   final granted = await NotificationService.requestPermission();
@@ -181,8 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: _zikrEnabled,
               onChanged: (value) async {
                 setState(() => _zikrEnabled = value);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool(_kZikrNotif, value);
+                await hourlyZikrNotificationSetting.setEnabled(value);
                 if (kIsWeb) return;
                 if (value) {
                   final granted = await NotificationService.requestPermission();
@@ -201,8 +199,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: _sleepEnabled,
               onChanged: (value) async {
                 setState(() => _sleepEnabled = value);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool(_kSleepNotif, value);
+                await sleepAthkarNotificationSetting.setEnabled(value);
                 if (kIsWeb) return;
                 if (value) {
                   final granted = await NotificationService.requestPermission();
@@ -221,8 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: _jumaaEnabled,
               onChanged: (value) async {
                 setState(() => _jumaaEnabled = value);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool(_kJumaaNotif, value);
+                await jumaaAthkarNotificationSetting.setEnabled(value);
                 if (kIsWeb) return;
                 if (value) {
                   final granted = await NotificationService.requestPermission();

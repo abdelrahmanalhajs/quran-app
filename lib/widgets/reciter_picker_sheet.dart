@@ -31,8 +31,12 @@ Future<Reciter?> showReciterPicker(BuildContext context, Reciter current) {
                       final isArabic = ctx.locale.languageCode == 'ar';
                       return ListTile(
                         leading: Icon(
-                          selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                          color: selected ? Theme.of(ctx).colorScheme.primary : null,
+                          selected
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                          color: selected
+                              ? Theme.of(ctx).colorScheme.primary
+                              : null,
                         ),
                         title: Text(isArabic ? r.nameAr : r.nameEn),
                         onTap: () => Navigator.of(ctx).pop(r),

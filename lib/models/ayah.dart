@@ -68,7 +68,9 @@ class Ayah {
       juz: json['juz'] as int,
       page: json['page'] as int,
       hizbQuarter: json['hizbQuarter'] as int,
-      sajda: sajdaValue is bool ? sajdaValue : (sajdaValue != null && sajdaValue != false),
+      sajda: sajdaValue is bool
+          ? sajdaValue
+          : (sajdaValue != null && sajdaValue != false),
     );
   }
 }
