@@ -568,11 +568,13 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
         ayahNumberInSurah: widget.ayah.numberInSurah,
         arabic: isArabic,
       );
+      if (!mounted) return;
       setState(() {
         _tafsir = text.isEmpty ? '-' : text;
         _loadingTafsir = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _tafsirError = 'error';
         _loadingTafsir = false;
