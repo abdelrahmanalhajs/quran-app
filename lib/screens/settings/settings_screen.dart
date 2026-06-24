@@ -146,13 +146,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const Divider(),
-            ListTile(
-              title: Text('settings.quran_font_size'.tr()),
-              subtitle: Slider(
-                min: 18,
-                max: 38,
-                value: settings.quranFontSize,
-                onChanged: (v) => settings.setQuranFontSize(v),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: responsiveHorizontalPadding(context),
+                vertical: 8,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'settings.quran_font_size'.tr(),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'settings.quran_font_size_hint'.tr(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _QuranFontSizeDots(
+                    value: settings.quranFontSize,
+                    onChanged: (v) => settings.setQuranFontSize(v),
+                  ),
+                ],
               ),
             ),
             const Divider(),
@@ -310,6 +328,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }).toList(),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 5 tappable dots, growing in size left-to-right, for picking one of
+/// [kQuranFontSizeSteps] — a discrete "Aa" size picker instead of a
+/// continuous slider, since only these 5 sizes are meaningful here (the
+/// first 3 fit the Mushaf page without scrolling, the last 2 don't).
+class _QuranFontSizeDots extends StatelessWidget {
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _QuranFontSizeDots({required this.value, required this.onChanged});
+
+  static const double _minDotSize = 12;
+  static const double _maxDotSize = 28;
+
+  int get _selectedIndex {
+    var nearest = 0;
+    var nearestDiff = double.infinity;
+    for (var i = 0; i < kQuranFontSizeSteps.length; i++) {
+      final diff = (kQuranFontSizeSteps[i] - value).abs();
+      if (diff < nearestDiff) {
+        nearestDiff = diff;
+        nearest = i;
+      }
+    }
+    return nearest;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = _selectedIndex;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        for (var i = 0; i < kQuranFontSizeSteps.length; i++)
+          _buildDot(
+            context,
+            i,
+            isSelected: i == selected,
+            color: colorScheme.primary,
+            unselectedColor: colorScheme.outlineVariant,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDot(
+    BuildContext context,
+    int index, {
+    required bool isSelected,
+    required Color color,
+    required Color unselectedColor,
+  }) {
+    final steps = kQuranFontSizeSteps.length;
+    final size =
+        _minDotSize + (_maxDotSize - _minDotSize) * index / (steps - 1);
+    return InkResponse(
+      onTap: () => onChanged(kQuranFontSizeSteps[index]),
+      radius: 28,
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: _maxDotSize,
+              height: _maxDotSize,
+              alignment: Alignment.center,
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? color : Colors.transparent,
+                  border: Border.all(
+                    color: isSelected ? color : unselectedColor,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${index + 1}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: isSelected ? color : unselectedColor,
+                fontWeight: isSelected ? FontWeight.bold : null,
+              ),
+            ),
           ],
         ),
       ),
