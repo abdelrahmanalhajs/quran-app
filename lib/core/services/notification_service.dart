@@ -311,16 +311,16 @@ class NotificationService {
 
   static Future<void> cancelSleepReminder() => _plugin.cancel(_sleepReminderId);
 
-  /// Weekly reminder (Friday, default 9 AM) to read the Jumu'ah athkar
+  /// Weekly reminder (Friday, default 10 AM) to read the Jumu'ah sunan
   /// (including Surah Al-Kahf and abundant salawat upon the Prophet ﷺ).
   static Future<void> scheduleJumaaReminder({
-    int hour = 9,
+    int hour = 10,
     int minute = 0,
     bool arabic = false,
   }) async {
     await _plugin.zonedSchedule(
       _jumaaReminderId,
-      arabic ? 'أذكار الجمعة' : "Jumu'ah Athkar",
+      arabic ? 'التذكير بسنن الجمعة' : "Jumu'ah Sunan Reminder",
       arabic
           ? 'يوم الجمعة المبارك: لا تنس قراءة سورة الكهف والإكثار من الصلاة على النبي ﷺ'
           : "It's Jumu'ah: don't forget to recite Surah Al-Kahf and send abundant blessings upon the Prophet ﷺ",
@@ -328,8 +328,8 @@ class NotificationService {
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'jumaa_reminder',
-          "Jumu'ah Athkar Reminder",
-          channelDescription: "A weekly Friday reminder for Jumu'ah athkar",
+          "Jumu'ah Sunan Reminder",
+          channelDescription: "A weekly Friday reminder for Jumu'ah sunan",
           importance: Importance.high,
           priority: Priority.high,
         ),

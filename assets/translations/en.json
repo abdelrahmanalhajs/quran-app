@@ -88,7 +88,7 @@
     "notifications": "Daily Hadith Notification",
     "hourly_zikr": "Hourly Zikr Reminder",
     "sleep_athkar_notif": "Sleep Athkar Reminder (10 PM daily)",
-    "jumaa_athkar_notif": "Jumu'ah Athkar Reminder (Friday 9 AM)",
+    "jumaa_athkar_notif": "Jumu'ah Sunan Reminder (Friday 10 AM)",
     "athkar_prayer_reminders": "Morning/Evening Athkar Reminders",
     "athkar_prayer_reminders_hint": "Get reminded shortly after Fajr for the morning athkar, and after Asr for the evening athkar",
     "athan_notifications": "Athan Notifications",
