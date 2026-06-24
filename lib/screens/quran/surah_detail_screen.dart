@@ -225,6 +225,19 @@ class _AyahCard extends StatelessWidget {
   }
 }
 
+const _arabicIndicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+/// Renders [number] using Arabic-Indic digits (١٢٣...) when the active
+/// locale is Arabic, otherwise plain Western digits.
+String _localizedNumber(BuildContext context, int number) {
+  if (context.locale.languageCode != 'ar') return '$number';
+  return number
+      .toString()
+      .split('')
+      .map((d) => _arabicIndicDigits[int.parse(d)])
+      .join();
+}
+
 void _showAyahSheet(
   BuildContext context,
   Ayah ayah,
@@ -490,7 +503,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Text(
-                    'quran.juz_label'.tr(args: ['${widget.ayahs.first.juz}']),
+                    'quran.juz_label'.tr(
+                      args: [
+                        _localizedNumber(context, widget.ayahs.first.juz),
+                      ],
+                    ),
                     style: const TextStyle(
                       color: _pageBg,
                       fontWeight: FontWeight.bold,
