@@ -235,7 +235,7 @@ class _AyahCard extends StatelessWidget {
                   context,
                 ).colorScheme.secondaryContainer,
                 child: Text(
-                  '${ayah.numberInSurah}',
+                  _arabicIndicNumber(ayah.numberInSurah),
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
@@ -293,6 +293,14 @@ const _arabicIndicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨'
 /// locale is Arabic, otherwise plain Western digits.
 String _localizedNumber(BuildContext context, int number) {
   if (context.locale.languageCode != 'ar') return '$number';
+  return _arabicIndicNumber(number);
+}
+
+/// Renders [number] using Arabic-Indic digits (١٢٣...) unconditionally.
+/// Ayah numbers are part of the Quranic text itself — like a printed
+/// Mushaf, they're always Arabic-Indic regardless of the app's UI language,
+/// unlike UI labels (Juz/Hizb/page) which follow [_localizedNumber].
+String _arabicIndicNumber(int number) {
   return number
       .toString()
       .split('')
@@ -860,7 +868,7 @@ class _AyahFlowerMarker extends StatelessWidget {
             decoration: BoxDecoration(shape: BoxShape.circle, color: background),
             alignment: Alignment.center,
             child: Text(
-              '$number',
+              _arabicIndicNumber(number),
               style: TextStyle(
                 fontSize: 8.5,
                 color: color,
