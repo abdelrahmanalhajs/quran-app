@@ -814,12 +814,13 @@ class _MushafPageViewState extends State<_MushafPageView> {
   }
 
   Widget _buildMushafPage(BuildContext context, List<Ayah> pageAyahs) {
-    final lineHeight =
-        kQuranFontSizeLineHeight[quranFontSizeStepIndex(widget.fontSize)];
+    final stepIndex = quranFontSizeStepIndex(widget.fontSize);
+    final lineHeight = kQuranFontSizeLineHeight[stepIndex];
+    final fontWeight = kQuranFontSizeWeight[stepIndex];
     final baseStyle = AppTheme.quranTextStyle(
       context,
       fontSize: widget.fontSize,
-    ).copyWith(height: lineHeight, color: _ink);
+    ).copyWith(height: lineHeight, fontWeight: fontWeight, color: _ink);
 
     final blocks = <Widget>[];
     final runs = _groupBySurah(pageAyahs);
@@ -956,8 +957,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // the same cream background beneath the text, the way a real Mushaf
     // page's last, partly-filled page looks, rather than empty space
     // floating the text away from the border on every side.
-    final fitsPage =
-        kQuranFontSizeFitsPage[quranFontSizeStepIndex(widget.fontSize)];
+    final fitsPage = kQuranFontSizeFitsPage[stepIndex];
     final allowScroll = !fitsPage;
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
