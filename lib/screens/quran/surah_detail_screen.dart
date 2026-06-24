@@ -841,7 +841,6 @@ class _MushafPageViewState extends State<_MushafPageView> {
         final banner = _SurahBanner(
           name: surahInfo?.nameAr ?? '',
           color: _frameGreen,
-          fontSize: widget.fontSize,
         );
         if (r == 0) {
           topBanner = banner;
@@ -1096,13 +1095,15 @@ class _AdjacentSurahTransitionPage extends StatelessWidget {
 class _SurahBanner extends StatelessWidget {
   final String name;
   final Color color;
-  final double fontSize;
 
-  const _SurahBanner({
-    required this.name,
-    required this.color,
-    required this.fontSize,
-  });
+  /// Always a fixed, moderate size regardless of the page's selected Quran
+  /// font tier — Small/Medium/Large's raw values exist to drive the
+  /// auto-fit body text (see [kQuranFontSizeSteps]), not to size chrome
+  /// like this banner, so using them directly here made the banner swing
+  /// too large for Medium and too small for Small/Large.
+  static const double _fontSize = 22;
+
+  const _SurahBanner({required this.name, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1125,7 +1126,7 @@ class _SurahBanner extends StatelessWidget {
                 textDirection: TextDirection.rtl,
                 style: AppTheme.quranNameStyle(
                   context,
-                  fontSize: fontSize,
+                  fontSize: _fontSize,
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
