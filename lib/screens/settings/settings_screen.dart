@@ -414,7 +414,7 @@ class _QuranFontSizeDots extends StatelessWidget {
             Text(
               _labelKeys[index].tr(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: isSelected ? color : unselectedColor,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.bold : null,
               ),
             ),
