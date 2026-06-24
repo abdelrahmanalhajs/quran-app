@@ -7,19 +7,33 @@ import '../core/constants/reciters.dart';
 /// default since it matches the look of a real Quran page.
 enum QuranViewMode { page, list }
 
-/// The 2 selectable Quran text sizes: Small and Large. Small always fills
-/// the full page without scrolling (scaled up or down to match the screen
-/// exactly, like a printed Mushaf page); Large renders at its natural size
-/// and scrolls to keep reading instead of shrinking the text or changing
-/// which ayahs are on the page (see [_MushafPageViewState] in
-/// surah_detail_screen.dart).
-const List<double> kQuranFontSizeSteps = [60, 36];
+/// The 3 selectable Quran text sizes: Small, Medium and Large. Small and
+/// Medium both always fill the full page without scrolling (scaled up or
+/// down to match the screen exactly, like a printed Mushaf page). Large
+/// renders at its natural size and scrolls to keep reading instead of
+/// shrinking the text or changing which ayahs are on the page (see
+/// [_MushafPageViewState] in surah_detail_screen.dart).
+///
+/// Since Small and Medium both scale to *exactly* fill the page regardless
+/// of their starting size (there's only one final on-screen size that fits
+/// a given page), the raw values here can't make Medium look bigger than
+/// Small on their own — see [kQuranFontSizeLineHeight] for what actually
+/// does.
+const List<double> kQuranFontSizeSteps = [40, 65, 36];
 
 /// Parallel to [kQuranFontSizeSteps]: whether that step auto-fits the page
-/// without scrolling. Kept separate from the raw font-size values so Small's
-/// value can be tuned independently without it being mistaken for Large
-/// (which would flip which one scrolls if inferred from a `>=` comparison).
-const List<bool> kQuranFontSizeFitsPage = [true, false];
+/// without scrolling. Kept separate from the raw font-size values so
+/// Small/Medium's values can be tuned independently without being mistaken
+/// for Large (which would flip which ones scroll if inferred from a `>=`
+/// comparison).
+const List<bool> kQuranFontSizeFitsPage = [true, true, false];
+
+/// Parallel to [kQuranFontSizeSteps]: the line-height multiplier for that
+/// step. This — not the font-size value — is what makes Medium look bigger
+/// than Small: a tighter line height means less of the page's fixed height
+/// budget goes to the gap between lines once the page is scaled to fill the
+/// frame exactly, leaving more of it for the letters themselves.
+const List<double> kQuranFontSizeLineHeight = [1.9, 1.5, 1.9];
 
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].
@@ -44,7 +58,7 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 60;
+  double _quranFontSize = 40;
   QuranViewMode _quranViewMode = QuranViewMode.page;
 
   ThemeMode get themeMode => _themeMode;
@@ -66,7 +80,7 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 60;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 40;
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list

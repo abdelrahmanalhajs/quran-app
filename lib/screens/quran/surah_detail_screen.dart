@@ -814,10 +814,12 @@ class _MushafPageViewState extends State<_MushafPageView> {
   }
 
   Widget _buildMushafPage(BuildContext context, List<Ayah> pageAyahs) {
+    final lineHeight =
+        kQuranFontSizeLineHeight[quranFontSizeStepIndex(widget.fontSize)];
     final baseStyle = AppTheme.quranTextStyle(
       context,
       fontSize: widget.fontSize,
-    ).copyWith(height: 1.9, color: _ink);
+    ).copyWith(height: lineHeight, color: _ink);
 
     final blocks = <Widget>[];
     final runs = _groupBySurah(pageAyahs);
@@ -934,16 +936,16 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    // Small must always fit without scrolling AND fill the full frame width
-    // and height — not just shrink-to-fit, which (see [_PageScaler]) leaves
-    // a narrow column with large empty margins on narrow phones, since
-    // uniformly scaling text that's already pinned to the full width down
-    // to fit the height also shrinks the width. Large skips all of that,
-    // since it's deliberately large enough to commonly overflow and is
-    // meant to be read by scrolling instead. Which tier fits-the-page is
-    // looked up via [kQuranFontSizeFitsPage] rather than comparing raw
-    // values, so Small's font size can be tuned independently of Large's
-    // without flipping which one scrolls.
+    // Small and Medium must always fit without scrolling AND fill the full
+    // frame width and height — not just shrink-to-fit, which (see
+    // [_PageScaler]) leaves a narrow column with large empty margins on
+    // narrow phones, since uniformly scaling text that's already pinned to
+    // the full width down to fit the height also shrinks the width. Large
+    // skips all of that, since it's deliberately large enough to commonly
+    // overflow and is meant to be read by scrolling instead. Which tier
+    // fits-the-page is looked up via [kQuranFontSizeFitsPage] rather than
+    // comparing raw values, so Small/Medium's font sizes can be tuned
+    // independently of Large's without flipping which ones scroll.
     //
     // The frame itself is *always* the full screen size (via the Expanded
     // below) at every size, on phone or tablet, in any orientation — never
