@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/arabic_numbers.dart';
 import '../../core/constants/juz_boundaries.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
@@ -178,14 +179,14 @@ class _SurahTile extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Text('${surah.number}'),
+          child: Text(localizedNumber(context, surah.number)),
         ),
         title: Text(
           surah.nameAr,
           style: AppTheme.quranNameStyle(context, fontSize: 18),
         ),
         subtitle: Text(
-          '${surah.englishName} · ${surah.numberOfAyahs} ${'quran.ayahs'.tr()}',
+          '${surah.englishName} · ${localizedNumber(context, surah.numberOfAyahs)} ${'quran.ayahs'.tr()}',
         ),
         trailing: Text(
           surah.revelationType == 'Meccan'
@@ -226,6 +227,7 @@ class _JuzTile extends StatelessWidget {
         .map((n) => surahsByNumber[n])
         .whereType<SurahSummary>()
         .toList();
+    final isArabic = context.locale.languageCode == 'ar';
     return Card(
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
@@ -233,14 +235,16 @@ class _JuzTile extends StatelessWidget {
         initiallyExpanded: forceExpanded,
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-          child: Text('${juz.number}'),
+          child: Text(localizedNumber(context, juz.number)),
         ),
         title: Text(
-          'quran.juz_label'.tr(args: [juz.number.toString()]),
+          'quran.juz_label'.tr(
+            args: [localizedNumber(context, juz.number)],
+          ),
           style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: Text(
-          surahs.map((s) => s.englishName).join(' · '),
+          surahs.map((s) => isArabic ? s.nameAr : s.englishName).join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -254,7 +258,7 @@ class _JuzTile extends StatelessWidget {
                   context,
                 ).colorScheme.primaryContainer,
                 child: Text(
-                  '${surah.number}',
+                  localizedNumber(context, surah.number),
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
               ),

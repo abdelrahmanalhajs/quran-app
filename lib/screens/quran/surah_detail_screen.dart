@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import '../../core/arabic_numbers.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/quran_repository.dart';
@@ -340,7 +341,7 @@ class _AyahCard extends StatelessWidget {
                   context,
                 ).colorScheme.secondaryContainer,
                 child: Text(
-                  _arabicIndicNumber(ayah.numberInSurah),
+                  arabicIndicNumber(ayah.numberInSurah),
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
@@ -390,27 +391,6 @@ class _AyahCard extends StatelessWidget {
       ),
     );
   }
-}
-
-const _arabicIndicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-
-/// Renders [number] using Arabic-Indic digits (١٢٣...) when the active
-/// locale is Arabic, otherwise plain Western digits.
-String _localizedNumber(BuildContext context, int number) {
-  if (context.locale.languageCode != 'ar') return '$number';
-  return _arabicIndicNumber(number);
-}
-
-/// Renders [number] using Arabic-Indic digits (١٢٣...) unconditionally.
-/// Ayah numbers are part of the Quranic text itself — like a printed
-/// Mushaf, they're always Arabic-Indic regardless of the app's UI language,
-/// unlike UI labels (Juz/Hizb/page) which follow [_localizedNumber].
-String _arabicIndicNumber(int number) {
-  return number
-      .toString()
-      .split('')
-      .map((d) => _arabicIndicDigits[int.parse(d)])
-      .join();
 }
 
 void _showAyahSheet(
@@ -913,7 +893,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
         );
         spans.add(
           TextSpan(
-            text: '۝${_arabicIndicNumber(ayah.numberInSurah)}',
+            text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
             style: baseStyle.copyWith(
               color: _frameGreen,
               fontWeight: FontWeight.bold,
@@ -935,7 +915,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
     final lastAyah = pageAyahs.last;
     final hizbLabel =
-        '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
+        '${localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
 
     final content = Column(
       mainAxisSize: MainAxisSize.min,
@@ -950,7 +930,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // the green bar above the frame for every page.
     final footer = Text(
       'quran.page_footer'.tr(
-        args: [hizbLabel, _localizedNumber(context, lastAyah.page)],
+        args: [hizbLabel, localizedNumber(context, lastAyah.page)],
       ),
       textAlign: TextAlign.center,
       style: TextStyle(
@@ -1047,7 +1027,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             child: Center(
               child: Text(
                 'quran.juz_label'.tr(
-                  args: [_localizedNumber(context, pageAyahs.first.juz)],
+                  args: [localizedNumber(context, pageAyahs.first.juz)],
                 ),
                 style: const TextStyle(
                   color: _pageBg,
