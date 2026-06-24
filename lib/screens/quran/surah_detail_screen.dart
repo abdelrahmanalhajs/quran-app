@@ -1150,32 +1150,56 @@ class _RenderPageScaler extends RenderProxyBox {
     );
     double chosenWidth = availW;
 
-    if (naturalAtAvailW.height > availH && availH.isFinite) {
-      // Binary-search the narrowest "virtual" wrap width >= availW whose
-      // natural height, once scaled back down by availW/width, still fits
-      // availH — i.e. the width whose resulting aspect ratio matches the
-      // frame's, so a single uniform scale fills both axes at once instead
-      // of just shrinking width along with height.
-      double lo = availW;
-      double hi = availW * 4;
-      Size hiSize = child.getDryLayout(BoxConstraints(maxWidth: hi));
+    // Binary-search a "virtual" wrap width whose natural height, once
+    // scaled back to availW (by availW/width), matches availH exactly —
+    // i.e. the width whose aspect ratio matches the frame's, so a single
+    // uniform scale fills both axes completely instead of just shrinking
+    // (or leaving the natural, possibly-shorter-than-the-frame) size as is.
+    // A page denser than availW's natural size needs a *wider* virtual
+    // width (shrinks when scaled back down); a page shorter than the frame
+    // needs a *narrower* one (enlarges when scaled back up) so it still
+    // fills the page edge-to-edge like a real, fully-set Mushaf page.
+    if (availH.isFinite && naturalAtAvailW.height != availH) {
+      final bool tooTall = naturalAtAvailW.height > availH;
+      double lo = tooTall ? availW : availW / 64;
+      double hi = tooTall ? availW : availW;
+      double boundary = tooTall ? availW * 4 : availW;
+      Size boundarySize = child.getDryLayout(BoxConstraints(maxWidth: boundary));
       var guard = 0;
-      while (hiSize.height * availW / hi > availH && guard < 6) {
-        hi *= 2;
-        hiSize = child.getDryLayout(BoxConstraints(maxWidth: hi));
+      bool stillNeedsSearch(Size s, double w) =>
+          tooTall ? s.height * availW / w > availH : s.height * availW / w < availH;
+      while (stillNeedsSearch(boundarySize, boundary) && guard < 6) {
+        boundary = tooTall ? boundary * 2 : boundary / 2;
+        boundarySize = child.getDryLayout(BoxConstraints(maxWidth: boundary));
         guard++;
+      }
+      if (tooTall) {
+        hi = boundary;
+      } else {
+        lo = boundary;
       }
       for (var i = 0; i < 14; i++) {
         final double mid = (lo + hi) / 2;
         final Size midSize = child.getDryLayout(BoxConstraints(maxWidth: mid));
         final double scaledHeight = midSize.height * availW / mid;
-        if (scaledHeight > availH) {
-          lo = mid;
+        final bool stillTooShortOrTall = tooTall
+            ? scaledHeight > availH
+            : scaledHeight < availH;
+        if (stillTooShortOrTall) {
+          if (tooTall) {
+            lo = mid;
+          } else {
+            hi = mid;
+          }
         } else {
-          hi = mid;
+          if (tooTall) {
+            hi = mid;
+          } else {
+            lo = mid;
+          }
         }
       }
-      chosenWidth = hi;
+      chosenWidth = tooTall ? hi : lo;
     }
 
     child.layout(BoxConstraints.tightFor(width: chosenWidth), parentUsesSize: true);
