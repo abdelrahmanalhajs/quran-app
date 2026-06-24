@@ -934,8 +934,8 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    // Small and medium (the first 2 of kQuranFontSizeSteps) must always fit
-    // without scrolling AND fill the full frame width and height — not just
+    // Medium (the first of kQuranFontSizeSteps) must always fit without
+    // scrolling AND fill the full frame width and height — not just
     // shrink-to-fit, which (see [_PageScaler]) leaves a narrow column with
     // large empty margins on narrow phones, since uniformly scaling text
     // that's already pinned to the full width down to fit the height also
@@ -952,7 +952,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // the same cream background beneath the text, the way a real Mushaf
     // page's last, partly-filled page looks, rather than empty space
     // floating the text away from the border on every side.
-    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[2];
+    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[1];
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
         if (!allowScroll) {

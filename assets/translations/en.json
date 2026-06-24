@@ -83,7 +83,7 @@
     "theme_dark": "Dark",
     "theme_system": "System",
     "quran_font_size": "Quran Text Size",
-    "quran_font_size_hint": "Small and medium always fit the page; large is bigger and may need scrolling to read the whole page",
+    "quran_font_size_hint": "Medium always fits the page; large is bigger and may need scrolling to read the whole page",
     "about": "About",
     "notifications": "Daily Hadith Notification",
     "hourly_zikr": "Hourly Zikr Reminder",

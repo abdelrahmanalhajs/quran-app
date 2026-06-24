@@ -335,10 +335,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-/// 3 tappable dots (small/medium/large), growing in size left-to-right, for
+/// 2 tappable dots (medium/large), growing in size left-to-right, for
 /// picking one of [kQuranFontSizeSteps] — a discrete "Aa" size picker
-/// instead of a continuous slider, since only these 3 sizes are meaningful
-/// here (small and medium fill the page without scrolling, large scrolls).
+/// instead of a continuous slider, since only these 2 sizes are meaningful
+/// here (medium fills the page without scrolling, large scrolls).
 class _QuranFontSizeDots extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
