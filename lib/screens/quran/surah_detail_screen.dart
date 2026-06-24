@@ -817,7 +817,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final baseStyle = AppTheme.quranTextStyle(
       context,
       fontSize: widget.fontSize,
-    ).copyWith(height: 2.1, color: _ink);
+    ).copyWith(height: 1.9, color: _ink);
 
     final blocks = <Widget>[];
     final runs = _groupBySurah(pageAyahs);
