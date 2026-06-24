@@ -535,6 +535,8 @@ class _MushafPageViewState extends State<_MushafPageView> {
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
   bool _navigating = false;
+  int _currentIndex = 0;
+  int _itemCount = 0;
 
   void _clearRecognizers() {
     for (final r in _recognizers) {
@@ -559,6 +561,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final initialPage = widget.startAtLastPage && mushafPageCount > 0
         ? _realPagesStart + mushafPageCount - 1
         : _realPagesStart;
+    _currentIndex = initialPage;
     _pageController = PageController(initialPage: initialPage);
   }
 
@@ -570,6 +573,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   }
 
   void _onPageChanged(int index) {
+    _currentIndex = index;
     if (_navigating) return;
     if (index == _prevSentinelIndex) {
       _navigating = true;
@@ -580,32 +584,60 @@ class _MushafPageViewState extends State<_MushafPageView> {
     }
   }
 
+  /// Swipe direction is driven explicitly here (instead of relying on
+  /// [PageView]'s own gesture handling, whose direction depends on a
+  /// fiddly interaction between `reverse` and ambient [Directionality])
+  /// so it unambiguously matches Mushaf reading order: swipe right reveals
+  /// the next page, swipe left goes back to the previous one. This also
+  /// sidesteps Flutter web's default [ScrollBehavior], which only enables
+  /// touch/stylus drag-to-scroll and ignores mouse drags — a plain
+  /// [GestureDetector] responds to every pointer kind.
+  void _handleHorizontalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() < 150) return;
+    final target = velocity > 0 ? _currentIndex + 1 : _currentIndex - 1;
+    if (target < 0 || target >= _itemCount) return;
+    _pageController.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     _clearRecognizers();
     final totalAyahs = widget.ayahs.length;
     final mushafPages = _groupByMushafPage(widget.ayahs);
-    final itemCount = mushafPages.length +
+    _itemCount = mushafPages.length +
         (_prevSentinelIndex != null ? 1 : 0) +
         (_nextSentinelIndex != null ? 1 : 0);
 
     return ResponsiveCenter(
       maxWidth: 760,
-      child: PageView.builder(
-        controller: _pageController,
-        reverse: true, // RTL: swiping left advances to the next page.
-        itemCount: itemCount,
-        onPageChanged: _onPageChanged,
-        itemBuilder: (context, index) {
-          if (index == _prevSentinelIndex) {
-            return const _AdjacentSurahTransitionPage(forward: false);
-          }
-          if (index == _nextSentinelIndex) {
-            return const _AdjacentSurahTransitionPage(forward: true);
-          }
-          final pageAyahs = mushafPages[index - _realPagesStart];
-          return _buildMushafPage(context, pageAyahs, totalAyahs: totalAyahs);
-        },
+      child: GestureDetector(
+        onHorizontalDragEnd: _handleHorizontalDragEnd,
+        child: PageView.builder(
+          controller: _pageController,
+          reverse: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _itemCount,
+          onPageChanged: _onPageChanged,
+          itemBuilder: (context, index) {
+            if (index == _prevSentinelIndex) {
+              return const _AdjacentSurahTransitionPage(forward: false);
+            }
+            if (index == _nextSentinelIndex) {
+              return const _AdjacentSurahTransitionPage(forward: true);
+            }
+            final pageAyahs = mushafPages[index - _realPagesStart];
+            return _buildMushafPage(
+              context,
+              pageAyahs,
+              totalAyahs: totalAyahs,
+            );
+          },
+        ),
       ),
     );
   }
@@ -627,35 +659,35 @@ class _MushafPageViewState extends State<_MushafPageView> {
       _recognizers.add(recognizer);
       final isActive = widget.activeAyahNumber == ayah.numberInSurah;
 
-      // No space between the ayah text and its marker: a plain space there
-      // is a valid line-break point, and if the line wraps exactly there,
-      // the marker drifts to the start of the next line and visually sits
-      // next to the following ayah's text instead — looking like the ayah
-      // numbers got swapped. The marker's own padding provides the visual
-      // gap, and the breakable space goes *after* it instead, where wrapping
-      // is harmless.
+      // The ayah-end marker is plain text glued directly to its own ayah's
+      // span with no space in between, never a WidgetSpan. A WidgetSpan
+      // placeholder carries an inherent line-break opportunity on *both*
+      // sides regardless of adjacent whitespace, so even after removing the
+      // leading space it could still wrap onto the next line and visually
+      // sit next to the following ayah's text — looking like the ayah
+      // numbers got swapped. Plain adjacent TextSpans with no whitespace
+      // between them can never be split by a line break, so the marker can
+      // only ever travel with its own ayah. The breakable space goes after
+      // the marker, where wrapping just starts the next ayah on a new line.
+      final highlight = isActive
+          ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
+          : null;
       spans.add(
         TextSpan(
           text: ayah.textAr,
-          style: baseStyle.copyWith(
-            background: isActive
-                ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
-                : null,
-          ),
+          style: baseStyle.copyWith(background: highlight),
           recognizer: recognizer,
         ),
       );
       spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: _AyahFlowerMarker(
-              number: ayah.numberInSurah,
-              color: _frameGreen,
-              background: _pageBg,
-            ),
+        TextSpan(
+          text: '۝${_arabicIndicNumber(ayah.numberInSurah)}',
+          style: baseStyle.copyWith(
+            color: _frameGreen,
+            fontWeight: FontWeight.bold,
+            background: highlight,
           ),
+          recognizer: recognizer,
         ),
       );
       spans.add(const TextSpan(text: ' '));
@@ -814,68 +846,6 @@ class _SurahBanner extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text('❁', style: TextStyle(color: color, fontSize: 16)),
-        ],
-      ),
-    );
-  }
-}
-
-/// An 8-petal flower badge (two overlapping rotated squares) with the ayah
-/// number centered, evoking the ornate "end of ayah" rosette printed in a
-/// Mushaf, rather than a plain circle.
-class _AyahFlowerMarker extends StatelessWidget {
-  final int number;
-  final Color color;
-  final Color background;
-
-  const _AyahFlowerMarker({
-    required this.number,
-    required this.color,
-    required this.background,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 26,
-      height: 26,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.rotate(
-            angle: 0,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                border: Border.all(color: color, width: 1.1),
-              ),
-            ),
-          ),
-          Transform.rotate(
-            angle: 0.785398,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                border: Border.all(color: color, width: 1.1),
-              ),
-            ),
-          ),
-          Container(
-            width: 15,
-            height: 15,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: background),
-            alignment: Alignment.center,
-            child: Text(
-              _arabicIndicNumber(number),
-              style: TextStyle(
-                fontSize: 8.5,
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
       ),
     );
