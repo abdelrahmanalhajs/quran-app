@@ -271,7 +271,7 @@ class LanguageToggle extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('AR'),
+          child: Text('عربي'),
         ),
       ],
     );

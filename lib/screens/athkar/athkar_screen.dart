@@ -100,6 +100,7 @@ class _ThikrCardState extends State<_ThikrCard> {
   @override
   Widget build(BuildContext context) {
     final done = _remaining <= 0;
+    final isArabic = context.locale.languageCode == 'ar';
     return Card(
       color: done
           ? Theme.of(context).colorScheme.surfaceContainerHighest
@@ -124,13 +125,15 @@ class _ThikrCardState extends State<_ThikrCard> {
                   context,
                 ).textTheme.titleMedium?.copyWith(height: 1.7),
               ),
-              const SizedBox(height: 10),
-              Text(
-                widget.thikr.en,
-                textAlign: TextAlign.left,
-                textDirection: TextDirection.ltr,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              if (!isArabic) ...[
+                const SizedBox(height: 10),
+                Text(
+                  widget.thikr.en,
+                  textAlign: TextAlign.left,
+                  textDirection: TextDirection.ltr,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
