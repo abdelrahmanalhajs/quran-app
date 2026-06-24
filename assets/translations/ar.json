@@ -8,7 +8,7 @@
     "settings": "الإعدادات"
   },
   "quran": {
-    "search_hint": "ابحث عن سورة...",
+    "search_hint": "ابحث عن سورة أو جزء...",
     "ayahs": "آيات",
     "meccan": "مكية",
     "medinan": "مدنية",
@@ -23,7 +23,9 @@
     "view_page": "التبديل إلى عرض صفحة القرآن",
     "view_list": "التبديل إلى عرض القائمة",
     "juz_label": "جزء {}",
-    "page_footer": "الجزء {} • الحزب {} • صفحة {}",
+    "surahs_tab": "السور",
+    "juz_tab": "الأجزاء",
+    "page_footer": "الحزب {} • صفحة {}",
     "next_surah": "السورة التالية",
     "previous_surah": "السورة السابقة",
     "choose_reciter": "اختر القارئ",

@@ -8,7 +8,7 @@
     "settings": "Settings"
   },
   "quran": {
-    "search_hint": "Search for a surah...",
+    "search_hint": "Search for a surah or Juz'...",
     "ayahs": "Ayahs",
     "meccan": "Meccan",
     "medinan": "Medinan",
@@ -23,7 +23,9 @@
     "view_page": "Switch to Quran page view",
     "view_list": "Switch to list view",
     "juz_label": "Juz' {}",
-    "page_footer": "Juz {} · Hizb {} · Page {}",
+    "surahs_tab": "Surahs",
+    "juz_tab": "Juz'",
+    "page_footer": "Hizb {} · Page {}",
     "next_surah": "Next surah",
     "previous_surah": "Previous surah",
     "choose_reciter": "Choose reciter",

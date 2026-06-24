@@ -1,12 +1,15 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/juz_boundaries.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/surah.dart';
 import '../../state/quran_provider.dart';
 import '../../widgets/responsive_center.dart';
 import 'surah_detail_screen.dart';
+
+enum _ListMode { surahs, juz }
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
@@ -16,6 +19,8 @@ class SurahListScreen extends StatefulWidget {
 }
 
 class _SurahListScreenState extends State<SurahListScreen> {
+  _ListMode _mode = _ListMode.surahs;
+
   @override
   void initState() {
     super.initState();
@@ -49,32 +54,42 @@ class _SurahListScreenState extends State<SurahListScreen> {
                 ),
               ),
             ),
-            Expanded(child: _buildBody(provider)),
+            Padding(
+              padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
+              child: SegmentedButton<_ListMode>(
+                segments: [
+                  ButtonSegment(
+                    value: _ListMode.surahs,
+                    label: Text('quran.surahs_tab'.tr()),
+                  ),
+                  ButtonSegment(
+                    value: _ListMode.juz,
+                    label: Text('quran.juz_tab'.tr()),
+                  ),
+                ],
+                selected: {_mode},
+                onSelectionChanged: (selection) =>
+                    setState(() => _mode = selection.first),
+              ),
+            ),
+            Expanded(
+              child: _mode == _ListMode.surahs
+                  ? _buildSurahBody(context, provider)
+                  : _buildJuzBody(context, provider),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBody(QuranProvider provider) {
+  Widget _buildSurahBody(BuildContext context, QuranProvider provider) {
     switch (provider.status) {
       case LoadStatus.idle:
       case LoadStatus.loading:
         return const Center(child: CircularProgressIndicator());
       case LoadStatus.error:
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('quran.error'.tr()),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => provider.loadSurahs(),
-                child: const Icon(Icons.refresh),
-              ),
-            ],
-          ),
-        );
+        return _buildError(provider);
       case LoadStatus.loaded:
         final list = provider.filteredSurahs;
         if (list.isEmpty) {
@@ -93,6 +108,61 @@ class _SurahListScreenState extends State<SurahListScreen> {
           ),
         );
     }
+  }
+
+  Widget _buildJuzBody(BuildContext context, QuranProvider provider) {
+    switch (provider.status) {
+      case LoadStatus.idle:
+      case LoadStatus.loading:
+        return const Center(child: CircularProgressIndicator());
+      case LoadStatus.error:
+        return _buildError(provider);
+      case LoadStatus.loaded:
+        final query = provider.query.trim();
+        final matchedNumbers = provider.filteredSurahs
+            .map((s) => s.number)
+            .toSet();
+        final juzList = kJuzBoundaries.where((juz) {
+          if (query.isEmpty) return true;
+          if (query == juz.number.toString()) return true;
+          return juz.surahNumbers.any(matchedNumbers.contains);
+        }).toList();
+        if (juzList.isEmpty) {
+          return Center(child: Text('quran.no_results'.tr()));
+        }
+        final surahsByNumber = {
+          for (final s in provider.surahs) s.number: s,
+        };
+        return ListView.separated(
+          padding: EdgeInsets.symmetric(
+            horizontal: responsiveHorizontalPadding(context) - 4,
+            vertical: 4,
+          ),
+          itemCount: juzList.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 6),
+          itemBuilder: (context, index) => _JuzTile(
+            juz: juzList[index],
+            surahsByNumber: surahsByNumber,
+            forceExpanded: query.isNotEmpty,
+          ),
+        );
+    }
+  }
+
+  Widget _buildError(QuranProvider provider) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('quran.error'.tr()),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () => provider.loadSurahs(),
+            child: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -127,6 +197,80 @@ class _SurahTile extends StatelessWidget {
             MaterialPageRoute(builder: (_) => SurahDetailScreen(surah: surah)),
           );
         },
+      ),
+    );
+  }
+}
+
+/// One Juz' row in the Juz' tab, expandable to list every surah it spans
+/// (looked up from [surahsByNumber], built once from the full unfiltered
+/// surah list so a partially-matching search still shows every surah inside
+/// a matched Juz', not just the one that matched). [forceExpanded] opens it
+/// automatically while the user is actively searching, so a match is
+/// immediately visible without an extra tap.
+class _JuzTile extends StatelessWidget {
+  final JuzBoundary juz;
+  final Map<int, SurahSummary> surahsByNumber;
+  final bool forceExpanded;
+
+  const _JuzTile({
+    required this.juz,
+    required this.surahsByNumber,
+    required this.forceExpanded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final surahs = juz.surahNumbers
+        .map((n) => surahsByNumber[n])
+        .whereType<SurahSummary>()
+        .toList();
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: ValueKey('${juz.number}-$forceExpanded'),
+        initiallyExpanded: forceExpanded,
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          child: Text('${juz.number}'),
+        ),
+        title: Text(
+          'quran.juz_label'.tr(args: [juz.number.toString()]),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: Text(
+          surahs.map((s) => s.englishName).join(' · '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        children: [
+          for (final surah in surahs)
+            ListTile(
+              dense: true,
+              leading: CircleAvatar(
+                radius: 14,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primaryContainer,
+                child: Text(
+                  '${surah.number}',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+              title: Text(
+                surah.nameAr,
+                style: AppTheme.quranNameStyle(context, fontSize: 16),
+              ),
+              subtitle: Text(surah.englishName),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SurahDetailScreen(surah: surah),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
     );
   }

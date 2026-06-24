@@ -822,6 +822,14 @@ class _MushafPageViewState extends State<_MushafPageView> {
       fontSize: widget.fontSize,
     ).copyWith(height: lineHeight, fontWeight: fontWeight, color: _ink);
 
+    // The page's own starting surah's name banner is pinned above the
+    // scaled/scrollable area (see [topBanner] below) instead of living
+    // inline with the rest of the content, so it — like the footer — no
+    // longer eats into the height budget that Small/Medium scale ayah text
+    // to fill. A surah that starts *mid*-page (r > 0) still gets its banner
+    // inline, since that's a genuine transition marker tied to specific
+    // ayahs rather than this page's own running header.
+    Widget? topBanner;
     final blocks = <Widget>[];
     final runs = _groupBySurah(pageAyahs);
     for (var r = 0; r < runs.length; r++) {
@@ -829,16 +837,19 @@ class _MushafPageViewState extends State<_MushafPageView> {
       final runSurahNumber = run.first.surahNumber;
       final startsNewSurah = run.first.numberInSurah == 1;
       if (startsNewSurah) {
-        if (r > 0) blocks.add(const SizedBox(height: 18));
         final surahInfo = widget.surahsByNumber[runSurahNumber];
-        blocks.add(
-          _SurahBanner(
-            name: surahInfo?.nameAr ?? '',
-            color: _frameGreen,
-          ),
+        final banner = _SurahBanner(
+          name: surahInfo?.nameAr ?? '',
+          color: _frameGreen,
         );
+        if (r == 0) {
+          topBanner = banner;
+        } else {
+          blocks.add(const SizedBox(height: 18));
+          blocks.add(banner);
+        }
         if (QuranRepository.hasSeparateBismillah(runSurahNumber)) {
-          blocks.add(const SizedBox(height: 14));
+          if (r > 0) blocks.add(const SizedBox(height: 14));
           blocks.add(
             Text(
               'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
@@ -916,25 +927,24 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ...blocks,
-        const SizedBox(height: 14),
-        Text(
-          'quran.page_footer'.tr(
-            args: [
-              _localizedNumber(context, lastAyah.juz),
-              hizbLabel,
-              _localizedNumber(context, lastAyah.page),
-            ],
-          ),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: _frameGreen,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-        ),
-      ],
+      children: blocks,
+    );
+
+    // Hizb/page footer — pinned right above the frame's own bottom border
+    // (see [pageArea] below) rather than inside the scaled/scrollable
+    // content, so it no longer eats into Small/Medium's fill-the-page
+    // height budget. Juz' isn't repeated here since it's already shown in
+    // the green bar above the frame for every page.
+    final footer = Text(
+      'quran.page_footer'.tr(
+        args: [hizbLabel, _localizedNumber(context, lastAyah.page)],
+      ),
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: _frameGreen,
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+      ),
     );
 
     // Small and Medium must always fit without scrolling AND fill the full
@@ -983,9 +993,30 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final pageArea = _OrnateFrame(
       color: _frameGreen,
       background: _pageBg,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-        child: innerArea,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (topBanner != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+              child: topBanner,
+            ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                topBanner != null ? 6 : 14,
+                18,
+                4,
+              ),
+              child: innerArea,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+            child: footer,
+          ),
+        ],
       ),
     );
 
