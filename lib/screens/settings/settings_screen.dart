@@ -366,7 +366,7 @@ class _QuranFontSizeDots extends StatelessWidget {
     final selected = _selectedIndex;
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (var i = 0; i < kQuranFontSizeSteps.length; i++)
           _buildDot(
