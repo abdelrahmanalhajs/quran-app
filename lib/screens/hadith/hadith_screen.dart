@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
+import '../../core/responsive.dart';
 import '../../data/hadith_repository.dart';
 import '../../models/hadith.dart';
 import '../../widgets/responsive_center.dart';
@@ -35,7 +36,7 @@ class _HadithScreenState extends State<HadithScreen> {
           final isArabic = context.locale.languageCode == 'ar';
           return ResponsiveCenter(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(responsiveHorizontalPadding(context) + 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

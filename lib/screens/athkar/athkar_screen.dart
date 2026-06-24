@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
+import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/athkar_repository.dart';
 import '../../models/thikr.dart';
@@ -81,7 +82,7 @@ class _AthkarList extends StatelessWidget {
         if (!classified) {
           return ResponsiveCenter(
             child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(responsiveHorizontalPadding(context)),
               itemCount: items.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) => _ThikrCard(thikr: items[index]),
@@ -107,7 +108,7 @@ class _AthkarList extends StatelessWidget {
         }
         return ResponsiveCenter(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(responsiveHorizontalPadding(context)),
             children: widgets,
           ),
         );

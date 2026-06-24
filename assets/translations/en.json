@@ -27,7 +27,8 @@
     "next_surah": "Next surah",
     "previous_surah": "Previous surah",
     "choose_reciter": "Choose reciter",
-    "choose_reciter_hint": "Here you can choose the reciter for this surah"
+    "choose_reciter_hint": "Here you can choose the reciter for this surah",
+    "reciter_unavailable": "This reciter has no recording for this surah"
   },
   "prayer": {
     "title": "Prayer Times & Qiblah",
@@ -45,7 +46,15 @@
     "location_permission": "Location permission is needed to calculate prayer times and qiblah for your location",
     "enable_location": "Enable Location",
     "fetching_location": "Fetching your location...",
-    "degrees_from_north": "{} from North"
+    "degrees_from_north": "{} from North",
+    "permission_denied_forever": "Location access is blocked for this app. Enable it from your device settings to see prayer times and qiblah.",
+    "open_settings": "Open Settings",
+    "service_disabled": "Location services are turned off on this device. Turn them on to see prayer times and qiblah.",
+    "open_location_settings": "Open Location Settings",
+    "timed_out": "Couldn't get your location in time. Check your signal and try again.",
+    "retry": "Try Again",
+    "compass_unavailable_native": "This device doesn't have a compass sensor. Here's the qiblah direction from North instead.",
+    "error_generic": "Something went wrong. Please try again."
   },
   "athkar": {
     "title": "Athkar",

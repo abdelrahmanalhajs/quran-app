@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/surah.dart';
 import '../../state/quran_provider.dart';
@@ -26,6 +27,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<QuranProvider>();
+    final hPad = responsiveHorizontalPadding(context);
 
     return Scaffold(
       appBar: AppBar(title: Text('app_name'.tr())),
@@ -33,7 +35,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 8),
               child: TextField(
                 onChanged: provider.setQuery,
                 decoration: InputDecoration(
@@ -81,7 +83,10 @@ class _SurahListScreenState extends State<SurahListScreen> {
         return RefreshIndicator(
           onRefresh: provider.loadSurahs,
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: responsiveHorizontalPadding(context) - 4,
+              vertical: 4,
+            ),
             itemCount: list.length,
             separatorBuilder: (context, index) => const SizedBox(height: 6),
             itemBuilder: (context, index) => _SurahTile(surah: list[index]),

@@ -36,7 +36,18 @@ class NotificationService {
       final name = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(name));
     } catch (_) {
-      // Defaults to UTC if the device timezone can't be resolved.
+      // FlutterTimezone can fail to resolve a named IANA zone (seen on some
+      // emulators/web). Silently falling back to UTC would schedule every
+      // prayer/athkar notification at the wrong wall-clock time for anyone
+      // not in UTC, so fall back to a fixed-offset zone built from the
+      // device's own UTC offset instead — still correct local wall-clock
+      // time, just without DST transition data.
+      final offsetMs = DateTime.now().timeZoneOffset.inMilliseconds;
+      tz.setLocalLocation(
+        tz.Location('Fixed', const [], const [], [
+          tz.TimeZone(offsetMs, isDst: false, abbreviation: 'LOC'),
+        ]),
+      );
     }
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');

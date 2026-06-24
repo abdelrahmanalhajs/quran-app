@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../core/services/athan_settings.dart';
 import '../core/services/athkar_prayer_reminder_settings.dart';
@@ -5,7 +6,17 @@ import '../core/services/notification_service.dart';
 import '../data/prayer_repository.dart';
 import '../models/prayer_times.dart';
 
-enum PrayerLoadStatus { idle, loadingLocation, loadingData, loaded, permissionDenied, error }
+enum PrayerLoadStatus {
+  idle,
+  loadingLocation,
+  loadingData,
+  loaded,
+  permissionDenied,
+  permissionDeniedForever,
+  serviceDisabled,
+  timedOut,
+  error,
+}
 
 class PrayerProvider extends ChangeNotifier {
   final PrayerRepository _repo = PrayerRepository();
@@ -55,11 +66,17 @@ class PrayerProvider extends ChangeNotifier {
           arabic: arabicAthanLabels,
         );
       }
+    } on LocationPermissionDeniedForeverException {
+      _status = PrayerLoadStatus.permissionDeniedForever;
+    } on LocationPermissionDeniedException {
+      _status = PrayerLoadStatus.permissionDenied;
+    } on LocationServiceDisabledException {
+      _status = PrayerLoadStatus.serviceDisabled;
+    } on TimeoutException {
+      _status = PrayerLoadStatus.timedOut;
     } catch (e) {
       _errorMessage = e.toString();
-      _status = e.toString().contains('permission')
-          ? PrayerLoadStatus.permissionDenied
-          : PrayerLoadStatus.error;
+      _status = PrayerLoadStatus.error;
     }
     notifyListeners();
   }

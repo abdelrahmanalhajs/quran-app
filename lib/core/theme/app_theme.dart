@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../responsive.dart';
 
 class AppTheme {
   static const Color _seed = Color(0xFF0E6E55);
@@ -51,7 +52,7 @@ class AppTheme {
 
   static TextStyle quranTextStyle(BuildContext context, {double fontSize = 26}) {
     return GoogleFonts.amiri(
-      fontSize: fontSize,
+      fontSize: responsiveFontSize(context, fontSize),
       height: 1.9,
       color: Theme.of(context).colorScheme.onSurface,
     );
@@ -69,7 +70,7 @@ class AppTheme {
     Color? color,
   }) {
     return GoogleFonts.amiri(
-      fontSize: fontSize,
+      fontSize: responsiveFontSize(context, fontSize),
       fontWeight: fontWeight,
       color: color ?? Theme.of(context).colorScheme.onSurface,
     );
@@ -85,7 +86,7 @@ class AppTheme {
     double height = 1.7,
   }) {
     return GoogleFonts.amiri(
-      fontSize: fontSize,
+      fontSize: responsiveFontSize(context, fontSize),
       height: height,
       color: Theme.of(context).colorScheme.onSurface,
     );

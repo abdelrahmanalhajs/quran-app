@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/quran_repository.dart';
 import '../../data/tafsir_repository.dart';
@@ -142,7 +143,12 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           );
           return ResponsiveCenter(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              padding: EdgeInsets.fromLTRB(
+                responsiveHorizontalPadding(context),
+                12,
+                responsiveHorizontalPadding(context),
+                96,
+              ),
               itemCount: ayahs.length + (showBismillah ? 1 : 0),
               itemBuilder: (context, index) {
                 if (showBismillah && index == 0) {
@@ -175,9 +181,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         onPressed: () async {
           if (!reciter.hasSurah(widget.surah.number)) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('This reciter has no recording for this surah'),
-              ),
+              SnackBar(content: Text('quran.reciter_unavailable'.tr())),
             );
             return;
           }

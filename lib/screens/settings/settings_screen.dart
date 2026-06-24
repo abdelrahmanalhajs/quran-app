@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/athan.dart';
+import '../../core/responsive.dart';
 import '../../core/services/athan_settings.dart';
 import '../../core/services/athkar_prayer_reminder_settings.dart';
 import '../../core/services/notification_service.dart';
@@ -110,7 +111,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const Divider(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: responsiveHorizontalPadding(context),
+                vertical: 8,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
