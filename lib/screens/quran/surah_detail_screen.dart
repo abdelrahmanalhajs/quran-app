@@ -933,31 +933,57 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit the
-    // frame without scrolling: FittedBox(scaleDown) only ever shrinks
-    // (never enlarges) to guarantee that, falling back to a barely-smaller
-    // render on the rare unusually dense page rather than letting it
-    // scroll. Sizes 4-5 are deliberately large enough to commonly overflow,
-    // so they skip the shrink and scroll inside the frame instead, keeping
-    // the text genuinely at the larger size the user chose.
+    final framedContent = _OrnateFrame(
+      color: _frameGreen,
+      background: _pageBg,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+        child: content,
+      ),
+    );
+
+    // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit
+    // without scrolling: FittedBox(scaleDown) only ever shrinks (never
+    // enlarges), and here it scales the frame *together with* the text as
+    // one unit, so the decorative border always hugs the text tightly —
+    // rather than being stretched to the full screen with smaller text
+    // floating in the middle of a far-away border. A plain background fill
+    // behind it keeps the page looking full-screen regardless. Sizes 4-5
+    // are deliberately large enough to commonly overflow, so they skip the
+    // shrink: the frame there stays fixed around the full available
+    // viewport and only the text inside scrolls, since it's meant to be
+    // genuinely larger than the page and read by scrolling.
     final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
-    final frameContent = allowScroll
-        ? SingleChildScrollView(child: content)
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              return Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(width: constraints.maxWidth, child: content),
-                ),
-              );
-            },
+    final pageArea = allowScroll
+        ? _OrnateFrame(
+            color: _frameGreen,
+            background: _pageBg,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+              child: SingleChildScrollView(child: content),
+            ),
+          )
+        : Container(
+            color: _pageBg,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: framedContent,
+                    ),
+                  ),
+                );
+              },
+            ),
           );
 
-    // The frame fills the full page extent given by the PageView (matching
-    // the device's screen, on both phone and tablet) regardless of font
-    // size — Expanded stretches it to that size even when the content
-    // doesn't reach the bottom.
+    // The cream background always fills the full page extent given by the
+    // PageView (matching the device's screen, in any orientation, on both
+    // phone and tablet) — Expanded stretches it to that size regardless of
+    // how big the framed content within it ends up being.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -979,16 +1005,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
               ),
             ),
           ),
-        Expanded(
-          child: _OrnateFrame(
-            color: _frameGreen,
-            background: _pageBg,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-              child: frameContent,
-            ),
-          ),
-        ),
+        Expanded(child: pageArea),
       ],
     );
   }
