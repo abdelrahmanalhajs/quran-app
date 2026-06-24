@@ -16,7 +16,16 @@ import '../../widgets/responsive_center.dart';
 class SurahDetailScreen extends StatefulWidget {
   final SurahSummary surah;
 
-  const SurahDetailScreen({super.key, required this.surah});
+  /// When opened by swiping backward past the previous surah's first page,
+  /// the page view should land on this surah's *last* page (continuing the
+  /// backward flow), not jump back to its first page.
+  final bool startAtLastPage;
+
+  const SurahDetailScreen({
+    super.key,
+    required this.surah,
+    this.startAtLastPage = false,
+  });
 
   @override
   State<SurahDetailScreen> createState() => _SurahDetailScreenState();
@@ -48,7 +57,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     final resolvedTarget = target;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => SurahDetailScreen(surah: resolvedTarget),
+        builder: (_) => SurahDetailScreen(
+          surah: resolvedTarget,
+          startAtLastPage: delta < 0,
+        ),
       ),
     );
   }
@@ -121,6 +133,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               surahNameAr: widget.surah.nameAr,
               activeAyahNumber: activeAyah,
               fontSize: settings.quranFontSize,
+              startAtLastPage: widget.startAtLastPage,
               onAdjacentSurah: (delta) => _goToAdjacentSurah(context, delta),
             );
           }
@@ -486,6 +499,7 @@ class _MushafPageView extends StatefulWidget {
   final String surahNameAr;
   final int? activeAyahNumber;
   final double fontSize;
+  final bool startAtLastPage;
   final void Function(int delta) onAdjacentSurah;
 
   const _MushafPageView({
@@ -493,6 +507,7 @@ class _MushafPageView extends StatefulWidget {
     required this.surahNameAr,
     required this.activeAyahNumber,
     required this.fontSize,
+    required this.startAtLastPage,
     required this.onAdjacentSurah,
   });
 
@@ -507,7 +522,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
   static const _quarterMarks = ['', '¼', '½', '¾'];
 
   final List<TapGestureRecognizer> _recognizers = [];
-  final PageController _pageController = PageController();
+  late final PageController _pageController;
+  late int _realPagesStart;
+  int? _prevSentinelIndex;
+  int? _nextSentinelIndex;
+  bool _navigating = false;
 
   void _clearRecognizers() {
     for (final r in _recognizers) {
@@ -517,10 +536,40 @@ class _MushafPageViewState extends State<_MushafPageView> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    final surahNumber =
+        widget.ayahs.isNotEmpty ? widget.ayahs.first.surahNumber : null;
+    final hasPrevSurah = surahNumber != null && surahNumber > 1;
+    final hasNextSurah = surahNumber != null && surahNumber < 114;
+    final mushafPageCount = _groupByMushafPage(widget.ayahs).length;
+
+    _realPagesStart = hasPrevSurah ? 1 : 0;
+    _prevSentinelIndex = hasPrevSurah ? 0 : null;
+    _nextSentinelIndex =
+        hasNextSurah ? _realPagesStart + mushafPageCount : null;
+    final initialPage = widget.startAtLastPage && mushafPageCount > 0
+        ? _realPagesStart + mushafPageCount - 1
+        : _realPagesStart;
+    _pageController = PageController(initialPage: initialPage);
+  }
+
+  @override
   void dispose() {
     _clearRecognizers();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _onPageChanged(int index) {
+    if (_navigating) return;
+    if (index == _prevSentinelIndex) {
+      _navigating = true;
+      widget.onAdjacentSurah(-1);
+    } else if (index == _nextSentinelIndex) {
+      _navigating = true;
+      widget.onAdjacentSurah(1);
+    }
   }
 
   @override
@@ -528,24 +577,26 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _clearRecognizers();
     final totalAyahs = widget.ayahs.length;
     final mushafPages = _groupByMushafPage(widget.ayahs);
+    final itemCount = mushafPages.length +
+        (_prevSentinelIndex != null ? 1 : 0) +
+        (_nextSentinelIndex != null ? 1 : 0);
 
     return ResponsiveCenter(
       maxWidth: 760,
       child: PageView.builder(
         controller: _pageController,
         reverse: true, // RTL: swiping left advances to the next page.
-        itemCount: mushafPages.length,
+        itemCount: itemCount,
+        onPageChanged: _onPageChanged,
         itemBuilder: (context, index) {
-          final pageAyahs = mushafPages[index];
-          final isFirstPage = index == 0;
-          final isLastPage = index == mushafPages.length - 1;
-          return _buildMushafPage(
-            context,
-            pageAyahs,
-            totalAyahs: totalAyahs,
-            isFirstPage: isFirstPage,
-            isLastPage: isLastPage,
-          );
+          if (index == _prevSentinelIndex) {
+            return const _AdjacentSurahTransitionPage(forward: false);
+          }
+          if (index == _nextSentinelIndex) {
+            return const _AdjacentSurahTransitionPage(forward: true);
+          }
+          final pageAyahs = mushafPages[index - _realPagesStart];
+          return _buildMushafPage(context, pageAyahs, totalAyahs: totalAyahs);
         },
       ),
     );
@@ -554,7 +605,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   Widget _buildMushafPage(
     BuildContext context,
     List<Ayah> pageAyahs,
-    {required int totalAyahs, required bool isFirstPage, required bool isLastPage}
+    {required int totalAyahs}
   ) {
     final baseStyle = AppTheme.quranTextStyle(context, fontSize: widget.fontSize)
         .copyWith(height: 2.1, color: _ink);
@@ -677,26 +728,47 @@ class _MushafPageViewState extends State<_MushafPageView> {
               ),
             ),
           ),
-          if (isFirstPage || isLastPage) ...[
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isFirstPage)
-                  TextButton.icon(
-                    onPressed: () => widget.onAdjacentSurah(-1),
-                    icon: const Icon(Icons.arrow_back, size: 16),
-                    label: Text('quran.previous_surah'.tr()),
-                  ),
-                if (isLastPage)
-                  TextButton.icon(
-                    onPressed: () => widget.onAdjacentSurah(1),
-                    icon: const Icon(Icons.arrow_forward, size: 16),
-                    label: Text('quran.next_surah'.tr()),
-                  ),
-              ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown briefly while swiping past a surah's first/last page, while
+/// [_SurahDetailScreenState._goToAdjacentSurah] looks up and navigates to
+/// the adjacent surah. Styled to match the Mushaf page background so the
+/// transition doesn't flash an unstyled blank page.
+class _AdjacentSurahTransitionPage extends StatelessWidget {
+  final bool forward;
+
+  const _AdjacentSurahTransitionPage({required this.forward});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _MushafPageViewState._pageBg,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            forward ? Icons.arrow_forward : Icons.arrow_back,
+            color: _MushafPageViewState._frameGreen,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            forward ? 'quran.next_surah'.tr() : 'quran.previous_surah'.tr(),
+            style: const TextStyle(
+              color: _MushafPageViewState._frameGreen,
+              fontWeight: FontWeight.w600,
             ),
-          ],
+          ),
+          const SizedBox(height: 16),
+          const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         ],
       ),
     );
