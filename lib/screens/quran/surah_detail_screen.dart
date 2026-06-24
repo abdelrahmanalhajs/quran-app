@@ -294,10 +294,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             surahTitle: widget.surah.nameAr,
           );
         },
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        extendedPadding: const EdgeInsets.symmetric(horizontal: 14),
         icon: Icon(
           playingThis && audio.isPlaying ? Icons.pause : Icons.play_arrow,
+          size: 16,
         ),
-        label: Text('quran.play_surah'.tr()),
+        label: Text(
+          'quran.play_surah'.tr(),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
@@ -761,7 +767,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _clearRecognizers();
 
     return ResponsiveCenter(
-      maxWidth: 760,
+      maxWidth: 900,
       child: Padding(
         padding: responsiveMushafPagePadding(context),
         child: GestureDetector(
@@ -913,8 +919,6 @@ class _MushafPageViewState extends State<_MushafPageView> {
     }
 
     final lastAyah = pageAyahs.last;
-    final hizbLabel =
-        '${localizedNumber(context, lastAyah.hizb)}${localizedQuarterMark(context, lastAyah.quarterInHizb)}';
 
     final content = Column(
       mainAxisSize: MainAxisSize.min,
@@ -922,14 +926,15 @@ class _MushafPageViewState extends State<_MushafPageView> {
       children: blocks,
     );
 
-    // Hizb/page footer — pinned right above the frame's own bottom border
-    // (see [pageArea] below) rather than inside the scaled/scrollable
-    // content, so it no longer eats into Small/Medium's fill-the-page
-    // height budget. Juz' isn't repeated here since it's already shown in
-    // the green bar above the frame for every page.
+    // Page-number footer — pinned right above the frame's own bottom
+    // border (see [pageArea] below) rather than inside the
+    // scaled/scrollable content, so it no longer eats into Small/Medium's
+    // fill-the-page height budget. Hizb and Juz' aren't repeated here
+    // since they're already shown in the green bar above the frame for
+    // every page.
     final footer = Text(
       'quran.page_footer'.tr(
-        args: [hizbLabel, localizedNumber(context, lastAyah.page)],
+        args: [localizedNumber(context, lastAyah.page)],
       ),
       textAlign: TextAlign.center,
       style: TextStyle(
@@ -1023,39 +1028,37 @@ class _MushafPageViewState extends State<_MushafPageView> {
           Container(
             color: _frameGreen,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
-            // Hizb always sits at the visual top-left and Juz' at the
-            // visual top-right, regardless of the app's UI language — a
-            // fixed Directionality keeps Row's first/second child pinned
-            // to those screen sides instead of flipping with RTL Arabic.
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'quran.hizb_label'.tr(
-                      args: [localizedNumber(context, pageAyahs.first.hizb)],
-                    ),
-                    style: const TextStyle(
-                      color: _pageBg,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                    ),
+            // Juz' sits at the start side and Hizb at the end side of the
+            // bar, following the ambient reading direction: in Arabic
+            // (RTL) that puts Juz' on the right and Hizb on the left; in
+            // English (LTR) it puts Juz' on the left and Hizb on the
+            // right.
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'quran.juz_label'.tr(
+                    args: [localizedNumber(context, pageAyahs.first.juz)],
                   ),
-                  Text(
-                    'quran.juz_label'.tr(
-                      args: [localizedNumber(context, pageAyahs.first.juz)],
-                    ),
-                    style: const TextStyle(
-                      color: _pageBg,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                    ),
+                  style: const TextStyle(
+                    color: _pageBg,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
                   ),
-                ],
-              ),
+                ),
+                Text(
+                  'quran.hizb_label'.tr(
+                    args: [localizedNumber(context, pageAyahs.first.hizb)],
+                  ),
+                  style: const TextStyle(
+                    color: _pageBg,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ),
         Expanded(child: pageArea),

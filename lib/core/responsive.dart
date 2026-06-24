@@ -51,10 +51,10 @@ double responsiveHorizontalPadding(BuildContext context) {
 /// play button on every tier.
 EdgeInsets responsiveMushafPagePadding(BuildContext context) {
   if (isTablet(context)) {
-    return const EdgeInsets.fromLTRB(20, 16, 20, 92);
+    return const EdgeInsets.fromLTRB(10, 8, 10, 68);
   }
   if (isCompactPhone(context)) {
-    return const EdgeInsets.fromLTRB(8, 8, 8, 84);
+    return const EdgeInsets.fromLTRB(4, 4, 4, 60);
   }
-  return const EdgeInsets.fromLTRB(12, 12, 12, 88);
+  return const EdgeInsets.fromLTRB(6, 6, 6, 64);
 }
