@@ -153,4 +153,104 @@ class QuranRepository {
       );
     }).toList();
   }
+
+  /// Fetches every ayah on a real, absolute Mushaf page (1-604), regardless
+  /// of which surah(s) it belongs to. Unlike [getSurahAyahs] (scoped to one
+  /// surah), a page that's shared between the end of one surah and the
+  /// start of the next comes back with both, each ayah carrying its own
+  /// correct [Ayah.surahNumber] (read from the API's per-ayah `surah`
+  /// object) — this is what makes rendering a real Mushaf page's true
+  /// content (not just "this surah's lines for this page") possible.
+  Future<List<Ayah>> getPageAyahs(
+    int pageNumber, {
+    bool withTranslation = true,
+  }) async {
+    final cacheKey = 'page_v1_$pageNumber';
+    final cached = await FileCache.read(cacheKey);
+    if (cached != null) {
+      return _ayahsFromPageCache(cached);
+    }
+
+    final arUri = Uri.parse(
+      '${ApiConstants.quranBase}/page/$pageNumber/${ApiConstants.arabicEdition}',
+    );
+    final arRes = await http.get(arUri);
+    if (arRes.statusCode != 200) {
+      throw Exception('Failed to load page $pageNumber');
+    }
+    final arBody = jsonDecode(arRes.body) as Map<String, dynamic>;
+    final arAyahsJson = (arBody['data']['ayahs'] as List)
+        .cast<Map<String, dynamic>>();
+    final arAyahs = arAyahsJson
+        .map(
+          (e) => Ayah.fromArabicJson(
+            e,
+            (e['surah'] as Map<String, dynamic>)['number'] as int,
+          ),
+        )
+        .toList();
+
+    List<String>? translations;
+    if (withTranslation) {
+      final enUri = Uri.parse(
+        '${ApiConstants.quranBase}/page/$pageNumber/${ApiConstants.englishEdition}',
+      );
+      final enRes = await http.get(enUri);
+      if (enRes.statusCode == 200) {
+        final enBody = jsonDecode(enRes.body) as Map<String, dynamic>;
+        translations = (enBody['data']['ayahs'] as List)
+            .map((e) => (e as Map<String, dynamic>)['text'] as String)
+            .toList();
+      }
+    }
+
+    final ayahs = <Ayah>[];
+    for (var i = 0; i < arAyahs.length; i++) {
+      final translation = translations != null && i < translations.length
+          ? translations[i]
+          : null;
+      var ayah = arAyahs[i].copyWithTranslation(translation);
+      if (ayah.numberInSurah == 1 && hasSeparateBismillah(ayah.surahNumber)) {
+        ayah = ayah.copyWithArabicText(_stripBismillahPrefix(ayah.textAr));
+      }
+      ayahs.add(ayah);
+    }
+
+    await FileCache.write(cacheKey, {
+      'ayahs': ayahs
+          .map(
+            (a) => {
+              'number': a.number,
+              'numberInSurah': a.numberInSurah,
+              'surahNumber': a.surahNumber,
+              'textAr': a.textAr,
+              'textEn': a.textEn,
+              'juz': a.juz,
+              'page': a.page,
+              'hizbQuarter': a.hizbQuarter,
+              'sajda': a.sajda,
+            },
+          )
+          .toList(),
+    });
+
+    return ayahs;
+  }
+
+  List<Ayah> _ayahsFromPageCache(Map<String, dynamic> cached) {
+    return (cached['ayahs'] as List).map((e) {
+      final m = e as Map<String, dynamic>;
+      return Ayah(
+        number: m['number'] as int,
+        numberInSurah: m['numberInSurah'] as int,
+        surahNumber: m['surahNumber'] as int,
+        textAr: m['textAr'] as String,
+        textEn: m['textEn'] as String?,
+        juz: m['juz'] as int,
+        page: m['page'] as int,
+        hizbQuarter: m['hizbQuarter'] as int,
+        sajda: m['sajda'] as bool,
+      );
+    }).toList();
+  }
 }

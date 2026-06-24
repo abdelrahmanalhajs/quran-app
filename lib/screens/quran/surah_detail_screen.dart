@@ -14,6 +14,29 @@ import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
 
+/// Everything [SurahDetailScreen] needs to render: the surah's own ayahs
+/// (for list mode, the FAB and totals), the same ayahs but with the first
+/// and/or last Mushaf-page group replaced by the *actual* page content from
+/// [QuranRepository.getPageAyahs] (which may include trailing ayahs of the
+/// previous surah or leading ayahs of the next one, exactly like a real
+/// printed Mushaf), and a lookup of every surah referenced on those boundary
+/// pages so banners/totals can be shown for a surah other than this one.
+class _SurahPageBundle {
+  final List<Ayah> ayahs;
+  final List<Ayah> pageViewAyahs;
+  final bool isFirstPageShared;
+  final bool isLastPageShared;
+  final Map<int, SurahSummary> surahsByNumber;
+
+  _SurahPageBundle({
+    required this.ayahs,
+    required this.pageViewAyahs,
+    required this.isFirstPageShared,
+    required this.isLastPageShared,
+    required this.surahsByNumber,
+  });
+}
+
 class SurahDetailScreen extends StatefulWidget {
   final SurahSummary surah;
 
@@ -22,10 +45,20 @@ class SurahDetailScreen extends StatefulWidget {
   /// backward flow), not jump back to its first page.
   final bool startAtLastPage;
 
+  /// This surah's first Mushaf page was already fully shown combined into
+  /// the previous surah's last page, so skip straight to the second page.
+  final bool skipFirstPage;
+
+  /// This surah's last Mushaf page was already fully shown combined into
+  /// the next surah's first page, so land one page before the last.
+  final bool skipLastPage;
+
   const SurahDetailScreen({
     super.key,
     required this.surah,
     this.startAtLastPage = false,
+    this.skipFirstPage = false,
+    this.skipLastPage = false,
   });
 
   @override
@@ -33,17 +66,71 @@ class SurahDetailScreen extends StatefulWidget {
 }
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
-  late Future<List<Ayah>> _ayahsFuture;
+  late Future<_SurahPageBundle> _bundleFuture;
 
   @override
   void initState() {
     super.initState();
-    _ayahsFuture = context.read<QuranProvider>().repository.getSurahAyahs(
-      widget.surah.number,
+    _bundleFuture = _loadBundle();
+  }
+
+  Future<_SurahPageBundle> _loadBundle() async {
+    final repo = context.read<QuranProvider>().repository;
+    final surahNumber = widget.surah.number;
+    final results = await Future.wait([
+      repo.getSurahAyahs(surahNumber),
+      repo.getSurahList(),
+    ]);
+    final ayahs = results[0] as List<Ayah>;
+    final surahList = results[1] as List<SurahSummary>;
+    final surahsByNumber = {for (final s in surahList) s.number: s};
+
+    if (ayahs.isEmpty) {
+      return _SurahPageBundle(
+        ayahs: ayahs,
+        pageViewAyahs: ayahs,
+        isFirstPageShared: false,
+        isLastPageShared: false,
+        surahsByNumber: surahsByNumber,
+      );
+    }
+
+    final firstPage = ayahs.first.page;
+    final lastPage = ayahs.last.page;
+    final firstPageAyahs = await repo.getPageAyahs(firstPage);
+    final lastPageAyahs = firstPage == lastPage
+        ? firstPageAyahs
+        : await repo.getPageAyahs(lastPage);
+
+    final isFirstPageShared = firstPageAyahs.any(
+      (a) => a.surahNumber != surahNumber,
+    );
+    final isLastPageShared = lastPageAyahs.any(
+      (a) => a.surahNumber != surahNumber,
+    );
+
+    final pageViewAyahs = firstPage == lastPage
+        ? firstPageAyahs
+        : [
+            ...firstPageAyahs,
+            ...ayahs.where((a) => a.page != firstPage && a.page != lastPage),
+            ...lastPageAyahs,
+          ];
+
+    return _SurahPageBundle(
+      ayahs: ayahs,
+      pageViewAyahs: pageViewAyahs,
+      isFirstPageShared: isFirstPageShared,
+      isLastPageShared: isLastPageShared,
+      surahsByNumber: surahsByNumber,
     );
   }
 
-  Future<void> _goToAdjacentSurah(BuildContext context, int delta) async {
+  Future<void> _goToAdjacentSurah(
+    BuildContext context,
+    int delta, {
+    required bool skip,
+  }) async {
     final targetNumber = widget.surah.number + delta;
     if (targetNumber < 1 || targetNumber > 114) return;
     final list = await context.read<QuranProvider>().repository.getSurahList();
@@ -61,6 +148,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         builder: (_) => SurahDetailScreen(
           surah: resolvedTarget,
           startAtLastPage: delta < 0,
+          skipFirstPage: delta > 0 && skip,
+          skipLastPage: delta < 0 && skip,
         ),
       ),
     );
@@ -117,8 +206,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Ayah>>(
-        future: _ayahsFuture,
+      body: FutureBuilder<_SurahPageBundle>(
+        future: _bundleFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -126,18 +215,29 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           if (snapshot.hasError) {
             return Center(child: Text('quran.error'.tr()));
           }
-          final ayahs = snapshot.data!;
-          final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
+          final bundle = snapshot.data!;
+          final ayahs = bundle.ayahs;
           if (settings.quranViewMode == QuranViewMode.page) {
             return _MushafPageView(
-              ayahs: ayahs,
-              surahNameAr: widget.surah.nameAr,
-              activeAyahNumber: activeAyah,
+              ayahs: bundle.pageViewAyahs,
+              surahNumber: widget.surah.number,
+              surahsByNumber: bundle.surahsByNumber,
+              activeSurahNumber: audio.currentSurah,
+              activeAyahNumber: audio.currentAbsoluteAyah,
               fontSize: settings.quranFontSize,
               startAtLastPage: widget.startAtLastPage,
-              onAdjacentSurah: (delta) => _goToAdjacentSurah(context, delta),
+              skipFirstPage: widget.skipFirstPage,
+              skipLastPage: widget.skipLastPage,
+              onAdjacentSurah: (delta) => _goToAdjacentSurah(
+                context,
+                delta,
+                skip: delta > 0
+                    ? bundle.isLastPageShared
+                    : bundle.isFirstPageShared,
+              ),
             );
           }
+          final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
           final showBismillah = QuranRepository.hasSeparateBismillah(
             widget.surah.number,
           );
@@ -480,12 +580,14 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   }
 }
 
-/// Splits a surah's ayahs into chunks matching real Mushaf page breaks
-/// (using each ayah's [Ayah.page]), so they render as separate swipeable
-/// pages instead of one continuous flow. Since this only has one surah's
-/// ayahs to work with, a Mushaf page that's shared between this surah and an
-/// adjacent one will only show this surah's lines for that page number —
-/// swiping past the edge moves to the adjacent surah instead.
+/// Splits a list of ayahs into chunks matching real Mushaf page breaks
+/// (using each ayah's [Ayah.page]). Each chunk renders as exactly one
+/// swipeable screen — a real Mushaf page is never split across several
+/// screens, regardless of font size; [_buildMushafPage]'s own FittedBox
+/// scales the whole page down to fit instead. When [ayahs] is the result of
+/// [_SurahDetailScreenState._loadBundle]'s page-aware fetch, the first and/or
+/// last chunk may already contain ayahs from an adjacent surah, in which
+/// case that chunk is the literal, true content of that printed page.
 List<List<Ayah>> _groupByMushafPage(List<Ayah> ayahs) {
   final pages = <List<Ayah>>[];
   for (final ayah in ayahs) {
@@ -498,194 +600,55 @@ List<List<Ayah>> _groupByMushafPage(List<Ayah> ayahs) {
   return pages;
 }
 
-double _measureTextHeight(
-  BuildContext context,
-  String text,
-  TextStyle style,
-  double maxWidth,
-) {
-  final tp = TextPainter(
-    text: TextSpan(text: text, style: style),
-    textDirection: TextDirection.rtl,
-    textScaler: MediaQuery.textScalerOf(context),
-  )..layout(maxWidth: maxWidth);
-  return tp.height;
-}
-
-double _measureAyahBlockHeight(
-  BuildContext context,
-  List<Ayah> ayahs,
-  TextStyle baseStyle,
-  double maxWidth,
-) {
-  final spans = <InlineSpan>[];
-  for (final ayah in ayahs) {
-    spans.add(TextSpan(text: ayah.textAr, style: baseStyle));
-    spans.add(
-      TextSpan(
-        text: '۝${_arabicIndicNumber(ayah.numberInSurah)}',
-        style: baseStyle.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
-    spans.add(const TextSpan(text: ' '));
-  }
-  final tp = TextPainter(
-    text: TextSpan(children: spans),
-    textDirection: TextDirection.rtl,
-    textAlign: TextAlign.justify,
-    textScaler: MediaQuery.textScalerOf(context),
-  )..layout(maxWidth: maxWidth);
-  return tp.height;
-}
-
-/// Sum of every fixed-height element around the ayah text block in
-/// [_buildMushafPage] (Juz banner, ornate frame's own padding, the footer)
-/// — i.e. everything except the surah banner/Bismillah, which only appears
-/// on a Mushaf page's first screen and is accounted for separately.
-double _decorativeOverheadHeight(BuildContext context, double contentWidth) {
-  final juzBannerHeight =
-      _measureTextHeight(
-        context,
-        'quran.juz_label'.tr(args: ['٠']),
-        const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-          letterSpacing: 0.5,
-        ),
-        contentWidth,
-      ) +
-      16; // Juz banner Container's vertical:8 padding, both sides
-  final footerHeight = _measureTextHeight(
-    context,
-    'quran.page_footer'.tr(args: ['٠', '٠', '٠']),
-    const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-    contentWidth,
-  );
-  // _OrnateFrame outer padding (10*2) + inner padding (6*2) + the content
-  // Padding's own vertical fromLTRB(_, 20, _, 24), plus the SizedBox(14)
-  // gap between the ayah text and the footer.
-  const frameAndContentPadding = 20.0 + 12.0 + 44.0;
-  return juzBannerHeight + footerHeight + frameAndContentPadding + 14;
-}
-
-/// How much extra height the surah banner (and Bismillah, where it applies)
-/// adds on top of [_decorativeOverheadHeight] — only relevant for the first
-/// screen of a Mushaf page that starts a new surah.
-double _surahBannerOverheadHeight(
-  BuildContext context,
-  String surahNameAr,
-  int surahNumber,
-  double contentWidth,
-  TextStyle baseStyle,
-) {
-  var height =
-      _measureTextHeight(
-        context,
-        surahNameAr,
-        AppTheme.quranNameStyle(
-          context,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-        contentWidth,
-      ) +
-      20 + // _SurahBanner's own vertical:10 padding, both sides
-      18; // SizedBox(height: 18) after the banner block
-  if (QuranRepository.hasSeparateBismillah(surahNumber)) {
-    height +=
-        _measureTextHeight(
-          context,
-          'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-          baseStyle.copyWith(fontWeight: FontWeight.bold),
-          contentWidth,
-        ) +
-        14; // SizedBox(height: 14) before the Bismillah text
-  }
-  return height;
-}
-
-/// Splits one real Mushaf page's ayahs across as many screens as it
-/// actually takes to render them at the user's chosen font size without
-/// overflowing — instead of forcing everything onto a single screen and
-/// shrinking the text to fit, which made the font-size setting feel like it
-/// had no effect on denser pages. Never splits in the middle of an ayah:
-/// each screen always holds whole ayahs, so a single very long ayah that
-/// alone exceeds the available height is left to [_buildMushafPage]'s own
-/// FittedBox safety net rather than being cut off.
-List<List<Ayah>> _splitMushafPageToScreens(
-  BuildContext context,
-  List<Ayah> pageAyahs,
-  BoxConstraints constraints,
-  double fontSize,
-  String surahNameAr,
-) {
-  if (pageAyahs.isEmpty) return const [];
-  final baseStyle = AppTheme.quranTextStyle(
-    context,
-    fontSize: fontSize,
-  ).copyWith(height: 2.1);
-  // _OrnateFrame outer padding (10*2) + inner padding (6*2) + the content
-  // Padding's own horizontal fromLTRB(18, _, 18, _).
-  final contentWidth = constraints.maxWidth - 20 - 12 - 36;
-  final fixedOverhead = _decorativeOverheadHeight(context, contentWidth);
-  final showsSurahStart = pageAyahs.first.numberInSurah == 1;
-  final surahBannerOverhead = showsSurahStart
-      ? _surahBannerOverheadHeight(
-          context,
-          surahNameAr,
-          pageAyahs.first.surahNumber,
-          contentWidth,
-          baseStyle,
-        )
-      : 0.0;
-
-  final screens = <List<Ayah>>[];
-  var current = <Ayah>[];
+/// Splits one Mushaf page's ayahs into runs of consecutive ayahs that
+/// belong to the same surah, in page order. A page is almost always a
+/// single run, but a page shared between the end of one surah and the
+/// start of the next comes back as two (or, for very short surahs packed
+/// together, occasionally more) runs — each rendered with its own banner
+/// (where it starts a new surah) but on the same physical page.
+List<List<Ayah>> _groupBySurah(List<Ayah> pageAyahs) {
+  final runs = <List<Ayah>>[];
   for (final ayah in pageAyahs) {
-    final trial = [...current, ayah];
-    final textHeight = _measureAyahBlockHeight(
-      context,
-      trial,
-      baseStyle,
-      contentWidth,
-    );
-    final budget =
-        constraints.maxHeight -
-        fixedOverhead -
-        (screens.isEmpty ? surahBannerOverhead : 0);
-    if (current.isNotEmpty && textHeight > budget) {
-      screens.add(current);
-      current = [ayah];
+    if (runs.isEmpty || runs.last.first.surahNumber != ayah.surahNumber) {
+      runs.add([ayah]);
     } else {
-      current = trial;
+      runs.last.add(ayah);
     }
   }
-  if (current.isNotEmpty) screens.add(current);
-  return screens;
+  return runs;
 }
 
 /// A continuous, justified Arabic text flow with an ornate border, surah
-/// banner and inline ayah-number roundels, matching the look of a real
+/// banner(s) and inline ayah-number roundels, matching the look of a real
 /// printed Quran page rather than a list of separate ayah cards. Content is
 /// split into real Mushaf page breaks and presented as horizontally
 /// swipeable pages, like flipping through a physical Mushaf, with a
-/// Juz/Hizb/page footer at the end of each page. Colors are fixed
-/// (cream/green/black) regardless of app theme, since that's the
-/// recognizable look of a physical Mushaf page.
+/// Juz/Hizb/page footer at the end of each page. A page shared between two
+/// surahs shows both, banner and all, exactly where they fall on the real
+/// page. Colors are fixed (cream/green/black) regardless of app theme,
+/// since that's the recognizable look of a physical Mushaf page.
 class _MushafPageView extends StatefulWidget {
   final List<Ayah> ayahs;
-  final String surahNameAr;
+  final int surahNumber;
+  final Map<int, SurahSummary> surahsByNumber;
+  final int? activeSurahNumber;
   final int? activeAyahNumber;
   final double fontSize;
   final bool startAtLastPage;
+  final bool skipFirstPage;
+  final bool skipLastPage;
   final void Function(int delta) onAdjacentSurah;
 
   const _MushafPageView({
     required this.ayahs,
-    required this.surahNameAr,
+    required this.surahNumber,
+    required this.surahsByNumber,
+    required this.activeSurahNumber,
     required this.activeAyahNumber,
     required this.fontSize,
     required this.startAtLastPage,
+    required this.skipFirstPage,
+    required this.skipLastPage,
     required this.onAdjacentSurah,
   });
 
@@ -706,7 +669,6 @@ class _MushafPageViewState extends State<_MushafPageView> {
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
   bool _navigating = false;
-  bool _initialized = false;
   int _currentIndex = 0;
   int _itemCount = 0;
 
@@ -717,59 +679,66 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _recognizers.clear();
   }
 
-  /// Splitting a Mushaf page across screens depends on the actual available
-  /// width/height, which is only known once the surrounding layout runs —
-  /// so this is done lazily on the first build (via the [LayoutBuilder] in
-  /// [build]) rather than in [initState]. It deliberately doesn't redo the
-  /// split on later layout changes (e.g. a mid-session rotation): the
-  /// surrounding [PageController]/sentinel indices are keyed to whichever
-  /// split ran first, and reconciling a resplit with the page the user is
-  /// currently on isn't worth the complexity for what's a rare case anyway.
-  void _ensureInitialized(BoxConstraints constraints) {
-    if (_initialized) return;
-    _initialized = true;
+  @override
+  void initState() {
+    super.initState();
 
-    final mushafPages = _groupByMushafPage(widget.ayahs);
-    final screenPages = <List<Ayah>>[];
-    for (final pageAyahs in mushafPages) {
-      screenPages.addAll(
-        _splitMushafPageToScreens(
-          context,
-          pageAyahs,
-          constraints,
-          widget.fontSize,
-          widget.surahNameAr,
-        ),
-      );
-    }
-    _screenPages = screenPages;
-
-    final surahNumber = widget.ayahs.isNotEmpty
-        ? widget.ayahs.first.surahNumber
-        : null;
-    final hasPrevSurah = surahNumber != null && surahNumber > 1;
-    final hasNextSurah = surahNumber != null && surahNumber < 114;
+    _screenPages = _groupByMushafPage(widget.ayahs);
+    final hasPrevSurah = widget.surahNumber > 1;
+    final hasNextSurah = widget.surahNumber < 114;
 
     _realPagesStart = hasPrevSurah ? 1 : 0;
     _prevSentinelIndex = hasPrevSurah ? 0 : null;
     _nextSentinelIndex = hasNextSurah
-        ? _realPagesStart + screenPages.length
+        ? _realPagesStart + _screenPages.length
         : null;
     _itemCount =
-        screenPages.length +
+        _screenPages.length +
         (_prevSentinelIndex != null ? 1 : 0) +
         (_nextSentinelIndex != null ? 1 : 0);
-    final initialPage = widget.startAtLastPage && screenPages.isNotEmpty
-        ? _realPagesStart + screenPages.length - 1
-        : _realPagesStart;
+
+    // A page that's shared with the adjacent surah may already have been
+    // shown in full on the screen the user is coming from (the adjacent
+    // surah's own boundary page) — skip past it so it isn't shown twice.
+    final totalScreens = _screenPages.length;
+    var fullySkip = false;
+    int initialPage;
+    if (widget.startAtLastPage) {
+      final idx = totalScreens - 1 - (widget.skipLastPage ? 1 : 0);
+      if (idx < 0) {
+        fullySkip = true;
+        initialPage = _realPagesStart;
+      } else {
+        initialPage = _realPagesStart + idx;
+      }
+    } else {
+      final idx = widget.skipFirstPage ? 1 : 0;
+      if (idx >= totalScreens) {
+        fullySkip = true;
+        initialPage = _realPagesStart;
+      } else {
+        initialPage = _realPagesStart + idx;
+      }
+    }
     _currentIndex = initialPage;
     _pageController = PageController(initialPage: initialPage);
+
+    // This surah's entire content was already shown combined into the
+    // adjacent surah's boundary page, so there's nothing unique to land on
+    // here at all — defer straight to the next surah over in that
+    // direction, same as swiping past this (empty, from this surah's point
+    // of view) edge would.
+    if (fullySkip) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onAdjacentSurah(widget.startAtLastPage ? -1 : 1);
+      });
+    }
   }
 
   @override
   void dispose() {
     _clearRecognizers();
-    if (_initialized) _pageController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -808,113 +777,142 @@ class _MushafPageViewState extends State<_MushafPageView> {
   @override
   Widget build(BuildContext context) {
     _clearRecognizers();
-    final totalAyahs = widget.ayahs.length;
 
     return ResponsiveCenter(
       maxWidth: 760,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            _ensureInitialized(constraints);
-            return GestureDetector(
-              // Without this, a drag starting on empty space (e.g. the
-              // letterboxed margins FittedBox leaves around a shrunk page)
-              // wouldn't be hit-tested at all, since the default
-              // `deferToChild` behavior only recognizes gestures where a
-              // child actually paints.
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragEnd: _handleHorizontalDragEnd,
-              child: PageView.builder(
-                controller: _pageController,
-                reverse: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _itemCount,
-                onPageChanged: _onPageChanged,
-                itemBuilder: (context, index) {
-                  if (index == _prevSentinelIndex) {
-                    return const _AdjacentSurahTransitionPage(forward: false);
-                  }
-                  if (index == _nextSentinelIndex) {
-                    return const _AdjacentSurahTransitionPage(forward: true);
-                  }
-                  final pageAyahs = _screenPages[index - _realPagesStart];
-                  return _buildMushafPage(
-                    context,
-                    pageAyahs,
-                    totalAyahs: totalAyahs,
-                  );
-                },
-              ),
-            );
-          },
+        child: GestureDetector(
+          // Without this, a drag starting on empty space (e.g. the
+          // letterboxed margins FittedBox leaves around a shrunk page)
+          // wouldn't be hit-tested at all, since the default
+          // `deferToChild` behavior only recognizes gestures where a
+          // child actually paints.
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragEnd: _handleHorizontalDragEnd,
+          child: PageView.builder(
+            controller: _pageController,
+            reverse: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _itemCount,
+            onPageChanged: _onPageChanged,
+            itemBuilder: (context, index) {
+              if (index == _prevSentinelIndex) {
+                return const _AdjacentSurahTransitionPage(forward: false);
+              }
+              if (index == _nextSentinelIndex) {
+                return const _AdjacentSurahTransitionPage(forward: true);
+              }
+              final pageAyahs = _screenPages[index - _realPagesStart];
+              return _buildMushafPage(context, pageAyahs);
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMushafPage(
-    BuildContext context,
-    List<Ayah> pageAyahs, {
-    required int totalAyahs,
-  }) {
+  Widget _buildMushafPage(BuildContext context, List<Ayah> pageAyahs) {
     final baseStyle = AppTheme.quranTextStyle(
       context,
       fontSize: widget.fontSize,
     ).copyWith(height: 2.1, color: _ink);
-    final showsSurahStart = pageAyahs.any((a) => a.numberInSurah == 1);
 
-    final spans = <InlineSpan>[];
-    for (final ayah in pageAyahs) {
-      final recognizer = TapGestureRecognizer()
-        ..onTap = () =>
-            _showAyahSheet(context, ayah, totalAyahs, widget.surahNameAr);
-      _recognizers.add(recognizer);
-      final isActive = widget.activeAyahNumber == ayah.numberInSurah;
-
-      // The ayah-end marker is plain text glued directly to its own ayah's
-      // span with no space in between, never a WidgetSpan. A WidgetSpan
-      // placeholder carries an inherent line-break opportunity on *both*
-      // sides regardless of adjacent whitespace, so even after removing the
-      // leading space it could still wrap onto the next line and visually
-      // sit next to the following ayah's text — looking like the ayah
-      // numbers got swapped. Plain adjacent TextSpans with no whitespace
-      // between them can never be split by a line break, so the marker can
-      // only ever travel with its own ayah. The breakable space goes after
-      // the marker, where wrapping just starts the next ayah on a new line.
-      final highlight = isActive
-          ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
-          : null;
-      spans.add(
-        TextSpan(
-          text: ayah.textAr,
-          style: baseStyle.copyWith(background: highlight),
-          recognizer: recognizer,
-        ),
-      );
-      spans.add(
-        TextSpan(
-          text: '۝${_arabicIndicNumber(ayah.numberInSurah)}',
-          style: baseStyle.copyWith(
+    final blocks = <Widget>[];
+    final runs = _groupBySurah(pageAyahs);
+    for (var r = 0; r < runs.length; r++) {
+      final run = runs[r];
+      final runSurahNumber = run.first.surahNumber;
+      final startsNewSurah = run.first.numberInSurah == 1;
+      if (startsNewSurah) {
+        if (r > 0) blocks.add(const SizedBox(height: 18));
+        final surahInfo = widget.surahsByNumber[runSurahNumber];
+        blocks.add(
+          _SurahBanner(
+            name: surahInfo?.nameAr ?? '',
             color: _frameGreen,
-            fontWeight: FontWeight.bold,
-            background: highlight,
           ),
-          recognizer: recognizer,
+        );
+        if (QuranRepository.hasSeparateBismillah(runSurahNumber)) {
+          blocks.add(const SizedBox(height: 14));
+          blocks.add(
+            Text(
+              'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+              textAlign: TextAlign.center,
+              textDirection: TextDirection.rtl,
+              style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+            ),
+          );
+        }
+        blocks.add(const SizedBox(height: 18));
+      }
+
+      final spans = <InlineSpan>[];
+      for (final ayah in run) {
+        final surahInfo = widget.surahsByNumber[ayah.surahNumber];
+        final recognizer = TapGestureRecognizer()
+          ..onTap = () => _showAyahSheet(
+            context,
+            ayah,
+            surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
+            surahInfo?.nameAr ?? '',
+          );
+        _recognizers.add(recognizer);
+        final isActive =
+            widget.activeSurahNumber == ayah.surahNumber &&
+            widget.activeAyahNumber == ayah.numberInSurah;
+
+        // The ayah-end marker is plain text glued directly to its own
+        // ayah's span with no space in between, never a WidgetSpan. A
+        // WidgetSpan placeholder carries an inherent line-break opportunity
+        // on *both* sides regardless of adjacent whitespace, so even after
+        // removing the leading space it could still wrap onto the next
+        // line and visually sit next to the following ayah's text —
+        // looking like the ayah numbers got swapped. Plain adjacent
+        // TextSpans with no whitespace between them can never be split by
+        // a line break, so the marker can only ever travel with its own
+        // ayah. The breakable space goes after the marker, where wrapping
+        // just starts the next ayah on a new line.
+        final highlight = isActive
+            ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
+            : null;
+        spans.add(
+          TextSpan(
+            text: ayah.textAr,
+            style: baseStyle.copyWith(background: highlight),
+            recognizer: recognizer,
+          ),
+        );
+        spans.add(
+          TextSpan(
+            text: '۝${_arabicIndicNumber(ayah.numberInSurah)}',
+            style: baseStyle.copyWith(
+              color: _frameGreen,
+              fontWeight: FontWeight.bold,
+              background: highlight,
+            ),
+            recognizer: recognizer,
+          ),
+        );
+        spans.add(const TextSpan(text: ' '));
+      }
+      blocks.add(
+        Text.rich(
+          TextSpan(children: spans),
+          textAlign: TextAlign.justify,
+          textDirection: TextDirection.rtl,
         ),
       );
-      spans.add(const TextSpan(text: ' '));
     }
 
     final lastAyah = pageAyahs.last;
     final hizbLabel =
         '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
 
-    // pageAyahs has already been split (see _splitMushafPageToScreens) to
-    // fit the available height at this font size without scrolling, so
-    // this FittedBox should rarely need to shrink anything — it's a safety
-    // net for estimation error in that split, and for the rare single ayah
-    // long enough to overflow on its own (ayahs are never split mid-text).
+    // The real Mushaf page's ayahs are never split across screens or
+    // dropped to fit a font size — this FittedBox uniformly shrinks the
+    // whole rendered page (never scaling up) so it always fits on screen
+    // without scrolling, at whatever font size the user has chosen.
     final page = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -945,26 +943,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (showsSurahStart) ...[
-                  _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
-                  if (QuranRepository.hasSeparateBismillah(
-                    pageAyahs.first.surahNumber,
-                  )) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                      textAlign: TextAlign.center,
-                      textDirection: TextDirection.rtl,
-                      style: baseStyle.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                ],
-                Text.rich(
-                  TextSpan(children: spans),
-                  textAlign: TextAlign.justify,
-                  textDirection: TextDirection.rtl,
-                ),
+                ...blocks,
                 const SizedBox(height: 14),
                 Text(
                   'quran.page_footer'.tr(
