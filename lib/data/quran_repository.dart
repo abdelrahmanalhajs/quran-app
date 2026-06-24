@@ -8,6 +8,31 @@ import '../models/surah.dart';
 class QuranRepository {
   List<SurahSummary>? _surahCache;
 
+  /// Whether [surahNumber] should show a separate Bismillah line under the
+  /// surah banner. False for Al-Fatiha (it's already ayah 1) and At-Tawbah
+  /// (it has none).
+  static bool hasSeparateBismillah(int surahNumber) =>
+      surahNumber != 1 && surahNumber != 9;
+
+  // The Uthmani-script edition prepends the 4-word Bismillah phrase to the
+  // text of ayah 1 for every surah except Al-Fatiha and At-Tawbah (see
+  // [hasSeparateBismillah]). Diacritic encoding of that prefix isn't always
+  // byte-identical (e.g. shadda placement can vary), so rather than matching
+  // an exact literal string, strip everything up to and including the 4th
+  // space — robust to those encoding differences.
+  static String _stripBismillahPrefix(String text) {
+    var spaceCount = 0;
+    for (var i = 0; i < text.length; i++) {
+      if (text[i] == ' ') {
+        spaceCount++;
+        if (spaceCount == 4) {
+          return text.substring(i + 1).trimLeft();
+        }
+      }
+    }
+    return text;
+  }
+
   Future<List<SurahSummary>> getSurahList() async {
     if (_surahCache != null) return _surahCache!;
 
@@ -42,7 +67,7 @@ class QuranRepository {
   }
 
   Future<List<Ayah>> getSurahAyahs(int surahNumber, {bool withTranslation = true}) async {
-    final cacheKey = 'surah_$surahNumber';
+    final cacheKey = 'surah_v2_$surahNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
       return _ayahsFromCache(cached, surahNumber);
@@ -78,6 +103,13 @@ class QuranRepository {
     for (var i = 0; i < arAyahs.length; i++) {
       final translation = translations != null && i < translations.length ? translations[i] : null;
       ayahs.add(arAyahs[i].copyWithTranslation(translation));
+    }
+
+    if (hasSeparateBismillah(surahNumber) && ayahs.isNotEmpty) {
+      final first = ayahs[0];
+      ayahs[0] = first.copyWithArabicText(
+        _stripBismillahPrefix(first.textAr),
+      );
     }
 
     await FileCache.write(cacheKey, {

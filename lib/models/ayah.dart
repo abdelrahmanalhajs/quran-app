@@ -32,6 +32,19 @@ class Ayah {
     );
   }
 
+  Ayah copyWithArabicText(String text) {
+    return Ayah(
+      number: number,
+      numberInSurah: numberInSurah,
+      surahNumber: surahNumber,
+      textAr: text,
+      textEn: textEn,
+      juz: juz,
+      page: page,
+      sajda: sajda,
+    );
+  }
+
   String get verseKey => '$surahNumber:$numberInSurah';
 
   factory Ayah.fromArabicJson(Map<String, dynamic> json, int surahNumber) {

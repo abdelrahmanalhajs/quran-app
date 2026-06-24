@@ -81,6 +81,12 @@ class AudioProvider extends ChangeNotifier {
       if (_player.playing) {
         await _player.pause();
       } else {
+        // After playback reaches the end, just_audio won't restart on play()
+        // alone — seek back to the start first so pressing play again
+        // repeats the surah instead of doing nothing.
+        if (_player.processingState == ProcessingState.completed) {
+          await _player.seek(Duration.zero);
+        }
         await _player.play();
       }
       return;

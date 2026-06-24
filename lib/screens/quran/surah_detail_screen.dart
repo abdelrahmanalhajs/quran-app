@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/quran_repository.dart';
 import '../../data/tafsir_repository.dart';
 import '../../models/ayah.dart';
 import '../../models/surah.dart';
@@ -95,16 +96,36 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               fontSize: settings.quranFontSize,
             );
           }
+          final showBismillah = QuranRepository.hasSeparateBismillah(
+            widget.surah.number,
+          );
           return ResponsiveCenter(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-              itemCount: ayahs.length,
-              itemBuilder: (context, index) => _AyahCard(
-                ayah: ayahs[index],
-                totalAyahs: widget.surah.numberOfAyahs,
-                isActive: activeAyah == ayahs[index].numberInSurah,
-                surahNameAr: widget.surah.nameAr,
-              ),
+              itemCount: ayahs.length + (showBismillah ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (showBismillah && index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                      textAlign: TextAlign.center,
+                      textDirection: TextDirection.rtl,
+                      style: AppTheme.quranTextStyle(
+                        context,
+                        fontSize: settings.quranFontSize,
+                      ).copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  );
+                }
+                final ayah = ayahs[showBismillah ? index - 1 : index];
+                return _AyahCard(
+                  ayah: ayah,
+                  totalAyahs: widget.surah.numberOfAyahs,
+                  isActive: activeAyah == ayah.numberInSurah,
+                  surahNameAr: widget.surah.nameAr,
+                );
+              },
             ),
           );
         },
@@ -526,6 +547,20 @@ class _MushafPageViewState extends State<_MushafPageView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
+                    if (widget.ayahs.isNotEmpty &&
+                        QuranRepository.hasSeparateBismillah(
+                          widget.ayahs.first.surahNumber,
+                        )) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                        textAlign: TextAlign.center,
+                        textDirection: TextDirection.rtl,
+                        style: baseStyle.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 18),
                     Text.rich(
                       TextSpan(children: spans),
