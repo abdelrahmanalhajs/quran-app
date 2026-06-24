@@ -335,10 +335,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-/// 2 tappable dots (medium/large), growing in size left-to-right, for
+/// 2 tappable dots (Small/Large), growing in size left-to-right, for
 /// picking one of [kQuranFontSizeSteps] — a discrete "Aa" size picker
 /// instead of a continuous slider, since only these 2 sizes are meaningful
-/// here (medium fills the page without scrolling, large scrolls).
+/// here (Small fills the page without scrolling, Large scrolls).
 class _QuranFontSizeDots extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
@@ -348,18 +348,12 @@ class _QuranFontSizeDots extends StatelessWidget {
   static const double _minDotSize = 12;
   static const double _maxDotSize = 28;
 
-  int get _selectedIndex {
-    var nearest = 0;
-    var nearestDiff = double.infinity;
-    for (var i = 0; i < kQuranFontSizeSteps.length; i++) {
-      final diff = (kQuranFontSizeSteps[i] - value).abs();
-      if (diff < nearestDiff) {
-        nearestDiff = diff;
-        nearest = i;
-      }
-    }
-    return nearest;
-  }
+  static const _labelKeys = [
+    'settings.quran_font_small',
+    'settings.quran_font_large',
+  ];
+
+  int get _selectedIndex => quranFontSizeStepIndex(value);
 
   @override
   Widget build(BuildContext context) {
@@ -417,7 +411,7 @@ class _QuranFontSizeDots extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${index + 1}',
+              _labelKeys[index].tr(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: isSelected ? color : unselectedColor,
                 fontWeight: isSelected ? FontWeight.bold : null,

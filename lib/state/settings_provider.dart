@@ -7,13 +7,34 @@ import '../core/constants/reciters.dart';
 /// default since it matches the look of a real Quran page.
 enum QuranViewMode { page, list }
 
-/// The 2 selectable Quran text sizes: medium, large. Medium always fills
+/// The 2 selectable Quran text sizes: Small and Large. Small always fills
 /// the full page without scrolling (scaled up or down to match the screen
-/// exactly, like a printed Mushaf page); large renders at its natural,
-/// bigger size and scrolls to keep reading instead of shrinking the text or
-/// changing which ayahs are on the page (see [_MushafPageViewState] in
+/// exactly, like a printed Mushaf page); Large renders at its natural size
+/// and scrolls to keep reading instead of shrinking the text or changing
+/// which ayahs are on the page (see [_MushafPageViewState] in
 /// surah_detail_screen.dart).
-const List<double> kQuranFontSizeSteps = [35, 36];
+const List<double> kQuranFontSizeSteps = [60, 36];
+
+/// Parallel to [kQuranFontSizeSteps]: whether that step auto-fits the page
+/// without scrolling. Kept separate from the raw font-size values so Small's
+/// value can be tuned independently without it being mistaken for Large
+/// (which would flip which one scrolls if inferred from a `>=` comparison).
+const List<bool> kQuranFontSizeFitsPage = [true, false];
+
+/// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
+/// nearest to [fontSize].
+int quranFontSizeStepIndex(double fontSize) {
+  var nearest = 0;
+  var nearestDiff = double.infinity;
+  for (var i = 0; i < kQuranFontSizeSteps.length; i++) {
+    final diff = (kQuranFontSizeSteps[i] - fontSize).abs();
+    if (diff < nearestDiff) {
+      nearestDiff = diff;
+      nearest = i;
+    }
+  }
+  return nearest;
+}
 
 class SettingsProvider extends ChangeNotifier {
   static const _kThemeMode = 'theme_mode';
@@ -23,7 +44,7 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 35;
+  double _quranFontSize = 60;
   QuranViewMode _quranViewMode = QuranViewMode.page;
 
   ThemeMode get themeMode => _themeMode;
@@ -45,7 +66,7 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 35;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 60;
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list

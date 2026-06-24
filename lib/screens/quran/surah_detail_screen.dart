@@ -934,14 +934,16 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    // Medium (the first of kQuranFontSizeSteps) must always fit without
-    // scrolling AND fill the full frame width and height — not just
-    // shrink-to-fit, which (see [_PageScaler]) leaves a narrow column with
-    // large empty margins on narrow phones, since uniformly scaling text
-    // that's already pinned to the full width down to fit the height also
-    // shrinks the width. Large skips all of that, since it's deliberately
-    // large enough to commonly overflow and is meant to be read by
-    // scrolling instead.
+    // Small must always fit without scrolling AND fill the full frame width
+    // and height — not just shrink-to-fit, which (see [_PageScaler]) leaves
+    // a narrow column with large empty margins on narrow phones, since
+    // uniformly scaling text that's already pinned to the full width down
+    // to fit the height also shrinks the width. Large skips all of that,
+    // since it's deliberately large enough to commonly overflow and is
+    // meant to be read by scrolling instead. Which tier fits-the-page is
+    // looked up via [kQuranFontSizeFitsPage] rather than comparing raw
+    // values, so Small's font size can be tuned independently of Large's
+    // without flipping which one scrolls.
     //
     // The frame itself is *always* the full screen size (via the Expanded
     // below) at every size, on phone or tablet, in any orientation — never
@@ -952,7 +954,9 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // the same cream background beneath the text, the way a real Mushaf
     // page's last, partly-filled page looks, rather than empty space
     // floating the text away from the border on every side.
-    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[1];
+    final fitsPage =
+        kQuranFontSizeFitsPage[quranFontSizeStepIndex(widget.fontSize)];
+    final allowScroll = !fitsPage;
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
         if (!allowScroll) {
