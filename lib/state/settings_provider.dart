@@ -33,7 +33,7 @@ const List<bool> kQuranFontSizeFitsPage = [true, true, false];
 /// than Small: a tighter line height means less of the page's fixed height
 /// budget goes to the gap between lines once the page is scaled to fill the
 /// frame exactly, leaving more of it for the letters themselves.
-const List<double> kQuranFontSizeLineHeight = [1.9, 1.5, 1.9];
+const List<double> kQuranFontSizeLineHeight = [2.3, 1.9, 1.9];
 
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].
