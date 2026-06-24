@@ -909,12 +909,15 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final hizbLabel =
         '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
 
-    // The real Mushaf page's ayahs are never split across screens or
-    // dropped to fit a font size — this FittedBox uniformly shrinks the
-    // whole rendered page (never scaling up) so it always fits on screen
-    // without scrolling, at whatever font size the user has chosen.
-    final page = Column(
-      mainAxisSize: MainAxisSize.min,
+    // The frame fills the full page extent given by the PageView (matching
+    // the device's screen, on both phone and tablet) regardless of font
+    // size — Expanded stretches it to that size even when the ayah text at
+    // the default font size doesn't reach the bottom. The ayah text itself
+    // never shrinks and is never split across screens or dropped to fit;
+    // if a larger font size makes it taller than the frame, the inner
+    // SingleChildScrollView lets the user scroll down to read the rest of
+    // this same page (same ayahs, same page) instead.
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (pageAyahs.isNotEmpty)
@@ -935,47 +938,40 @@ class _MushafPageViewState extends State<_MushafPageView> {
               ),
             ),
           ),
-        _OrnateFrame(
-          color: _frameGreen,
-          background: _pageBg,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ...blocks,
-                const SizedBox(height: 14),
-                Text(
-                  'quran.page_footer'.tr(
-                    args: [
-                      _localizedNumber(context, lastAyah.juz),
-                      hizbLabel,
-                      _localizedNumber(context, lastAyah.page),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _frameGreen,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
+        Expanded(
+          child: _OrnateFrame(
+            color: _frameGreen,
+            background: _pageBg,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ...blocks,
+                    const SizedBox(height: 14),
+                    Text(
+                      'quran.page_footer'.tr(
+                        args: [
+                          _localizedNumber(context, lastAyah.juz),
+                          hizbLabel,
+                          _localizedNumber(context, lastAyah.page),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _frameGreen,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ],
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: SizedBox(width: constraints.maxWidth, child: page),
-          ),
-        );
-      },
     );
   }
 }
