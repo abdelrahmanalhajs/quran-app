@@ -781,7 +781,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     return ResponsiveCenter(
       maxWidth: 760,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+        padding: responsiveMushafPagePadding(context),
         child: GestureDetector(
           // Without this, a drag starting on empty space (e.g. the
           // letterboxed margins FittedBox leaves around a shrunk page)
@@ -945,40 +945,45 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit
     // without scrolling: FittedBox(scaleDown) only ever shrinks (never
     // enlarges), and here it scales the frame *together with* the text as
-    // one unit, so the decorative border always hugs the text tightly —
-    // rather than being stretched to the full screen with smaller text
-    // floating in the middle of a far-away border. A plain background fill
-    // behind it keeps the page looking full-screen regardless. Sizes 4-5
-    // are deliberately large enough to commonly overflow, so they skip the
-    // shrink: the frame there stays fixed around the full available
-    // viewport and only the text inside scrolls, since it's meant to be
-    // genuinely larger than the page and read by scrolling.
+    // one unit, so the decorative border always hugs the text tightly.
+    // Sizes 4-5 skip that shrink, since they're deliberately large enough
+    // to commonly overflow and are meant to be read by scrolling.
+    //
+    // Either way, ConstrainedBox(minHeight) + Center is what actually keeps
+    // the frame hugging the text in *every* case, including sizes 4-5 on a
+    // page that happens to fit at that size anyway: it centers the
+    // frame+text as one block when it's shorter than the screen (instead
+    // of stretching the frame the rest of the way to the screen edges with
+    // the text floating inside it), and only when the block is genuinely
+    // taller than the screen does it overflow into the SingleChildScrollView
+    // — which sizes 1-3 can never do, since FittedBox already guaranteed it
+    // fits before this point.
     final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
-    final pageArea = allowScroll
-        ? _OrnateFrame(
-            color: _frameGreen,
-            background: _pageBg,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-              child: SingleChildScrollView(child: content),
-            ),
-          )
-        : Container(
-            color: _pageBg,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return Center(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: SizedBox(
-                      width: constraints.maxWidth,
-                      child: framedContent,
-                    ),
+    final pageArea = Container(
+      color: _pageBg,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final scaled = allowScroll
+              ? SizedBox(width: constraints.maxWidth, child: framedContent)
+              : FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                    width: constraints.maxWidth,
+                    child: framedContent,
                   ),
                 );
-              },
+          return SingleChildScrollView(
+            physics: allowScroll
+                ? const ClampingScrollPhysics()
+                : const NeverScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(child: scaled),
             ),
           );
+        },
+      ),
+    );
 
     // The cream background always fills the full page extent given by the
     // PageView (matching the device's screen, in any orientation, on both
