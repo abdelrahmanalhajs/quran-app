@@ -951,17 +951,35 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
-        final scaled = allowScroll
-            ? SizedBox(width: constraints.maxWidth, child: content)
-            : FittedBox(
-                fit: BoxFit.scaleDown,
-                child: SizedBox(width: constraints.maxWidth, child: content),
-              );
+        if (!allowScroll) {
+          // FittedBox must see this LayoutBuilder's *bounded* height
+          // directly — Align loosens (keeps the same max, drops the min)
+          // rather than removing it, so FittedBox still knows the real
+          // available height to shrink against. Routing this through a
+          // SingleChildScrollView instead (as sizes 4-5 do) would hand
+          // FittedBox an *unbounded* height, which makes it skip shrinking
+          // entirely — exactly the "renders at full size, nothing to
+          // scroll to see the rest" bug this guards against.
+          return Align(
+            alignment: Alignment.topCenter,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(width: constraints.maxWidth, child: content),
+            ),
+          );
+        }
+        // Sizes 4-5: render at natural size, hugging the top of the
+        // available height when it fits; when it doesn't, the text scrolls
+        // inside the frame, which (via the Expanded below) stays fixed at
+        // the full screen size the whole time.
         return SingleChildScrollView(
-          physics: allowScroll
-              ? const ClampingScrollPhysics()
-              : const NeverScrollableScrollPhysics(),
-          child: Align(alignment: Alignment.topCenter, child: scaled),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(width: constraints.maxWidth, child: content),
+            ),
+          ),
         );
       },
     );
