@@ -568,9 +568,16 @@ class _MushafPageViewState extends State<_MushafPageView> {
       _recognizers.add(recognizer);
       final isActive = widget.activeAyahNumber == ayah.numberInSurah;
 
+      // No space between the ayah text and its marker: a plain space there
+      // is a valid line-break point, and if the line wraps exactly there,
+      // the marker drifts to the start of the next line and visually sits
+      // next to the following ayah's text instead — looking like the ayah
+      // numbers got swapped. The marker's own padding provides the visual
+      // gap, and the breakable space goes *after* it instead, where wrapping
+      // is harmless.
       spans.add(
         TextSpan(
-          text: '${ayah.textAr} ',
+          text: ayah.textAr,
           style: baseStyle.copyWith(
             background: isActive
                 ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))

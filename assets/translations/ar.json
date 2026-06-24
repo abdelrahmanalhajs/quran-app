@@ -79,6 +79,8 @@
     "hourly_zikr": "تذكير بالذكر كل ساعة",
     "sleep_athkar_notif": "تذكير بأذكار النوم (١٠ مساءً يوميًا)",
     "jumaa_athkar_notif": "تذكير بأذكار الجمعة (٩ صباحًا كل جمعة)",
+    "athkar_prayer_reminders": "تذكير بأذكار الصباح والمساء",
+    "athkar_prayer_reminders_hint": "تذكير بعد صلاة الفجر بأذكار الصباح، وبعد صلاة العصر بأذكار المساء",
     "athan_notifications": "إشعارات الأذان",
     "athan_notifications_hint": "تلقَّ إشعارًا بصوت الأذان عند دخول كل وقت من أوقات الصلاة الخمس",
     "preview_athan": "استماع"

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/athkar_repository.dart';
 import '../../models/thikr.dart';
 import '../../widgets/responsive_center.dart';
@@ -183,9 +184,7 @@ class _ThikrCardState extends State<_ThikrCard> {
                 widget.thikr.ar,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(height: 1.7),
+                style: AppTheme.athkarTextStyle(context),
               ),
               if (!isArabic) ...[
                 const SizedBox(height: 10),

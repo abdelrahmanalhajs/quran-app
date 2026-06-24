@@ -74,4 +74,20 @@ class AppTheme {
       color: color ?? Theme.of(context).colorScheme.onSurface,
     );
   }
+
+  /// Athkar/duaa text frequently quotes full ayahs verbatim (Ayat al-Kursi,
+  /// Al-Falaq, An-Nas, etc.), which carry the same Quranic-only marks that
+  /// break under Tajawal — see [quranNameStyle]. Use Amiri here too instead
+  /// of the default text theme.
+  static TextStyle athkarTextStyle(
+    BuildContext context, {
+    double fontSize = 18,
+    double height = 1.7,
+  }) {
+    return GoogleFonts.amiri(
+      fontSize: fontSize,
+      height: height,
+      color: Theme.of(context).colorScheme.onSurface,
+    );
+  }
 }

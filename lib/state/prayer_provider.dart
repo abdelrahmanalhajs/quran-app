@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../core/services/athan_settings.dart';
+import '../core/services/athkar_prayer_reminder_settings.dart';
 import '../core/services/notification_service.dart';
 import '../data/prayer_repository.dart';
 import '../models/prayer_times.dart';
@@ -45,6 +46,12 @@ class PrayerProvider extends ChangeNotifier {
         await NotificationService.schedulePrayerAthans(
           times: _times!.obligatoryPrayers,
           athan: athan,
+          arabic: arabicAthanLabels,
+        );
+      }
+      if (!kIsWeb && await AthkarPrayerReminderSettings.isEnabled()) {
+        await NotificationService.scheduleAthkarPrayerReminders(
+          times: _times!.obligatoryPrayers,
           arabic: arabicAthanLabels,
         );
       }

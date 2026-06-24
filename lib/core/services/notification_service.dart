@@ -13,6 +13,8 @@ class NotificationService {
   static const int _hourlyZikrId = 1002;
   static const int _sleepReminderId = 1003;
   static const int _jumaaReminderId = 1004;
+  static const int _morningAthkarReminderId = 1005;
+  static const int _eveningAthkarReminderId = 1006;
   // Prayer athan ids: 2001 (fajr) .. 2005 (isha), one per entry in kPrayerNotificationNames.
   static const int _athanIdBase = 2001;
 
@@ -284,4 +286,82 @@ class NotificationService {
   }
 
   static Future<void> cancelJumaaReminder() => _plugin.cancel(_jumaaReminderId);
+
+  /// Adds [offsetMinutes] to a "HH:mm" time string and returns the
+  /// resulting hour/minute, wrapping past midnight if needed.
+  static ({int hour, int minute})? _addMinutes(String? timeStr, int offsetMinutes) {
+    if (timeStr == null) return null;
+    final parts = timeStr.split(':');
+    if (parts.length != 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    final total = (hour * 60 + minute + offsetMinutes) % (24 * 60);
+    return (hour: total ~/ 60, minute: total % 60);
+  }
+
+  /// Schedules a reminder shortly after Fajr to recite the morning athkar,
+  /// and another shortly after Asr for the evening athkar — the traditional
+  /// timing for each, rather than a fixed clock time. [times] should be the
+  /// same map of "HH:mm" prayer times used for [schedulePrayerAthans]; call
+  /// this again whenever those times are refreshed.
+  static Future<void> scheduleAthkarPrayerReminders({
+    required Map<String, String> times,
+    required bool arabic,
+  }) async {
+    final morning = _addMinutes(times['fajr'], 15);
+    if (morning != null) {
+      await _plugin.zonedSchedule(
+        _morningAthkarReminderId,
+        arabic ? 'أذكار الصباح' : 'Morning Athkar',
+        arabic
+            ? 'حان وقت أذكار الصباح بعد صلاة الفجر'
+            : "It's time for the morning athkar, after Fajr prayer",
+        _nextInstanceOf(morning.hour, morning.minute),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'morning_athkar_reminder',
+            'Morning Athkar Reminder',
+            channelDescription: 'A reminder after Fajr to recite the morning athkar',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
+
+    final evening = _addMinutes(times['asr'], 15);
+    if (evening != null) {
+      await _plugin.zonedSchedule(
+        _eveningAthkarReminderId,
+        arabic ? 'أذكار المساء' : 'Evening Athkar',
+        arabic
+            ? 'حان وقت أذكار المساء بعد صلاة العصر'
+            : "It's time for the evening athkar, after Asr prayer",
+        _nextInstanceOf(evening.hour, evening.minute),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'evening_athkar_reminder',
+            'Evening Athkar Reminder',
+            channelDescription: 'A reminder after Asr to recite the evening athkar',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
+  }
+
+  static Future<void> cancelAthkarPrayerReminders() async {
+    await _plugin.cancel(_morningAthkarReminderId);
+    await _plugin.cancel(_eveningAthkarReminderId);
+  }
 }

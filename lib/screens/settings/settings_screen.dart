@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/athan.dart';
 import '../../core/services/athan_settings.dart';
+import '../../core/services/athkar_prayer_reminder_settings.dart';
 import '../../core/services/notification_service.dart';
 import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
@@ -27,6 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _zikrEnabled = false;
   bool _sleepEnabled = false;
   bool _jumaaEnabled = false;
+  bool _athkarPrayerRemindersEnabled = false;
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
 
@@ -73,6 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     final athanEnabled = await AthanSettings.isEnabled();
     final athanReciter = await AthanSettings.getReciter();
+    final athkarPrayerRemindersEnabled = await AthkarPrayerReminderSettings.isEnabled();
     setState(() {
       _notifEnabled = prefs.getBool(_kHadithNotif) ?? true;
       _zikrEnabled = prefs.getBool(_kZikrNotif) ?? false;
@@ -80,6 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _jumaaEnabled = prefs.getBool(_kJumaaNotif) ?? false;
       _athanEnabled = athanEnabled;
       _athanReciter = athanReciter;
+      _athkarPrayerRemindersEnabled = athkarPrayerRemindersEnabled;
     });
   }
 
@@ -225,6 +229,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 } else {
                   await NotificationService.cancelJumaaReminder();
+                }
+              },
+            ),
+            SwitchListTile(
+              title: Text('settings.athkar_prayer_reminders'.tr()),
+              subtitle: Text('settings.athkar_prayer_reminders_hint'.tr()),
+              value: _athkarPrayerRemindersEnabled,
+              onChanged: (value) async {
+                final prayerProvider = context.read<PrayerProvider>();
+                setState(() => _athkarPrayerRemindersEnabled = value);
+                await AthkarPrayerReminderSettings.setEnabled(value);
+                if (kIsWeb) return;
+                if (value) {
+                  final granted = await NotificationService.requestPermission();
+                  if (granted) {
+                    await prayerProvider.load(arabicAthanLabels: isArabic);
+                  }
+                } else {
+                  await NotificationService.cancelAthkarPrayerReminders();
                 }
               },
             ),
