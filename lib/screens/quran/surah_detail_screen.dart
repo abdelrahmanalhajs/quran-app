@@ -933,11 +933,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
       ],
     );
 
-    // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit
+    // Small and medium (the first 2 of kQuranFontSizeSteps) must always fit
     // without scrolling: FittedBox(scaleDown) only ever shrinks (never
-    // enlarges) the text to guarantee that. Sizes 4-5 skip that shrink,
-    // since they're deliberately large enough to commonly overflow and are
-    // meant to be read by scrolling instead.
+    // enlarges) the text to guarantee that. Large skips that shrink, since
+    // it's deliberately large enough to commonly overflow and is meant to
+    // be read by scrolling instead.
     //
     // The frame itself is *always* the full screen size (via the Expanded
     // below) at every size, on phone or tablet, in any orientation — never
@@ -948,7 +948,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // the same cream background beneath the text, the way a real Mushaf
     // page's last, partly-filled page looks, rather than empty space
     // floating the text away from the border on every side.
-    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
+    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[2];
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
         if (!allowScroll) {
@@ -956,7 +956,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
           // directly — Align loosens (keeps the same max, drops the min)
           // rather than removing it, so FittedBox still knows the real
           // available height to shrink against. Routing this through a
-          // SingleChildScrollView instead (as sizes 4-5 do) would hand
+          // SingleChildScrollView instead (as large does) would hand
           // FittedBox an *unbounded* height, which makes it skip shrinking
           // entirely — exactly the "renders at full size, nothing to
           // scroll to see the rest" bug this guards against.
@@ -968,7 +968,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             ),
           );
         }
-        // Sizes 4-5: render at natural size, hugging the top of the
+        // Large: render at natural size, hugging the top of the
         // available height when it fits; when it doesn't, the text scrolls
         // inside the frame, which (via the Expanded below) stays fixed at
         // the full screen size the whole time.

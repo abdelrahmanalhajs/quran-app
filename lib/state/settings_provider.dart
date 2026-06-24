@@ -7,14 +7,13 @@ import '../core/constants/reciters.dart';
 /// default since it matches the look of a real Quran page.
 enum QuranViewMode { page, list }
 
-/// The 5 selectable Quran text sizes, smallest to largest. The first 3 are
-/// kept small/conservative enough that a real Mushaf page's ayah text fits
-/// the screen without scrolling for virtually every page; the last 2 are
-/// deliberately large enough to commonly overflow, in which case the page
+/// The 3 selectable Quran text sizes: small, medium, large. Small and medium
+/// always fill the full page without scrolling (scaled up or down to match
+/// the screen exactly); large renders at its natural, bigger size and
 /// scrolls to keep reading instead of shrinking the text or changing which
 /// ayahs are on the page (see [_MushafPageViewState] in
 /// surah_detail_screen.dart).
-const List<double> kQuranFontSizeSteps = [18, 22, 26, 30, 34];
+const List<double> kQuranFontSizeSteps = [25, 30, 35];
 
 class SettingsProvider extends ChangeNotifier {
   static const _kThemeMode = 'theme_mode';
@@ -24,7 +23,7 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 26;
+  double _quranFontSize = 30;
   QuranViewMode _quranViewMode = QuranViewMode.page;
 
   ThemeMode get themeMode => _themeMode;
@@ -46,7 +45,7 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 26;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 30;
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list
