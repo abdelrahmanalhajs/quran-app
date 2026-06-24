@@ -13,7 +13,7 @@ enum QuranViewMode { page, list }
 /// scrolls to keep reading instead of shrinking the text or changing which
 /// ayahs are on the page (see [_MushafPageViewState] in
 /// surah_detail_screen.dart).
-const List<double> kQuranFontSizeSteps = [25, 30, 35];
+const List<double> kQuranFontSizeSteps = [25, 33, 35];
 
 class SettingsProvider extends ChangeNotifier {
   static const _kThemeMode = 'theme_mode';
@@ -23,7 +23,7 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 30;
+  double _quranFontSize = 33;
   QuranViewMode _quranViewMode = QuranViewMode.page;
 
   ThemeMode get themeMode => _themeMode;
@@ -45,7 +45,7 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 30;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 33;
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list
