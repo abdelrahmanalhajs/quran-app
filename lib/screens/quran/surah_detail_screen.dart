@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
@@ -934,10 +935,13 @@ class _MushafPageViewState extends State<_MushafPageView> {
     );
 
     // Small and medium (the first 2 of kQuranFontSizeSteps) must always fit
-    // without scrolling: FittedBox(scaleDown) only ever shrinks (never
-    // enlarges) the text to guarantee that. Large skips that shrink, since
-    // it's deliberately large enough to commonly overflow and is meant to
-    // be read by scrolling instead.
+    // without scrolling AND fill the full frame width and height — not just
+    // shrink-to-fit, which (see [_PageScaler]) leaves a narrow column with
+    // large empty margins on narrow phones, since uniformly scaling text
+    // that's already pinned to the full width down to fit the height also
+    // shrinks the width. Large skips all of that, since it's deliberately
+    // large enough to commonly overflow and is meant to be read by
+    // scrolling instead.
     //
     // The frame itself is *always* the full screen size (via the Expanded
     // below) at every size, on phone or tablet, in any orientation — never
@@ -952,21 +956,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
         if (!allowScroll) {
-          // FittedBox must see this LayoutBuilder's *bounded* height
-          // directly — Align loosens (keeps the same max, drops the min)
-          // rather than removing it, so FittedBox still knows the real
-          // available height to shrink against. Routing this through a
-          // SingleChildScrollView instead (as large does) would hand
-          // FittedBox an *unbounded* height, which makes it skip shrinking
-          // entirely — exactly the "renders at full size, nothing to
-          // scroll to see the rest" bug this guards against.
-          return Align(
-            alignment: Alignment.topCenter,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: SizedBox(width: constraints.maxWidth, child: content),
-            ),
-          );
+          return _PageScaler(child: content);
         }
         // Large: render at natural size, hugging the top of the
         // available height when it fits; when it doesn't, the text scrolls
@@ -1099,6 +1089,170 @@ class _SurahBanner extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Fills the available box exactly, both width and height, by laying out
+/// [child] at whichever width makes its *natural* (unscaled) aspect ratio
+/// match the available box, then uniformly scaling it up or down to fit —
+/// never distorting it non-uniformly, which would visibly stretch or
+/// squash the Arabic glyphs.
+///
+/// A plain `FittedBox(fit: BoxFit.scaleDown)` can't do this: it has to be
+/// told a width to wrap the text at, and the only width it can be handed
+/// ahead of time is the box's own available width. If the text is then
+/// naturally too *tall* for the available height at that width (common on
+/// narrow phones, where more line-wrapping makes the block taller), the
+/// uniform scale that shrinks it down to fit the height also shrinks its
+/// *width* by the same factor — leaving a narrow column of small text
+/// stranded in the middle of a mostly-empty page instead of filling it.
+/// [_RenderPageScaler] avoids that by searching for a wider "virtual" wrap
+/// width that makes the block's natural aspect ratio already match the
+/// available box, so the one uniform scale it does apply fills both
+/// dimensions at once. If the text already fits at the available width
+/// with no scaling needed, this renders it at natural size, top-aligned,
+/// exactly like the FittedBox approach it replaces.
+class _PageScaler extends SingleChildRenderObjectWidget {
+  const _PageScaler({required Widget child}) : super(child: child);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderPageScaler();
+}
+
+class _RenderPageScaler extends RenderProxyBox {
+  bool? _hasVisualOverflow;
+  Matrix4? _transform;
+
+  void _clearPaintData() {
+    _hasVisualOverflow = null;
+    _transform = null;
+  }
+
+  @override
+  void performLayout() {
+    final BoxConstraints c = constraints;
+    final double availW = c.maxWidth;
+    final double availH = c.maxHeight;
+    final RenderBox? child = this.child;
+
+    if (child == null) {
+      size = c.smallest;
+      return;
+    }
+
+    final Size naturalAtAvailW = child.getDryLayout(
+      BoxConstraints.tightFor(width: availW),
+    );
+    double chosenWidth = availW;
+
+    if (naturalAtAvailW.height > availH && availH.isFinite) {
+      // Binary-search the narrowest "virtual" wrap width >= availW whose
+      // natural height, once scaled back down by availW/width, still fits
+      // availH — i.e. the width whose resulting aspect ratio matches the
+      // frame's, so a single uniform scale fills both axes at once instead
+      // of just shrinking width along with height.
+      double lo = availW;
+      double hi = availW * 4;
+      Size hiSize = child.getDryLayout(BoxConstraints(maxWidth: hi));
+      var guard = 0;
+      while (hiSize.height * availW / hi > availH && guard < 6) {
+        hi *= 2;
+        hiSize = child.getDryLayout(BoxConstraints(maxWidth: hi));
+        guard++;
+      }
+      for (var i = 0; i < 14; i++) {
+        final double mid = (lo + hi) / 2;
+        final Size midSize = child.getDryLayout(BoxConstraints(maxWidth: mid));
+        final double scaledHeight = midSize.height * availW / mid;
+        if (scaledHeight > availH) {
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+      chosenWidth = hi;
+    }
+
+    child.layout(BoxConstraints.tightFor(width: chosenWidth), parentUsesSize: true);
+    size = c.constrain(Size(availW, availH));
+    _clearPaintData();
+  }
+
+  void _updatePaintData() {
+    if (_transform != null) return;
+    final RenderBox? child = this.child;
+    if (child == null) {
+      _hasVisualOverflow = false;
+      _transform = Matrix4.identity();
+      return;
+    }
+    final Size childSize = child.size;
+    final FittedSizes sizes = applyBoxFit(BoxFit.contain, childSize, size);
+    final double scaleX = sizes.destination.width / sizes.source.width;
+    final double scaleY = sizes.destination.height / sizes.source.height;
+    final Rect sourceRect = Alignment.topCenter.inscribe(
+      sizes.source,
+      Offset.zero & childSize,
+    );
+    final Rect destinationRect = Alignment.topCenter.inscribe(
+      sizes.destination,
+      Offset.zero & size,
+    );
+    _hasVisualOverflow =
+        sourceRect.width < childSize.width || sourceRect.height < childSize.height;
+    _transform = Matrix4.translationValues(destinationRect.left, destinationRect.top, 0.0)
+      ..scaleByDouble(scaleX, scaleY, 1.0, 1)
+      ..translateByDouble(-sourceRect.left, -sourceRect.top, 0, 1);
+  }
+
+  TransformLayer? _paintChildWithTransform(PaintingContext context, Offset offset) {
+    final Offset? childOffset = MatrixUtils.getAsTranslation(_transform!);
+    if (childOffset == null) {
+      return context.pushTransform(
+        needsCompositing,
+        offset,
+        _transform!,
+        super.paint,
+        oldLayer: layer is TransformLayer ? layer! as TransformLayer : null,
+      );
+    }
+    super.paint(context, offset + childOffset);
+    return null;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (child == null || size.isEmpty || child!.size.isEmpty) return;
+    _updatePaintData();
+    if (_hasVisualOverflow!) {
+      layer = context.pushClipRect(
+        needsCompositing,
+        offset,
+        Offset.zero & size,
+        _paintChildWithTransform,
+        oldLayer: layer is ClipRectLayer ? layer! as ClipRectLayer : null,
+      );
+    } else {
+      layer = _paintChildWithTransform(context, offset);
+    }
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    if (size.isEmpty || (child?.size.isEmpty ?? false)) return false;
+    _updatePaintData();
+    return result.addWithPaintTransform(
+      transform: _transform,
+      position: position,
+      hitTest: (result, position) => super.hitTestChildren(result, position: position),
+    );
+  }
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    _updatePaintData();
+    transform.multiply(_transform!);
   }
 }
 
