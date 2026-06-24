@@ -57,6 +57,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
             Padding(
               padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
               child: SegmentedButton<_ListMode>(
+                showSelectedIcon: false,
                 segments: [
                   ButtonSegment(
                     value: _ListMode.surahs,
