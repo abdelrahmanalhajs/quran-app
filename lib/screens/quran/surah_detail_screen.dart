@@ -909,14 +909,55 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final hizbLabel =
         '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
 
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...blocks,
+        const SizedBox(height: 14),
+        Text(
+          'quran.page_footer'.tr(
+            args: [
+              _localizedNumber(context, lastAyah.juz),
+              hizbLabel,
+              _localizedNumber(context, lastAyah.page),
+            ],
+          ),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _frameGreen,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+
+    // Sizes 1-3 (the first 3 of kQuranFontSizeSteps) must always fit the
+    // frame without scrolling: FittedBox(scaleDown) only ever shrinks
+    // (never enlarges) to guarantee that, falling back to a barely-smaller
+    // render on the rare unusually dense page rather than letting it
+    // scroll. Sizes 4-5 are deliberately large enough to commonly overflow,
+    // so they skip the shrink and scroll inside the frame instead, keeping
+    // the text genuinely at the larger size the user chose.
+    final allowScroll = widget.fontSize >= kQuranFontSizeSteps[3];
+    final frameContent = allowScroll
+        ? SingleChildScrollView(child: content)
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              return Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(width: constraints.maxWidth, child: content),
+                ),
+              );
+            },
+          );
+
     // The frame fills the full page extent given by the PageView (matching
     // the device's screen, on both phone and tablet) regardless of font
-    // size — Expanded stretches it to that size even when the ayah text at
-    // the default font size doesn't reach the bottom. The ayah text itself
-    // never shrinks and is never split across screens or dropped to fit;
-    // if a larger font size makes it taller than the frame, the inner
-    // SingleChildScrollView lets the user scroll down to read the rest of
-    // this same page (same ayahs, same page) instead.
+    // size — Expanded stretches it to that size even when the content
+    // doesn't reach the bottom.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -944,30 +985,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             background: _pageBg,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ...blocks,
-                    const SizedBox(height: 14),
-                    Text(
-                      'quran.page_footer'.tr(
-                        args: [
-                          _localizedNumber(context, lastAyah.juz),
-                          hizbLabel,
-                          _localizedNumber(context, lastAyah.page),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _frameGreen,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: frameContent,
             ),
           ),
         ),
