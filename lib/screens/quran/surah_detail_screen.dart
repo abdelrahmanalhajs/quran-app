@@ -943,7 +943,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
       style: TextStyle(
         color: _frameGreen,
         fontWeight: FontWeight.w600,
-        fontSize: 12,
+        fontSize: 9,
       ),
     );
 

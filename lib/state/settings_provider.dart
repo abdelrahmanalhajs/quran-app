@@ -33,7 +33,7 @@ const List<bool> kQuranFontSizeFitsPage = [true, true, false];
 /// than Small: a tighter line height means less of the page's fixed height
 /// budget goes to the gap between lines once the page is scaled to fill the
 /// frame exactly, leaving more of it for the letters themselves.
-const List<double> kQuranFontSizeLineHeight = [2.1, 1.85, 1.9];
+const List<double> kQuranFontSizeLineHeight = [2.1, 2.1, 1.9];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
 /// Medium is bold (in addition to its tighter line height) to read as a
