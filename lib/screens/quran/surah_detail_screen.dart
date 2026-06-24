@@ -552,16 +552,18 @@ class _MushafPageViewState extends State<_MushafPageView> {
   @override
   void initState() {
     super.initState();
-    final surahNumber =
-        widget.ayahs.isNotEmpty ? widget.ayahs.first.surahNumber : null;
+    final surahNumber = widget.ayahs.isNotEmpty
+        ? widget.ayahs.first.surahNumber
+        : null;
     final hasPrevSurah = surahNumber != null && surahNumber > 1;
     final hasNextSurah = surahNumber != null && surahNumber < 114;
     final mushafPageCount = _groupByMushafPage(widget.ayahs).length;
 
     _realPagesStart = hasPrevSurah ? 1 : 0;
     _prevSentinelIndex = hasPrevSurah ? 0 : null;
-    _nextSentinelIndex =
-        hasNextSurah ? _realPagesStart + mushafPageCount : null;
+    _nextSentinelIndex = hasNextSurah
+        ? _realPagesStart + mushafPageCount
+        : null;
     final initialPage = widget.startAtLastPage && mushafPageCount > 0
         ? _realPagesStart + mushafPageCount - 1
         : _realPagesStart;
@@ -613,13 +615,19 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _clearRecognizers();
     final totalAyahs = widget.ayahs.length;
     final mushafPages = _groupByMushafPage(widget.ayahs);
-    _itemCount = mushafPages.length +
+    _itemCount =
+        mushafPages.length +
         (_prevSentinelIndex != null ? 1 : 0) +
         (_nextSentinelIndex != null ? 1 : 0);
 
     return ResponsiveCenter(
       maxWidth: 760,
       child: GestureDetector(
+        // Without this, a drag starting on empty space (e.g. the
+        // letterboxed margins FittedBox leaves around a shrunk-to-fit page)
+        // wouldn't be hit-tested at all, since the default `deferToChild`
+        // behavior only recognizes gestures where a child actually paints.
+        behavior: HitTestBehavior.opaque,
         onHorizontalDragEnd: _handleHorizontalDragEnd,
         child: PageView.builder(
           controller: _pageController,
@@ -635,11 +643,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
               return const _AdjacentSurahTransitionPage(forward: true);
             }
             final pageAyahs = mushafPages[index - _realPagesStart];
-            return _buildMushafPage(
-              context,
-              pageAyahs,
-              totalAyahs: totalAyahs,
-            );
+            return _buildMushafPage(context, pageAyahs, totalAyahs: totalAyahs);
           },
         ),
       ),
@@ -648,11 +652,13 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
   Widget _buildMushafPage(
     BuildContext context,
-    List<Ayah> pageAyahs,
-    {required int totalAyahs}
-  ) {
-    final baseStyle = AppTheme.quranTextStyle(context, fontSize: widget.fontSize)
-        .copyWith(height: 2.1, color: _ink);
+    List<Ayah> pageAyahs, {
+    required int totalAyahs,
+  }) {
+    final baseStyle = AppTheme.quranTextStyle(
+      context,
+      fontSize: widget.fontSize,
+    ).copyWith(height: 2.1, color: _ink);
     final showsSurahStart = pageAyahs.any((a) => a.numberInSurah == 1);
 
     final spans = <InlineSpan>[];
@@ -701,78 +707,98 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final hizbLabel =
         '${_localizedNumber(context, lastAyah.hizb)}${_quarterMarks[lastAyah.quarterInHizb - 1]}';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (pageAyahs.isNotEmpty)
-            Container(
-              color: _frameGreen,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: Text(
-                  'quran.juz_label'.tr(
-                    args: [_localizedNumber(context, pageAyahs.first.juz)],
-                  ),
-                  style: const TextStyle(
-                    color: _pageBg,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
-                  ),
+    // A real Mushaf page never scrolls — everything on it is sized to fit
+    // the physical page exactly. LayoutBuilder + FittedBox(scaleDown)
+    // reproduces that: the page content lays out at its natural size for
+    // the available width, then the whole frame (banner, ayahs, footer)
+    // scales down uniformly to fit the available height, instead of
+    // overflowing into a scrollable area. The bottom padding reserves room
+    // for the floating "play surah" button so the scaled content doesn't
+    // sit underneath it.
+    final page = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (pageAyahs.isNotEmpty)
+          Container(
+            color: _frameGreen,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Center(
+              child: Text(
+                'quran.juz_label'.tr(
+                  args: [_localizedNumber(context, pageAyahs.first.juz)],
+                ),
+                style: const TextStyle(
+                  color: _pageBg,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
-          _OrnateFrame(
-            color: _frameGreen,
-            background: _pageBg,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (showsSurahStart) ...[
-                    _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
-                    if (QuranRepository.hasSeparateBismillah(
-                      pageAyahs.first.surahNumber,
-                    )) ...[
-                      const SizedBox(height: 14),
-                      Text(
-                        'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.rtl,
-                        style: baseStyle.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                    const SizedBox(height: 18),
+          ),
+        _OrnateFrame(
+          color: _frameGreen,
+          background: _pageBg,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (showsSurahStart) ...[
+                  _SurahBanner(name: widget.surahNameAr, color: _frameGreen),
+                  if (QuranRepository.hasSeparateBismillah(
+                    pageAyahs.first.surahNumber,
+                  )) ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                      textAlign: TextAlign.center,
+                      textDirection: TextDirection.rtl,
+                      style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+                    ),
                   ],
-                  Text.rich(
-                    TextSpan(children: spans),
-                    textAlign: TextAlign.justify,
-                    textDirection: TextDirection.rtl,
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'quran.page_footer'.tr(
-                      args: [
-                        _localizedNumber(context, lastAyah.juz),
-                        hizbLabel,
-                        _localizedNumber(context, lastAyah.page),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _frameGreen,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
+                  const SizedBox(height: 18),
                 ],
-              ),
+                Text.rich(
+                  TextSpan(children: spans),
+                  textAlign: TextAlign.justify,
+                  textDirection: TextDirection.rtl,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'quran.page_footer'.tr(
+                    args: [
+                      _localizedNumber(context, lastAyah.juz),
+                      hizbLabel,
+                      _localizedNumber(context, lastAyah.page),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _frameGreen,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(width: constraints.maxWidth, child: page),
+            ),
+          );
+        },
       ),
     );
   }
@@ -898,11 +924,7 @@ class _OrnateFrame extends StatelessWidget {
               alignment: alignment,
               child: Transform.rotate(
                 angle: 0.785398, // 45deg
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  color: color,
-                ),
+                child: Container(width: 12, height: 12, color: color),
               ),
             ),
         ],
