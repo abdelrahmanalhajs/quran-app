@@ -831,6 +831,17 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // ayahs rather than this page's own running header.
     Widget? topBanner;
     final blocks = <Widget>[];
+    final segments = <Widget>[];
+    // Mirrors [blocks] but tags each child as scaled (real ayah text, which
+    // should grow/shrink with the rest of the page) or fixed (a mid-page
+    // surah banner, which — like [topBanner] — must stay a constant,
+    // moderate size no matter how much the page's auto-fit needs to
+    // stretch or shrink everything else; see [_PageScalerMulti]).
+    void addBlock(Widget child, {bool scaled = true}) {
+      blocks.add(child);
+      segments.add(_ScaledSegment(scaled: scaled, child: child));
+    }
+
     final runs = _groupBySurah(pageAyahs);
     for (var r = 0; r < runs.length; r++) {
       final run = runs[r];
@@ -845,12 +856,12 @@ class _MushafPageViewState extends State<_MushafPageView> {
         if (r == 0) {
           topBanner = banner;
         } else {
-          blocks.add(const SizedBox(height: 18));
-          blocks.add(banner);
+          addBlock(const SizedBox(height: 18), scaled: false);
+          addBlock(banner, scaled: false);
         }
         if (QuranRepository.hasSeparateBismillah(runSurahNumber)) {
-          if (r > 0) blocks.add(const SizedBox(height: 14));
-          blocks.add(
+          if (r > 0) addBlock(const SizedBox(height: 14));
+          addBlock(
             Text(
               'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
               textAlign: TextAlign.center,
@@ -859,7 +870,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             ),
           );
         }
-        blocks.add(const SizedBox(height: 18));
+        addBlock(const SizedBox(height: 18));
       }
 
       final spans = <InlineSpan>[];
@@ -911,7 +922,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
         );
         spans.add(const TextSpan(text: ' '));
       }
-      blocks.add(
+      addBlock(
         Text.rich(
           TextSpan(children: spans),
           textAlign: TextAlign.justify,
@@ -972,7 +983,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final innerArea = LayoutBuilder(
       builder: (context, constraints) {
         if (!allowScroll) {
-          return _PageScaler(child: content);
+          return _PageScalerMulti(children: segments);
         }
         // Large: render at natural size, hugging the top of the
         // available height when it fits; when it doesn't, the text scrolls
@@ -1141,41 +1152,96 @@ class _SurahBanner extends StatelessWidget {
   }
 }
 
-/// Fills the available box exactly, both width and height, by laying out
-/// [child] at whichever width makes its *natural* (unscaled) aspect ratio
-/// match the available box, then uniformly scaling it up or down to fit —
-/// never distorting it non-uniformly, which would visibly stretch or
-/// squash the Arabic glyphs.
+/// Marks a child of [_PageScalerMulti] as either part of the scaled ayah
+/// flow ([scaled] true — grows/shrinks with the rest of the page, like
+/// regular Mushaf body text) or pinned to a fixed, natural size ([scaled]
+/// false — a mid-page surah banner, which must look the same size no
+/// matter how much the page's auto-fit needs to stretch or shrink
+/// everything else, exactly like [SurahDetailScreen]'s pinned top banner).
+class _ScaledSegment extends ParentDataWidget<_PageScalerParentData> {
+  final bool scaled;
+
+  const _ScaledSegment({required this.scaled, required super.child});
+
+  @override
+  void applyParentData(RenderObject renderObject) {
+    final parentData = renderObject.parentData! as _PageScalerParentData;
+    if (parentData.scaled != scaled) {
+      parentData.scaled = scaled;
+      final targetParent = renderObject.parent;
+      if (targetParent is RenderObject) targetParent.markNeedsLayout();
+    }
+  }
+
+  @override
+  Type get debugTypicalAncestorWidgetClass => _PageScalerMulti;
+}
+
+class _PageScalerParentData extends ContainerBoxParentData<RenderBox> {
+  bool scaled = true;
+}
+
+/// Fills the available box exactly, both width and height, like the
+/// single-child version this generalizes: children tagged [_ScaledSegment]
+/// `scaled: true` are laid out together at whichever width makes their
+/// combined natural (unscaled) height match the box once uniformly scaled
+/// back to the available width — the same wider-or-narrower virtual-width
+/// search described below — while `scaled: false` children (mid-page surah
+/// banners) are laid out at their natural size and never touched by that
+/// scale, so they stay a constant, moderate size no matter how dense or
+/// sparse the rest of the page is.
 ///
-/// A plain `FittedBox(fit: BoxFit.scaleDown)` can't do this: it has to be
-/// told a width to wrap the text at, and the only width it can be handed
-/// ahead of time is the box's own available width. If the text is then
-/// naturally too *tall* for the available height at that width (common on
-/// narrow phones, where more line-wrapping makes the block taller), the
-/// uniform scale that shrinks it down to fit the height also shrinks its
-/// *width* by the same factor — leaving a narrow column of small text
-/// stranded in the middle of a mostly-empty page instead of filling it.
-/// [_RenderPageScaler] avoids that by searching for a wider "virtual" wrap
-/// width that makes the block's natural aspect ratio already match the
-/// available box, so the one uniform scale it does apply fills both
-/// dimensions at once. If the text already fits at the available width
-/// with no scaling needed, this renders it at natural size, top-aligned,
-/// exactly like the FittedBox approach it replaces.
-class _PageScaler extends SingleChildRenderObjectWidget {
-  const _PageScaler({required Widget child}) : super(child: child);
+/// A plain `FittedBox(fit: BoxFit.scaleDown)` can't do the scaled portion
+/// alone: it has to be told a width to wrap the text at, and the only width
+/// it can be handed ahead of time is the box's own available width. If the
+/// text is then naturally too *tall* for the available height at that width
+/// (common on narrow phones, where more line-wrapping makes the block
+/// taller), the uniform scale that shrinks it down to fit the height also
+/// shrinks its *width* by the same factor — leaving a narrow column of small
+/// text stranded in the middle of a mostly-empty page instead of filling
+/// it. This searches for a wider "virtual" wrap width that makes the
+/// scaled content's natural aspect ratio already match the available box,
+/// so the one uniform scale it does apply fills both dimensions at once.
+class _PageScalerMulti extends MultiChildRenderObjectWidget {
+  const _PageScalerMulti({required super.children});
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderPageScaler();
+      _RenderPageScalerMulti();
 }
 
-class _RenderPageScaler extends RenderProxyBox {
-  bool? _hasVisualOverflow;
-  Matrix4? _transform;
+class _RenderPageScalerMulti extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _PageScalerParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _PageScalerParentData> {
+  final Map<RenderBox, Matrix4> _transforms = {};
+  bool _hasVisualOverflow = false;
 
-  void _clearPaintData() {
-    _hasVisualOverflow = null;
-    _transform = null;
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _PageScalerParentData) {
+      child.parentData = _PageScalerParentData();
+    }
+  }
+
+  List<RenderBox> _scaledChildren() {
+    final result = <RenderBox>[];
+    RenderBox? child = firstChild;
+    while (child != null) {
+      if ((child.parentData! as _PageScalerParentData).scaled) {
+        result.add(child);
+      }
+      child = childAfter(child);
+    }
+    return result;
+  }
+
+  double _scaledNaturalHeightAt(List<RenderBox> scaledChildren, double width) {
+    var total = 0.0;
+    for (final child in scaledChildren) {
+      total += child.getDryLayout(BoxConstraints.tightFor(width: width)).height;
+    }
+    return total;
   }
 
   @override
@@ -1183,39 +1249,41 @@ class _RenderPageScaler extends RenderProxyBox {
     final BoxConstraints c = constraints;
     final double availW = c.maxWidth;
     final double availH = c.maxHeight;
-    final RenderBox? child = this.child;
 
-    if (child == null) {
-      size = c.smallest;
-      return;
+    var fixedHeight = 0.0;
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final pd = child.parentData! as _PageScalerParentData;
+      if (!pd.scaled) {
+        child.layout(BoxConstraints.tightFor(width: availW), parentUsesSize: true);
+        fixedHeight += child.size.height;
+      }
+      child = childAfter(child);
     }
 
-    final Size naturalAtAvailW = child.getDryLayout(
-      BoxConstraints.tightFor(width: availW),
-    );
+    final double remainingH = availH - fixedHeight;
+    final scaledChildren = _scaledChildren();
+    final double naturalAtAvailW = _scaledNaturalHeightAt(scaledChildren, availW);
     double chosenWidth = availW;
 
-    // Binary-search a "virtual" wrap width whose natural height, once
-    // scaled back to availW (by availW/width), matches availH exactly —
-    // i.e. the width whose aspect ratio matches the frame's, so a single
-    // uniform scale fills both axes completely instead of just shrinking
-    // (or leaving the natural, possibly-shorter-than-the-frame) size as is.
-    // A page denser than availW's natural size needs a *wider* virtual
-    // width (shrinks when scaled back down); a page shorter than the frame
-    // needs a *narrower* one (enlarges when scaled back up) so it still
-    // fills the page edge-to-edge like a real, fully-set Mushaf page.
-    if (availH.isFinite && naturalAtAvailW.height != availH) {
-      final bool tooTall = naturalAtAvailW.height > availH;
+    // Same binary search as the single-child version, just measuring the
+    // combined height of every scaled child at each candidate width instead
+    // of one child's height.
+    if (remainingH.isFinite &&
+        naturalAtAvailW > 0 &&
+        naturalAtAvailW != remainingH) {
+      final bool tooTall = naturalAtAvailW > remainingH;
       double lo = tooTall ? availW : availW / 64;
       double hi = tooTall ? availW : availW;
       double boundary = tooTall ? availW * 4 : availW;
-      Size boundarySize = child.getDryLayout(BoxConstraints(maxWidth: boundary));
+      double boundaryNat = _scaledNaturalHeightAt(scaledChildren, boundary);
       var guard = 0;
-      bool stillNeedsSearch(Size s, double w) =>
-          tooTall ? s.height * availW / w > availH : s.height * availW / w < availH;
-      while (stillNeedsSearch(boundarySize, boundary) && guard < 6) {
+      bool stillNeedsSearch(double natH, double w) => tooTall
+          ? natH * availW / w > remainingH
+          : natH * availW / w < remainingH;
+      while (stillNeedsSearch(boundaryNat, boundary) && guard < 6) {
         boundary = tooTall ? boundary * 2 : boundary / 2;
-        boundarySize = child.getDryLayout(BoxConstraints(maxWidth: boundary));
+        boundaryNat = _scaledNaturalHeightAt(scaledChildren, boundary);
         guard++;
       }
       if (tooTall) {
@@ -1225,11 +1293,11 @@ class _RenderPageScaler extends RenderProxyBox {
       }
       for (var i = 0; i < 14; i++) {
         final double mid = (lo + hi) / 2;
-        final Size midSize = child.getDryLayout(BoxConstraints(maxWidth: mid));
-        final double scaledHeight = midSize.height * availW / mid;
+        final double midNat = _scaledNaturalHeightAt(scaledChildren, mid);
+        final double scaledHeight = midNat * availW / mid;
         final bool stillTooShortOrTall = tooTall
-            ? scaledHeight > availH
-            : scaledHeight < availH;
+            ? scaledHeight > remainingH
+            : scaledHeight < remainingH;
         if (stillTooShortOrTall) {
           if (tooTall) {
             lo = mid;
@@ -1247,85 +1315,114 @@ class _RenderPageScaler extends RenderProxyBox {
       chosenWidth = tooTall ? hi : lo;
     }
 
-    child.layout(BoxConstraints.tightFor(width: chosenWidth), parentUsesSize: true);
+    final double scaleFactor = remainingH.isFinite && naturalAtAvailW > 0
+        ? availW / chosenWidth
+        : 1.0;
+
+    _transforms.clear();
+    _hasVisualOverflow = false;
+    var offsetY = 0.0;
+    child = firstChild;
+    while (child != null) {
+      final pd = child.parentData! as _PageScalerParentData;
+      if (!pd.scaled) {
+        pd.offset = Offset(0, offsetY);
+        offsetY += child.size.height;
+      } else {
+        child.layout(BoxConstraints.tightFor(width: chosenWidth), parentUsesSize: true);
+        final double scaledHeight = child.size.height * scaleFactor;
+        _transforms[child] = Matrix4.translationValues(0, offsetY, 0)
+          ..scaleByDouble(scaleFactor, scaleFactor, 1.0, 1);
+        pd.offset = Offset(0, offsetY);
+        offsetY += scaledHeight;
+      }
+      child = childAfter(child);
+    }
+    // Binary-search convergence can leave a sub-pixel mismatch between the
+    // final content height and availH; only clip if that ever grows large
+    // enough to be visible, so this rarely costs an extra layer.
+    _hasVisualOverflow = offsetY > availH + 0.5;
+
     size = c.constrain(Size(availW, availH));
-    _clearPaintData();
   }
 
-  void _updatePaintData() {
-    if (_transform != null) return;
-    final RenderBox? child = this.child;
-    if (child == null) {
-      _hasVisualOverflow = false;
-      _transform = Matrix4.identity();
-      return;
+  void _paintChildren(PaintingContext context, Offset offset) {
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final pd = child.parentData! as _PageScalerParentData;
+      final transform = _transforms[child];
+      if (transform == null) {
+        context.paintChild(child, offset + pd.offset);
+      } else {
+        context.pushTransform(needsCompositing, offset, transform, (
+          context,
+          offset,
+        ) {
+          context.paintChild(child!, offset);
+        });
+      }
+      child = childAfter(child);
     }
-    final Size childSize = child.size;
-    final FittedSizes sizes = applyBoxFit(BoxFit.contain, childSize, size);
-    final double scaleX = sizes.destination.width / sizes.source.width;
-    final double scaleY = sizes.destination.height / sizes.source.height;
-    final Rect sourceRect = Alignment.topCenter.inscribe(
-      sizes.source,
-      Offset.zero & childSize,
-    );
-    final Rect destinationRect = Alignment.topCenter.inscribe(
-      sizes.destination,
-      Offset.zero & size,
-    );
-    _hasVisualOverflow =
-        sourceRect.width < childSize.width || sourceRect.height < childSize.height;
-    _transform = Matrix4.translationValues(destinationRect.left, destinationRect.top, 0.0)
-      ..scaleByDouble(scaleX, scaleY, 1.0, 1)
-      ..translateByDouble(-sourceRect.left, -sourceRect.top, 0, 1);
-  }
-
-  TransformLayer? _paintChildWithTransform(PaintingContext context, Offset offset) {
-    final Offset? childOffset = MatrixUtils.getAsTranslation(_transform!);
-    if (childOffset == null) {
-      return context.pushTransform(
-        needsCompositing,
-        offset,
-        _transform!,
-        super.paint,
-        oldLayer: layer is TransformLayer ? layer! as TransformLayer : null,
-      );
-    }
-    super.paint(context, offset + childOffset);
-    return null;
   }
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (child == null || size.isEmpty || child!.size.isEmpty) return;
-    _updatePaintData();
-    if (_hasVisualOverflow!) {
-      layer = context.pushClipRect(
-        needsCompositing,
-        offset,
-        Offset.zero & size,
-        _paintChildWithTransform,
-        oldLayer: layer is ClipRectLayer ? layer! as ClipRectLayer : null,
-      );
-    } else {
-      layer = _paintChildWithTransform(context, offset);
+    if (!_hasVisualOverflow) {
+      _paintChildren(context, offset);
+      return;
     }
-  }
-
-  @override
-  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
-    if (size.isEmpty || (child?.size.isEmpty ?? false)) return false;
-    _updatePaintData();
-    return result.addWithPaintTransform(
-      transform: _transform,
-      position: position,
-      hitTest: (result, position) => super.hitTestChildren(result, position: position),
+    layer = context.pushClipRect(
+      needsCompositing,
+      offset,
+      Offset.zero & size,
+      _paintChildren,
+      oldLayer: layer is ClipRectLayer ? layer! as ClipRectLayer : null,
     );
   }
 
   @override
-  void applyPaintTransform(RenderBox child, Matrix4 transform) {
-    _updatePaintData();
-    transform.multiply(_transform!);
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    RenderBox? child = lastChild;
+    while (child != null) {
+      final pd = child.parentData! as _PageScalerParentData;
+      final transform = _transforms[child];
+      final bool isHit;
+      if (transform == null) {
+        isHit = result.addWithPaintOffset(
+          offset: pd.offset,
+          position: position,
+          hitTest: (result, transformed) =>
+              child!.hitTest(result, position: transformed),
+        );
+      } else {
+        isHit = result.addWithPaintTransform(
+          transform: transform,
+          position: position,
+          hitTest: (result, transformed) =>
+              child!.hitTest(result, position: transformed),
+        );
+      }
+      if (isHit) return true;
+      child = (child.parentData! as _PageScalerParentData).previousSibling;
+    }
+    return false;
+  }
+
+  // RenderBox's default applyPaintTransform only translates by the child's
+  // parentData.offset, which is correct for fixed children but wrong for
+  // scaled ones — those also need the scale factor folded in, or every
+  // ancestor-to-descendant coordinate mapping that relies on this (hit
+  // testing via the test framework's tester.tap, accessibility,
+  // Scrollable.ensureVisible, etc.) ends up off by that factor.
+  @override
+  void applyPaintTransform(RenderObject child, Matrix4 transform) {
+    final pd = child.parentData! as _PageScalerParentData;
+    final childTransform = _transforms[child];
+    if (childTransform != null) {
+      transform.multiply(childTransform);
+    } else {
+      transform.translateByDouble(pd.offset.dx, pd.offset.dy, 0, 1);
+    }
   }
 }
 
