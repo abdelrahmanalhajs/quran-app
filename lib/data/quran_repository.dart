@@ -72,7 +72,7 @@ class QuranRepository {
     int surahNumber, {
     bool withTranslation = true,
   }) async {
-    final cacheKey = 'surah_v3_$surahNumber';
+    final cacheKey = 'surah_v4_$surahNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
       return _ayahsFromCache(cached, surahNumber);
@@ -129,6 +129,7 @@ class QuranRepository {
               'page': a.page,
               'hizbQuarter': a.hizbQuarter,
               'sajda': a.sajda,
+              'sajdaObligatory': a.sajdaObligatory,
             },
           )
           .toList(),
@@ -150,6 +151,7 @@ class QuranRepository {
         page: m['page'] as int,
         hizbQuarter: m['hizbQuarter'] as int,
         sajda: m['sajda'] as bool,
+        sajdaObligatory: m['sajdaObligatory'] as bool? ?? false,
       );
     }).toList();
   }
@@ -165,7 +167,7 @@ class QuranRepository {
     int pageNumber, {
     bool withTranslation = true,
   }) async {
-    final cacheKey = 'page_v1_$pageNumber';
+    final cacheKey = 'page_v2_$pageNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
       return _ayahsFromPageCache(cached);
@@ -229,6 +231,7 @@ class QuranRepository {
               'page': a.page,
               'hizbQuarter': a.hizbQuarter,
               'sajda': a.sajda,
+              'sajdaObligatory': a.sajdaObligatory,
             },
           )
           .toList(),
@@ -250,6 +253,7 @@ class QuranRepository {
         page: m['page'] as int,
         hizbQuarter: m['hizbQuarter'] as int,
         sajda: m['sajda'] as bool,
+        sajdaObligatory: m['sajdaObligatory'] as bool? ?? false,
       );
     }).toList();
   }

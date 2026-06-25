@@ -8,6 +8,7 @@ class Ayah {
   final int page;
   final int hizbQuarter;
   final bool sajda;
+  final bool sajdaObligatory;
 
   Ayah({
     required this.number,
@@ -19,7 +20,15 @@ class Ayah {
     required this.page,
     required this.hizbQuarter,
     required this.sajda,
+    this.sajdaObligatory = false,
   });
+
+  /// The raw API/cache `sajda` field is either `false`, `true`, or an object
+  /// like `{"id":1,"recommended":true,"obligatory":false}` — this pulls out
+  /// the `obligatory` flag regardless of which shape it arrives in.
+  static bool obligatoryFromRaw(dynamic sajdaValue) {
+    return sajdaValue is Map && sajdaValue['obligatory'] == true;
+  }
 
   /// 1-based Hizb number (1-60). Each Juz contains 2 Hizb.
   int get hizb => ((hizbQuarter - 1) ~/ 4) + 1;
@@ -39,6 +48,7 @@ class Ayah {
       page: page,
       hizbQuarter: hizbQuarter,
       sajda: sajda,
+      sajdaObligatory: sajdaObligatory,
     );
   }
 
@@ -53,6 +63,7 @@ class Ayah {
       page: page,
       hizbQuarter: hizbQuarter,
       sajda: sajda,
+      sajdaObligatory: sajdaObligatory,
     );
   }
 
@@ -71,6 +82,7 @@ class Ayah {
       sajda: sajdaValue is bool
           ? sajdaValue
           : (sajdaValue != null && sajdaValue != false),
+      sajdaObligatory: obligatoryFromRaw(sajdaValue),
     );
   }
 }

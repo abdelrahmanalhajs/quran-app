@@ -259,9 +259,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       return Scaffold(body: body);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
+    // Forced ltr (rather than mirroring with the ambient locale direction)
+    // so the play button always sits physically to the right of the surah
+    // name on screen, in both Arabic and English UI — same reasoning as the
+    // Mushaf footer badge's [Alignment.centerLeft] further down.
+    final titleRow = Row(
+      textDirection: TextDirection.ltr,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
           widget.surah.nameAr,
           style: AppTheme.quranNameStyle(
             context,
@@ -269,6 +275,36 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
+        const SizedBox(width: 14),
+        IconButton(
+          onPressed: () async {
+            if (!reciter.hasSurah(widget.surah.number)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('quran.reciter_unavailable'.tr())),
+              );
+              return;
+            }
+            await context.read<AudioProvider>().playSurah(
+              widget.surah.number,
+              reciter,
+              resume: true,
+              surahTitle: widget.surah.nameAr,
+            );
+          },
+          tooltip: 'quran.play_surah'.tr(),
+          icon: Icon(
+            playingThis && audio.isPlaying
+                ? Icons.pause_circle_filled
+                : Icons.play_circle_fill,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: titleRow,
         actions: [
           IconButton(
             icon: Icon(
@@ -302,32 +338,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         ],
       ),
       body: body,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          if (!reciter.hasSurah(widget.surah.number)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('quran.reciter_unavailable'.tr())),
-            );
-            return;
-          }
-          await context.read<AudioProvider>().playSurah(
-            widget.surah.number,
-            reciter,
-            resume: true,
-            surahTitle: widget.surah.nameAr,
-          );
-        },
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        extendedPadding: const EdgeInsets.symmetric(horizontal: 14),
-        icon: Icon(
-          playingThis && audio.isPlaying ? Icons.pause : Icons.play_arrow,
-          size: 16,
-        ),
-        label: Text(
-          'quran.play_surah'.tr(),
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        ),
-      ),
     );
   }
 }
@@ -998,10 +1008,19 @@ class _MushafPageViewState extends State<_MushafPageView> {
               Container(
                 color: _pageBg,
                 constraints: const BoxConstraints(maxHeight: 280),
+                // This list always sits on the cream [_pageBg] background
+                // regardless of light/dark theme, so every text/icon color
+                // below is set explicitly rather than left to inherit from
+                // the ambient (theme-dependent) defaults — in dark mode
+                // those default to a near-white color that's nearly
+                // invisible against this light background.
                 child: (matches.isEmpty && juzMatch == null)
                     ? Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text('quran.no_results'.tr()),
+                        child: Text(
+                          'quran.no_results'.tr(),
+                          style: const TextStyle(color: _ink),
+                        ),
                       )
                     : ListView(
                         shrinkWrap: true,
@@ -1017,6 +1036,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
                                 'quran.juz_label'.tr(
                                   args: [localizedNumber(context, juzMatch)],
                                 ),
+                                style: const TextStyle(
+                                  color: _ink,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               onTap: () => _jumpToJuz(juzMatch),
                             ),
@@ -1030,7 +1053,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
                                 ),
                                 child: Text(
                                   localizedNumber(context, s.number),
-                                  style: const TextStyle(fontSize: 11),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: _frameGreen,
+                                  ),
                                 ),
                               ),
                               title: Text(
@@ -1038,9 +1064,15 @@ class _MushafPageViewState extends State<_MushafPageView> {
                                 style: AppTheme.quranNameStyle(
                                   context,
                                   fontSize: 16,
+                                  color: _ink,
                                 ),
                               ),
-                              subtitle: Text(s.englishName),
+                              subtitle: Text(
+                                s.englishName,
+                                style: TextStyle(
+                                  color: _ink.withValues(alpha: 0.65),
+                                ),
+                              ),
                               onTap: () => _jumpToSurah(s),
                             ),
                         ],
@@ -1088,31 +1120,47 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final q = _searchQuery.trim();
     if (q.isEmpty) return const [];
     final qLower = q.toLowerCase();
+    // The API's Arabic names come back fully diacritized (e.g. "Surat
+    // Al-Baqarah" with full tashkeel) while real users type plain
+    // undiacritized Arabic, so both sides go through
+    // [normalizeArabicSearch] before comparing — a literal [String.contains]
+    // against the raw diacritized name almost never matches otherwise.
+    final qNormalized = normalizeArabicSearch(q);
+    final qDigits = westernDigits(q);
     return _allSurahs
         .where(
           (s) =>
-              s.nameAr.contains(q) ||
+              normalizeArabicSearch(s.nameAr).contains(qNormalized) ||
               s.englishName.toLowerCase().contains(qLower) ||
-              s.number.toString() == q,
+              s.number.toString() == qDigits,
         )
         .take(6)
         .toList();
   }
 
   int? get _searchJuzMatch {
-    final n = int.tryParse(_searchQuery.trim());
+    // [int.tryParse] only understands Western digits — without converting
+    // first, typing the Arabic-Indic numerals (١٢٣...) the rest of this
+    // app displays everywhere else (or words like "Juz'"/"جزء" alongside
+    // the number) would silently never match.
+    final normalized = westernDigits(_searchQuery.trim());
+    final digits = RegExp(r'\d+').firstMatch(normalized)?.group(0);
+    if (digits == null) return null;
+    final n = int.tryParse(digits);
     if (n == null || n < 1 || n > 30) return null;
     return n;
   }
 
-  void _jumpToSurah(SurahSummary target) {
+  void _jumpToSurah(SurahSummary target, {int? startPage}) {
     setState(() {
       _chromeVisible = false;
       _searchQuery = '';
     });
     _searchController.clear();
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => SurahDetailScreen(surah: target)),
+      MaterialPageRoute(
+        builder: (_) => SurahDetailScreen(surah: target, startPage: startPage),
+      ),
     );
   }
 
@@ -1122,7 +1170,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
       (s) => s.number == boundary.startSurah,
       orElse: () => widget.surahsByNumber.values.first,
     );
-    _jumpToSurah(target);
+    // Jump straight to this Juz's own starting page — most Juz' boundaries
+    // fall mid-surah, so opening [target]'s default first page would land
+    // well before (or, for surahs split across Juz', well after) the
+    // actual Juz' start.
+    _jumpToSurah(target, startPage: boundary.startPage);
   }
 
   Widget _buildMushafPage(
@@ -1263,6 +1315,29 @@ class _MushafPageViewState extends State<_MushafPageView> {
             recognizer: recognizer,
           ),
         );
+        if (ayah.sajda) {
+          // ۩ marks the place of prostration. Per the reference table, an
+          // *obligatory* sajda additionally gets a line drawn above the
+          // marked word — we don't have per-word position data from the
+          // API, only the ayah-level obligatory flag, so the overline is
+          // drawn on the sign itself rather than a specific word.
+          spans.add(
+            TextSpan(
+              text: ' ۩',
+              style: baseStyle.copyWith(
+                color: _frameGreen,
+                fontWeight: FontWeight.bold,
+                background: highlight,
+                decoration: ayah.sajdaObligatory
+                    ? TextDecoration.overline
+                    : null,
+                decorationColor: _frameGreen,
+                decorationThickness: 2,
+              ),
+              recognizer: recognizer,
+            ),
+          );
+        }
         spans.add(const TextSpan(text: ' '));
         prevAyah = ayah;
       }
@@ -1321,7 +1396,12 @@ class _MushafPageViewState extends State<_MushafPageView> {
       hizbNumber = localizedNumber(context, newQuarterAyah.hizb);
       hizbFraction = _hizbQuarterFraction(context, newQuarterAyah.quarterInHizb);
     }
-    final footer = Center(
+    // Always pinned to the physical left edge — [Alignment.centerLeft]
+    // rather than a directional start/end alignment, since this should
+    // stay put on one side regardless of Arabic/English locale, unlike
+    // the rest of this screen's start/end-mirrored layout.
+    final footer = Align(
+      alignment: Alignment.centerLeft,
       child: _footerBadge(
         context,
         hizbWord: hizbWord,
@@ -1569,7 +1649,13 @@ class _MushafPageViewState extends State<_MushafPageView> {
     String? hizbFraction,
     required String pageText,
   }) {
-    final style = AppTheme.quranTextStyle(context, fontSize: 11).copyWith(
+    // Plain default font rather than [AppTheme.quranTextStyle]'s Amiri
+    // Quran — that face reserves extra vertical space above the line for
+    // Uthmani diacritics, which threw off vertical centering for this
+    // badge's plain digits/short word and didn't add anything, since none
+    // of that content needs Quranic glyph support.
+    const style = TextStyle(
+      fontSize: 11,
       color: _frameGreen,
       fontWeight: FontWeight.bold,
       height: 1,
@@ -1577,6 +1663,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     const gap = SizedBox(width: 4);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: _frameGreen, width: 1.2),
