@@ -18,6 +18,54 @@ import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
 
+/// Splits an ayah's text into spans, drawing an overline over the one word
+/// that actually commands prostration (any word containing the س-ج-د root,
+/// e.g. "وَٱسْجُدْ") when [overlineSajdaWord] is set — matching how a
+/// printed Mushaf marks an *obligatory* sajda: the place-of-sajda sign at
+/// the ayah's end never changes, but the specific trigger word earlier in
+/// the ayah gets a line above it. The word itself keeps its normal ink
+/// color; only the line is green, matching the sajda sign's color rather
+/// than the surrounding text. Shared by the Mushaf page view and the
+/// separate list view so both mark the trigger word identically.
+List<InlineSpan> _ayahTextSpans({
+  required String text,
+  required TextStyle style,
+  required GestureRecognizer? recognizer,
+  required bool overlineSajdaWord,
+}) {
+  if (!overlineSajdaWord) {
+    return [TextSpan(text: text, style: style, recognizer: recognizer)];
+  }
+  final words = text.split(' ');
+  final sajdaWordIndex = words.indexWhere(
+    (w) => normalizeArabicSearch(w).contains('سجد'),
+  );
+  if (sajdaWordIndex == -1) {
+    return [TextSpan(text: text, style: style, recognizer: recognizer)];
+  }
+  final spans = <InlineSpan>[];
+  for (var i = 0; i < words.length; i++) {
+    if (i > 0) {
+      spans.add(TextSpan(text: ' ', style: style, recognizer: recognizer));
+    }
+    final isSajdaWord = i == sajdaWordIndex;
+    spans.add(
+      TextSpan(
+        text: words[i],
+        style: isSajdaWord
+            ? style.copyWith(
+                decoration: TextDecoration.overline,
+                decorationColor: _MushafPageViewState._frameGreen,
+                decorationThickness: 2,
+              )
+            : style,
+        recognizer: recognizer,
+      ),
+    );
+  }
+  return spans;
+}
+
 /// Everything [SurahDetailScreen] needs to render: the surah's own ayahs
 /// (for list mode, the FAB and totals), the same ayahs but with the first
 /// and/or last Mushaf-page group replaced by the *actual* page content from
@@ -238,12 +286,18 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                   ),
                 );
               }
-              final ayah = ayahs[showBismillah ? index - 1 : index];
+              final ayahIndex = showBismillah ? index - 1 : index;
+              final ayah = ayahs[ayahIndex];
+              final prevAyah = ayahIndex > 0 ? ayahs[ayahIndex - 1] : null;
+              final isQuarterStart = prevAyah == null
+                  ? (ayah.surahNumber == 1 && ayah.numberInSurah == 1)
+                  : prevAyah.hizbQuarter != ayah.hizbQuarter;
               return _AyahCard(
                 ayah: ayah,
                 totalAyahs: widget.surah.numberOfAyahs,
                 isActive: activeAyah == ayah.numberInSurah,
                 surahNameAr: widget.surah.nameAr,
+                isQuarterStart: isQuarterStart,
               );
             },
           ),
@@ -349,18 +403,62 @@ class _AyahCard extends StatelessWidget {
   final int totalAyahs;
   final bool isActive;
   final String surahNameAr;
+  final bool isQuarterStart;
 
   const _AyahCard({
     required this.ayah,
     required this.totalAyahs,
     required this.isActive,
     required this.surahNameAr,
+    required this.isQuarterStart,
   });
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final audio = context.watch<AudioProvider>();
+    final signsColored = settings.quranSignsColored;
+    final baseStyle = AppTheme.quranTextStyle(
+      context,
+      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
+        settings.quranFontSize,
+      )],
+    );
+    final spans = <InlineSpan>[
+      if (isQuarterStart)
+        TextSpan(
+          text: '۞ ',
+          style: baseStyle.copyWith(
+            color: _MushafPageViewState._frameGreen,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ..._ayahTextSpans(
+        text: ayah.textAr,
+        style: baseStyle,
+        recognizer: null,
+        overlineSajdaWord: ayah.sajdaObligatory,
+      ),
+      if (ayah.sajda)
+        TextSpan(
+          text: ' ۩',
+          style: TextStyle(
+            fontSize: baseStyle.fontSize,
+            height: baseStyle.height,
+            color: _MushafPageViewState._frameGreen,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+    ];
+    // Same [ColorFilter] approach as the Mushaf page view (see
+    // [SettingsProvider.quranSignsColored]): flattens the quarter-Hizb,
+    // sajda and obligatory-sajda-overline colors down to the body ink
+    // color when signs are set to render uncolored.
+    final ayahText = Text.rich(
+      TextSpan(children: spans),
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.rtl,
+    );
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => _showAyahSheet(context, ayah, totalAyahs, surahNameAr),
@@ -388,17 +486,15 @@ class _AyahCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  ayah.textAr,
-                  textAlign: TextAlign.right,
-                  textDirection: TextDirection.rtl,
-                  style: AppTheme.quranTextStyle(
-                    context,
-                    fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
-                      settings.quranFontSize,
-                    )],
-                  ),
-                ),
+                child: signsColored
+                    ? ayahText
+                    : ColorFiltered(
+                        colorFilter: ColorFilter.mode(
+                          _MushafPageViewState._ink,
+                          BlendMode.srcIn,
+                        ),
+                        child: ayahText,
+                      ),
               ),
               IconButton(
                 icon: Icon(
@@ -1313,11 +1409,12 @@ class _MushafPageViewState extends State<_MushafPageView> {
             ),
           );
         }
-        spans.add(
-          TextSpan(
+        spans.addAll(
+          _ayahTextSpans(
             text: ayah.textAr,
             style: baseStyle.copyWith(background: highlight),
             recognizer: recognizer,
+            overlineSajdaWord: ayah.sajdaObligatory,
           ),
         );
         spans.add(
@@ -1332,11 +1429,9 @@ class _MushafPageViewState extends State<_MushafPageView> {
           ),
         );
         if (ayah.sajda) {
-          // ۩ marks the place of prostration. Per the reference table, an
-          // *obligatory* sajda additionally gets a line drawn above the
-          // marked word — we don't have per-word position data from the
-          // API, only the ayah-level obligatory flag, so the overline is
-          // drawn on the sign itself rather than a specific word.
+          // ۩ marks the place of prostration. The obligatory-sajda overline
+          // belongs on the actual trigger word earlier in the ayah (see
+          // [_ayahTextSpans]), not on this sign itself.
           //
           // Deliberately *not* [baseStyle] (Amiri Quran) here: that face
           // draws U+06E9 as an ornate rosette nearly indistinguishable from
@@ -1352,11 +1447,6 @@ class _MushafPageViewState extends State<_MushafPageView> {
                 color: _frameGreen,
                 fontWeight: FontWeight.bold,
                 background: highlight,
-                decoration: ayah.sajdaObligatory
-                    ? TextDecoration.overline
-                    : null,
-                decorationColor: _frameGreen,
-                decorationThickness: 2,
               ),
               recognizer: recognizer,
             ),

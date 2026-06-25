@@ -75,7 +75,7 @@ class Ayah {
       number: json['number'] as int,
       numberInSurah: json['numberInSurah'] as int,
       surahNumber: surahNumber,
-      textAr: json['text'] as String,
+      textAr: _stripTrailingSajdaMark(json['text'] as String),
       juz: json['juz'] as int,
       page: json['page'] as int,
       hizbQuarter: json['hizbQuarter'] as int,
@@ -84,5 +84,15 @@ class Ayah {
           : (sajdaValue != null && sajdaValue != false),
       sajdaObligatory: obligatoryFromRaw(sajdaValue),
     );
+  }
+
+  /// The quran-uthmani edition embeds its own ۩ glyph at the very end of a
+  /// sajda ayah's text. Stripped here so every caller (the Mushaf page view
+  /// and the separate list view) can render its own, consistently-styled
+  /// sajda sign instead of ending up with the symbol twice — once from the
+  /// raw text (in whatever font the surrounding ayah uses) and once from
+  /// the app's own sign.
+  static String _stripTrailingSajdaMark(String text) {
+    return text.replaceAll(RegExp('\\s*۩\\s*\$'), '');
   }
 }
