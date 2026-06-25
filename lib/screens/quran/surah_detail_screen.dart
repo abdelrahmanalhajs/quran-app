@@ -57,6 +57,13 @@ List<InlineSpan> _ayahTextSpans({
                 decoration: TextDecoration.overline,
                 decorationColor: _MushafPageViewState._frameGreen,
                 decorationThickness: 2,
+                // Extra leading just for this one word, so the overline
+                // gets clearance from the line above instead of crowding
+                // into its diacritics — [TextDecoration.overline] draws
+                // right at the top of the run's own line box, which at
+                // the surrounding paragraph's normal line height sits
+                // almost flush against the line above.
+                height: (style.height ?? 1.0) + 0.4,
               )
             : style,
         recognizer: recognizer,
@@ -1417,21 +1424,13 @@ class _MushafPageViewState extends State<_MushafPageView> {
             overlineSajdaWord: ayah.sajdaObligatory,
           ),
         );
-        spans.add(
-          TextSpan(
-            text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
-            style: baseStyle.copyWith(
-              color: _frameGreen,
-              fontWeight: FontWeight.bold,
-              background: highlight,
-            ),
-            recognizer: recognizer,
-          ),
-        );
         if (ayah.sajda) {
-          // ۩ marks the place of prostration. The obligatory-sajda overline
-          // belongs on the actual trigger word earlier in the ayah (see
-          // [_ayahTextSpans]), not on this sign itself.
+          // ۩ marks the place of prostration, placed right after the ayah
+          // text and before its own ۝ ayah-end number — i.e. to the *right*
+          // of (read before) that number in the RTL line, matching a
+          // printed Mushaf rather than trailing after it. The obligatory-
+          // sajda overline belongs on the actual trigger word earlier in
+          // the ayah (see [_ayahTextSpans]), not on this sign itself.
           //
           // Deliberately *not* [baseStyle] (Amiri Quran) here: that face
           // draws U+06E9 as an ornate rosette nearly indistinguishable from
@@ -1452,6 +1451,17 @@ class _MushafPageViewState extends State<_MushafPageView> {
             ),
           );
         }
+        spans.add(
+          TextSpan(
+            text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
+            style: baseStyle.copyWith(
+              color: _frameGreen,
+              fontWeight: FontWeight.bold,
+              background: highlight,
+            ),
+            recognizer: recognizer,
+          ),
+        );
         spans.add(const TextSpan(text: ' '));
         prevAyah = ayah;
       }
