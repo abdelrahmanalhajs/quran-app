@@ -33,7 +33,7 @@ const List<bool> kQuranFontSizeFitsPage = [true, true, false];
 /// than Small: a tighter line height means less of the page's fixed height
 /// budget goes to the gap between lines once the page is scaled to fill the
 /// frame exactly, leaving more of it for the letters themselves.
-const List<double> kQuranFontSizeLineHeight = [2.1, 2.1, 1.9];
+const List<double> kQuranFontSizeLineHeight = [2.1, 1.7, 1.9];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
 /// Medium is bold (in addition to its tighter line height) to read as a
@@ -66,6 +66,8 @@ class SettingsProvider extends ChangeNotifier {
   static const _kQuranViewMode = 'quran_view_mode';
   static const _kLastReadSurah = 'last_read_surah';
   static const _kLastReadPage = 'last_read_page';
+  static const _kOnboardingDone = 'onboarding_done';
+  static const _kQuranSignsColored = 'quran_signs_colored';
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
@@ -73,11 +75,27 @@ class SettingsProvider extends ChangeNotifier {
   QuranViewMode _quranViewMode = QuranViewMode.page;
   int? _lastReadSurah;
   int? _lastReadPage;
+  bool _onboardingDone = false;
+  bool _quranSignsColored = true;
 
   ThemeMode get themeMode => _themeMode;
   Reciter get reciter => _reciter;
   double get quranFontSize => _quranFontSize;
   QuranViewMode get quranViewMode => _quranViewMode;
+
+  /// Whether waqf marks, the sajda sign, the ayah-end marker and the
+  /// quarter-Hizb mark render in their own distinct colors (the default,
+  /// matching a printed Mushaf) or in the same color as the body text —
+  /// see [_MushafPageViewState]'s use of `ColorFiltered` in
+  /// surah_detail_screen.dart, which is what actually enforces this for
+  /// marks whose color comes from the font's own glyphs rather than a
+  /// [TextStyle] this app sets.
+  bool get quranSignsColored => _quranSignsColored;
+
+  /// Whether the first-time language-choice + feature walkthrough (see
+  /// `OnboardingScreen`) has already been shown, so it only ever appears
+  /// once per install rather than on every cold start.
+  bool get onboardingDone => _onboardingDone;
 
   /// The surah/Mushaf-page the user was last reading, persisted so the
   /// Quran tab can resume there instead of the surah list — both when
@@ -108,7 +126,23 @@ class SettingsProvider extends ChangeNotifier {
         : QuranViewMode.page;
     _lastReadSurah = prefs.getInt(_kLastReadSurah);
     _lastReadPage = prefs.getInt(_kLastReadPage);
+    _onboardingDone = prefs.getBool(_kOnboardingDone) ?? false;
+    _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? true;
     notifyListeners();
+  }
+
+  Future<void> setQuranSignsColored(bool colored) async {
+    _quranSignsColored = colored;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kQuranSignsColored, colored);
+  }
+
+  Future<void> setOnboardingDone() async {
+    _onboardingDone = true;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOnboardingDone, true);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

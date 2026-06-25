@@ -6,6 +6,7 @@ import '../../core/responsive.dart';
 import '../../core/services/notification_prefs.dart';
 import '../../core/services/notification_service.dart';
 import '../../models/surah.dart';
+import '../../state/navigation_provider.dart';
 import '../../state/quran_provider.dart';
 import '../../state/settings_provider.dart';
 import '../athkar/athkar_screen.dart';
@@ -23,11 +24,21 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+  late HomeNavigationProvider _nav;
+  int _lastIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _nav = context.read<HomeNavigationProvider>();
+    _lastIndex = _nav.index;
+    // The Quran reading screen's own embedded tab bar (see
+    // _MushafPageViewState) switches tabs by calling
+    // [HomeNavigationProvider.setIndex] and popping back to this screen,
+    // rather than through [_onDestinationSelected] below — this listener
+    // is what notices that kind of external switch so resuming into the
+    // Quran tab (see [_resumeLastRead]) keeps working from there too.
+    _nav.addListener(_handleNavChange);
     if (!kIsWeb) {
       // Each of these notifications is otherwise only (re-)scheduled from
       // inside its Settings toggle's onChanged — so a setting that's
@@ -76,16 +87,27 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  void _onDestinationSelected(int i) {
-    final wasQuranTab = _index == 0;
-    setState(() => _index = i);
-    // Switching back into the Quran tab from a different one should
-    // resume reading rather than always landing on the surah list — the
-    // cold-start case above only covers app launch, not this in-session
-    // tab switch.
-    if (!wasQuranTab && i == 0) {
+  void _onDestinationSelected(int i) => _nav.setIndex(i);
+
+  /// Switching back into the Quran tab from a different one should resume
+  /// reading rather than always landing on the surah list — the cold-start
+  /// case in [initState] only covers app launch, not an in-session tab
+  /// switch. Fires for both [_onDestinationSelected] (this screen's own
+  /// nav bar/rail) and the reading screen's embedded tab bar, since both
+  /// go through [HomeNavigationProvider].
+  void _handleNavChange() {
+    final newIndex = _nav.index;
+    final wasQuranTab = _lastIndex == 0;
+    _lastIndex = newIndex;
+    if (!wasQuranTab && newIndex == 0) {
       _resumeLastRead();
     }
+  }
+
+  @override
+  void dispose() {
+    _nav.removeListener(_handleNavChange);
+    super.dispose();
   }
 
   Future<void> _rescheduleEnabledNotifications() async {
@@ -135,6 +157,7 @@ class _HomeShellState extends State<HomeShell> {
     // every tab (including AppBar titles and TabBar labels) on switch,
     // instead of relying on each individual screen happening to depend on
     // locale itself.
+    final index = context.watch<HomeNavigationProvider>().index;
     final localeKey = ValueKey(context.locale.languageCode);
     final screens = [
       const SurahListScreen(),
@@ -150,7 +173,7 @@ class _HomeShellState extends State<HomeShell> {
       (Icons.format_quote, 'nav.hadith'.tr()),
       (Icons.settings_outlined, 'nav.settings'.tr()),
     ];
-    final body = IndexedStack(key: localeKey, index: _index, children: screens);
+    final body = IndexedStack(key: localeKey, index: index, children: screens);
 
     // A bottom NavigationBar designed for a ~360-430dp-wide phone stretches
     // into oddly wide, sparsely-spaced destinations on a ~1024dp iPad. A
@@ -161,7 +184,7 @@ class _HomeShellState extends State<HomeShell> {
         body: Row(
           children: [
             NavigationRail(
-              selectedIndex: _index,
+              selectedIndex: index,
               onDestinationSelected: _onDestinationSelected,
               labelType: NavigationRailLabelType.all,
               destinations: [
@@ -182,7 +205,7 @@ class _HomeShellState extends State<HomeShell> {
     return Scaffold(
       body: body,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
+        selectedIndex: index,
         onDestinationSelected: _onDestinationSelected,
         destinations: [
           for (final (icon, label) in destinations)

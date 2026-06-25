@@ -24,6 +24,7 @@
     "view_list": "Switch to list view",
     "juz_label": "Juz' {}",
     "hizb_label": "Hizb {}",
+    "hizb_word": "Hizb",
     "surahs_tab": "Surahs",
     "juz_tab": "Juz'",
     "next_surah": "Next surah",
@@ -90,6 +91,8 @@
     "quran_font_small": "Small",
     "quran_font_medium": "Medium",
     "quran_font_large": "Large",
+    "quran_signs_colored": "Colored Quran signs",
+    "quran_signs_colored_hint": "Show waqf marks, sajda and Hizb signs in their own colors, like a printed Mushaf",
     "about": "About",
     "notifications": "Daily Hadith Notification",
     "hourly_zikr": "Hourly Zikr Reminder",
@@ -100,5 +103,20 @@
     "athan_notifications": "Athan Notifications",
     "athan_notifications_hint": "Get notified with the athan sound at each of the 5 daily prayer times",
     "preview_athan": "Preview"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "get_started": "Get Started",
+    "step1_title": "Welcome to Quran",
+    "step1_body": "Read, listen and reflect on the Quran — plus prayer times, athkar and a daily hadith, all in one app.",
+    "step2_title": "Read like a printed Mushaf",
+    "step2_body": "Swipe between real Mushaf pages. Tap anywhere to show or hide the menu, and hold an ayah to see its translation and tafsir.",
+    "step3_title": "Listen to your favorite reciter",
+    "step3_body": "Tap the play button on any page, or pick from 7 reciters in the top bar.",
+    "step4_title": "Prayer times & Qiblah",
+    "step4_body": "Accurate prayer times for your location, plus a live compass pointing toward the Qiblah.",
+    "step5_title": "Athkar, Hadith & more",
+    "step5_body": "Morning and evening athkar, a daily hadith and helpful reminders — all customizable from Settings."
   }
 }

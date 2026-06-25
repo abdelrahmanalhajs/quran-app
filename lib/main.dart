@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_shell.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'state/audio_provider.dart';
+import 'state/navigation_provider.dart';
 import 'state/prayer_provider.dart';
 import 'state/quran_provider.dart';
 import 'state/settings_provider.dart';
@@ -40,6 +42,7 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => QuranProvider()),
           ChangeNotifierProvider(create: (_) => AudioProvider()),
           ChangeNotifierProvider(create: (_) => PrayerProvider()),
+          ChangeNotifierProvider(create: (_) => HomeNavigationProvider()),
         ],
         child: const QuranApp(),
       ),
@@ -62,7 +65,9 @@ class QuranApp extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
-      home: const HomeShell(),
+      home: settings.onboardingDone
+          ? const HomeShell()
+          : const OnboardingScreen(),
       builder: (context, child) {
         return Listener(
           onPointerDown: (_) {

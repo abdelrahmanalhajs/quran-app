@@ -43,18 +43,3 @@ double responsiveHorizontalPadding(BuildContext context) {
   if (isCompactPhone(context)) return 12;
   return 16;
 }
-
-/// Outer margin around the Mushaf page view itself: tighter on compact
-/// phones so the page doesn't lose extra width to margins sized for a
-/// normal phone, and a touch more generous on tablets where there's room
-/// to spare. The bottom inset stays large enough to clear the floating
-/// play button on every tier.
-EdgeInsets responsiveMushafPagePadding(BuildContext context) {
-  if (isTablet(context)) {
-    return const EdgeInsets.fromLTRB(10, 8, 10, 68);
-  }
-  if (isCompactPhone(context)) {
-    return const EdgeInsets.fromLTRB(4, 4, 4, 60);
-  }
-  return const EdgeInsets.fromLTRB(6, 6, 6, 64);
-}

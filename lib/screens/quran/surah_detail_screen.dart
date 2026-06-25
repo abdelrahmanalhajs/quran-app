@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import '../../core/arabic_numbers.dart';
+import '../../core/constants/juz_boundaries.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/quran_repository.dart';
@@ -11,6 +12,7 @@ import '../../data/tafsir_repository.dart';
 import '../../models/ayah.dart';
 import '../../models/surah.dart';
 import '../../state/audio_provider.dart';
+import '../../state/navigation_provider.dart';
 import '../../state/quran_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
@@ -173,6 +175,90 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         audio.currentSurah == widget.surah.number &&
         audio.currentReciter?.id == reciter.id;
 
+    final body = FutureBuilder<_SurahPageBundle>(
+      future: _bundleFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('quran.error'.tr()));
+        }
+        final bundle = snapshot.data!;
+        final ayahs = bundle.ayahs;
+        if (settings.quranViewMode == QuranViewMode.page) {
+          return _MushafPageView(
+            ayahs: bundle.pageViewAyahs,
+            surahNumber: widget.surah.number,
+            surahNameAr: widget.surah.nameAr,
+            surahsByNumber: bundle.surahsByNumber,
+            activeSurahNumber: audio.currentSurah,
+            activeAyahNumber: audio.currentAbsoluteAyah,
+            fontSize: settings.quranFontSize,
+            startAtLastPage: widget.startAtLastPage,
+            skipFirstPage: widget.skipFirstPage,
+            skipLastPage: widget.skipLastPage,
+            startPage: widget.startPage,
+            onAdjacentSurah: (delta) => _goToAdjacentSurah(
+              context,
+              delta,
+              skip: delta > 0
+                  ? bundle.isLastPageShared
+                  : bundle.isFirstPageShared,
+            ),
+          );
+        }
+        final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
+        final showBismillah = QuranRepository.hasSeparateBismillah(
+          widget.surah.number,
+        );
+        return ResponsiveCenter(
+          child: ListView.builder(
+            padding: EdgeInsets.fromLTRB(
+              responsiveHorizontalPadding(context),
+              12,
+              responsiveHorizontalPadding(context),
+              96,
+            ),
+            itemCount: ayahs.length + (showBismillah ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (showBismillah && index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                    textAlign: TextAlign.center,
+                    textDirection: TextDirection.rtl,
+                    style: AppTheme.quranTextStyle(
+                      context,
+                      fontSize: settings.quranFontSize,
+                    ).copyWith(fontWeight: FontWeight.bold),
+                  ),
+                );
+              }
+              final ayah = ayahs[showBismillah ? index - 1 : index];
+              return _AyahCard(
+                ayah: ayah,
+                totalAyahs: widget.surah.numberOfAyahs,
+                isActive: activeAyah == ayah.numberInSurah,
+                surahNameAr: widget.surah.nameAr,
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    // Page mode renders its own full-screen chrome (green bar, creamy
+    // frame, tap-to-reveal back/reciter/search/tab-bar overlay — see
+    // [_MushafPageViewState]) instead of a Scaffold appBar/FAB, so it gets
+    // the entire screen rather than losing a slice of it to chrome that's
+    // visible the whole time. List mode keeps the plain always-visible
+    // AppBar/FAB since it has no "page" to go full-screen with.
+    if (settings.quranViewMode == QuranViewMode.page) {
+      return Scaffold(body: body);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -215,78 +301,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<_SurahPageBundle>(
-        future: _bundleFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('quran.error'.tr()));
-          }
-          final bundle = snapshot.data!;
-          final ayahs = bundle.ayahs;
-          if (settings.quranViewMode == QuranViewMode.page) {
-            return _MushafPageView(
-              ayahs: bundle.pageViewAyahs,
-              surahNumber: widget.surah.number,
-              surahsByNumber: bundle.surahsByNumber,
-              activeSurahNumber: audio.currentSurah,
-              activeAyahNumber: audio.currentAbsoluteAyah,
-              fontSize: settings.quranFontSize,
-              startAtLastPage: widget.startAtLastPage,
-              skipFirstPage: widget.skipFirstPage,
-              skipLastPage: widget.skipLastPage,
-              startPage: widget.startPage,
-              onAdjacentSurah: (delta) => _goToAdjacentSurah(
-                context,
-                delta,
-                skip: delta > 0
-                    ? bundle.isLastPageShared
-                    : bundle.isFirstPageShared,
-              ),
-            );
-          }
-          final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
-          final showBismillah = QuranRepository.hasSeparateBismillah(
-            widget.surah.number,
-          );
-          return ResponsiveCenter(
-            child: ListView.builder(
-              padding: EdgeInsets.fromLTRB(
-                responsiveHorizontalPadding(context),
-                12,
-                responsiveHorizontalPadding(context),
-                96,
-              ),
-              itemCount: ayahs.length + (showBismillah ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (showBismillah && index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                      textAlign: TextAlign.center,
-                      textDirection: TextDirection.rtl,
-                      style: AppTheme.quranTextStyle(
-                        context,
-                        fontSize: settings.quranFontSize,
-                      ).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  );
-                }
-                final ayah = ayahs[showBismillah ? index - 1 : index];
-                return _AyahCard(
-                  ayah: ayah,
-                  totalAyahs: widget.surah.numberOfAyahs,
-                  isActive: activeAyah == ayah.numberInSurah,
-                  surahNameAr: widget.surah.nameAr,
-                );
-              },
-            ),
-          );
-        },
-      ),
+      body: body,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           if (!reciter.hasSurah(widget.surah.number)) {
@@ -627,6 +642,7 @@ List<List<Ayah>> _groupBySurah(List<Ayah> pageAyahs) {
 class _MushafPageView extends StatefulWidget {
   final List<Ayah> ayahs;
   final int surahNumber;
+  final String surahNameAr;
   final Map<int, SurahSummary> surahsByNumber;
   final int? activeSurahNumber;
   final int? activeAyahNumber;
@@ -640,6 +656,7 @@ class _MushafPageView extends StatefulWidget {
   const _MushafPageView({
     required this.ayahs,
     required this.surahNumber,
+    required this.surahNameAr,
     required this.surahsByNumber,
     required this.activeSurahNumber,
     required this.activeAyahNumber,
@@ -660,7 +677,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
 
-  final List<TapGestureRecognizer> _recognizers = [];
+  final List<LongPressGestureRecognizer> _recognizers = [];
   late final PageController _pageController;
   late int _realPagesStart;
   late List<List<Ayah>> _screenPages;
@@ -670,6 +687,14 @@ class _MushafPageViewState extends State<_MushafPageView> {
   int _currentIndex = 0;
   int _itemCount = 0;
 
+  /// Whether the tap-to-reveal back/reciter/view-toggle/search bar (top)
+  /// and embedded app-tab bar (bottom) are showing. Off by default so the
+  /// reading view stays fully immersive — see [_toggleChrome].
+  bool _chromeVisible = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  List<SurahSummary> _allSurahs = [];
+
   void _clearRecognizers() {
     for (final r in _recognizers) {
       r.dispose();
@@ -677,9 +702,19 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _recognizers.clear();
   }
 
+  void _toggleChrome() => setState(() => _chromeVisible = !_chromeVisible);
+
   @override
   void initState() {
     super.initState();
+
+    // Cached locally (rather than read from [QuranProvider.surahs], which
+    // may not have loaded yet if this screen was opened directly — e.g.
+    // resuming straight into a surah on a cold start) so the in-overlay
+    // surah/Juz' search below can filter synchronously as the user types.
+    context.read<QuranProvider>().repository.getSurahList().then((list) {
+      if (mounted) setState(() => _allSurahs = list);
+    });
 
     _screenPages = _groupByMushafPage(widget.ayahs);
     final hasPrevSurah = widget.surahNumber > 1;
@@ -749,6 +784,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   void dispose() {
     _clearRecognizers();
     _pageController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -801,18 +837,32 @@ class _MushafPageViewState extends State<_MushafPageView> {
   Widget build(BuildContext context) {
     _clearRecognizers();
 
-    return ResponsiveCenter(
-      maxWidth: 900,
-      child: Padding(
-        padding: responsiveMushafPagePadding(context),
+    // No outer padding/SafeArea-on-every-side here — the green bar sits at
+    // the literal top of the screen and the creamy frame's own bottom
+    // border touches the screen's bottom edge, exactly like a real Mushaf
+    // page filling the page it's printed on. SafeArea still protects the
+    // top (status bar/notch); the bottom is deliberately left unprotected
+    // since the frame's plain cream background can sit behind a home
+    // indicator without anything important being obscured.
+    final pageContent = SafeArea(
+      bottom: false,
+      child: ResponsiveCenter(
+        maxWidth: 900,
         child: GestureDetector(
-          // Without this, a drag starting on empty space (e.g. the
+          // Without this, a drag/tap starting on empty space (e.g. the
           // letterboxed margins FittedBox leaves around a shrunk page)
           // wouldn't be hit-tested at all, since the default
           // `deferToChild` behavior only recognizes gestures where a
           // child actually paints.
           behavior: HitTestBehavior.opaque,
           onHorizontalDragEnd: _handleHorizontalDragEnd,
+          // A quick tap anywhere on the page (including directly on an
+          // ayah's own text, see [_buildMushafPage]'s recognizers) toggles
+          // the chrome overlay; only a *held* tap on an ayah opens its
+          // translation/tafsir sheet, since a plain LongPressGestureRecognizer
+          // on the ayah text simply loses the gesture arena to this tap
+          // recognizer on anything shorter than the long-press threshold.
+          onTap: _toggleChrome,
           child: PageView.builder(
             controller: _pageController,
             reverse: true,
@@ -826,16 +876,261 @@ class _MushafPageViewState extends State<_MushafPageView> {
               if (index == _nextSentinelIndex) {
                 return const _AdjacentSurahTransitionPage(forward: true);
               }
-              final pageAyahs = _screenPages[index - _realPagesStart];
-              return _buildMushafPage(context, pageAyahs);
+              final screenPageIndex = index - _realPagesStart;
+              final pageAyahs = _screenPages[screenPageIndex];
+              return _buildMushafPage(context, pageAyahs, screenPageIndex);
             },
           ),
         ),
       ),
     );
+
+    return Container(
+      color: _pageBg,
+      child: Stack(
+        children: [
+          Positioned.fill(child: pageContent),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _ChromeOverlay(
+              visible: _chromeVisible,
+              fromTop: true,
+              child: _buildTopOverlay(context),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _ChromeOverlay(
+              visible: _chromeVisible,
+              fromTop: false,
+              child: _buildBottomNavOverlay(context),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildMushafPage(BuildContext context, List<Ayah> pageAyahs) {
+  /// Back/view-toggle/reciter and a local surah/Juz' search, revealed by
+  /// [_toggleChrome] — see [_chromeVisible].
+  Widget _buildTopOverlay(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final matches = _searchMatches;
+    final juzMatch = _searchJuzMatch;
+    final hasQuery = _searchQuery.trim().isNotEmpty;
+    return Material(
+      color: _frameGreen,
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 8, 6),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: _pageBg),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      style: const TextStyle(color: _pageBg),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'quran.search_hint'.tr(),
+                        hintStyle: TextStyle(
+                          color: _pageBg.withValues(alpha: 0.7),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: _pageBg.withValues(alpha: 0.85),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.view_agenda_outlined,
+                      color: _pageBg,
+                    ),
+                    tooltip: 'quran.view_list'.tr(),
+                    onPressed: () =>
+                        settings.setQuranViewMode(QuranViewMode.list),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.headphones_outlined,
+                      color: _pageBg,
+                    ),
+                    tooltip: 'quran.reciter'.tr(),
+                    onPressed: () async {
+                      final settingsProvider = context
+                          .read<SettingsProvider>();
+                      final picked = await showReciterPicker(
+                        context,
+                        settings.reciter,
+                      );
+                      if (picked != null) {
+                        await settingsProvider.setReciter(picked);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            if (hasQuery)
+              Container(
+                color: _pageBg,
+                constraints: const BoxConstraints(maxHeight: 280),
+                child: (matches.isEmpty && juzMatch == null)
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text('quran.no_results'.tr()),
+                      )
+                    : ListView(
+                        shrinkWrap: true,
+                        children: [
+                          if (juzMatch != null)
+                            ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.bookmark_outline,
+                                color: _frameGreen,
+                              ),
+                              title: Text(
+                                'quran.juz_label'.tr(
+                                  args: [localizedNumber(context, juzMatch)],
+                                ),
+                              ),
+                              onTap: () => _jumpToJuz(juzMatch),
+                            ),
+                          for (final s in matches)
+                            ListTile(
+                              dense: true,
+                              leading: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: _frameGreen.withValues(
+                                  alpha: 0.15,
+                                ),
+                                child: Text(
+                                  localizedNumber(context, s.number),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              title: Text(
+                                s.nameAr,
+                                style: AppTheme.quranNameStyle(
+                                  context,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Text(s.englishName),
+                              onTap: () => _jumpToSurah(s),
+                            ),
+                        ],
+                      ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The app's own main tabs, embedded so the user can switch away from
+  /// reading without first backing out to the surah list — tapping a
+  /// different tab here pops this screen and switches [HomeShell] to it
+  /// via [HomeNavigationProvider], rather than a nested Navigator.
+  Widget _buildBottomNavOverlay(BuildContext context) {
+    final destinations = [
+      (Icons.menu_book, 'nav.quran'.tr()),
+      (Icons.explore_outlined, 'nav.prayer'.tr()),
+      (Icons.favorite_outline, 'nav.athkar'.tr()),
+      (Icons.format_quote, 'nav.hadith'.tr()),
+      (Icons.settings_outlined, 'nav.settings'.tr()),
+    ];
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: NavigationBar(
+          selectedIndex: 0,
+          onDestinationSelected: (i) {
+            if (i == 0) return;
+            context.read<HomeNavigationProvider>().setIndex(i);
+            Navigator.of(context).popUntil((r) => r.isFirst);
+          },
+          destinations: [
+            for (final (icon, label) in destinations)
+              NavigationDestination(icon: Icon(icon), label: label),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<SurahSummary> get _searchMatches {
+    final q = _searchQuery.trim();
+    if (q.isEmpty) return const [];
+    final qLower = q.toLowerCase();
+    return _allSurahs
+        .where(
+          (s) =>
+              s.nameAr.contains(q) ||
+              s.englishName.toLowerCase().contains(qLower) ||
+              s.number.toString() == q,
+        )
+        .take(6)
+        .toList();
+  }
+
+  int? get _searchJuzMatch {
+    final n = int.tryParse(_searchQuery.trim());
+    if (n == null || n < 1 || n > 30) return null;
+    return n;
+  }
+
+  void _jumpToSurah(SurahSummary target) {
+    setState(() {
+      _chromeVisible = false;
+      _searchQuery = '';
+    });
+    _searchController.clear();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => SurahDetailScreen(surah: target)),
+    );
+  }
+
+  void _jumpToJuz(int juzNumber) {
+    final boundary = kJuzBoundaries[juzNumber - 1];
+    final target = _allSurahs.firstWhere(
+      (s) => s.number == boundary.startSurah,
+      orElse: () => widget.surahsByNumber.values.first,
+    );
+    _jumpToSurah(target);
+  }
+
+  Widget _buildMushafPage(
+    BuildContext context,
+    List<Ayah> pageAyahs,
+    int screenPageIndex,
+  ) {
+    final signsColored = context.watch<SettingsProvider>().quranSignsColored;
     final stepIndex = quranFontSizeStepIndex(widget.fontSize);
     final lineHeight = kQuranFontSizeLineHeight[stepIndex];
     final fontWeight = kQuranFontSizeWeight[stepIndex];
@@ -863,6 +1158,18 @@ class _MushafPageViewState extends State<_MushafPageView> {
       blocks.add(child);
       segments.add(_ScaledSegment(scaled: scaled, child: child));
     }
+
+    // Tracks the ayah immediately before whichever one is currently being
+    // laid out, across the whole page (and the previous screen page's
+    // last ayah for this page's very first one), so [ayah.hizbQuarter]
+    // changing between them marks exactly the ayah where a new
+    // quarter-Hizb (۞) begins — the same boundary [_isQuarterStart] finds
+    // at page granularity, just checked per-ayah here so the mark can be
+    // inserted inline at the right word instead of only summarized in the
+    // footer.
+    Ayah? prevAyah = screenPageIndex > 0
+        ? _screenPages[screenPageIndex - 1].last
+        : null;
 
     final runs = _groupBySurah(pageAyahs);
     for (var r = 0; r < runs.length; r++) {
@@ -898,8 +1205,8 @@ class _MushafPageViewState extends State<_MushafPageView> {
       final spans = <InlineSpan>[];
       for (final ayah in run) {
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
-        final recognizer = TapGestureRecognizer()
-          ..onTap = () => _showAyahSheet(
+        final recognizer = LongPressGestureRecognizer()
+          ..onLongPress = () => _showAyahSheet(
             context,
             ayah,
             surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
@@ -924,6 +1231,20 @@ class _MushafPageViewState extends State<_MushafPageView> {
         final highlight = isActive
             ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
             : null;
+        final startsQuarter = prevAyah == null
+            ? (ayah.surahNumber == 1 && ayah.numberInSurah == 1)
+            : prevAyah.hizbQuarter != ayah.hizbQuarter;
+        if (startsQuarter) {
+          spans.add(
+            TextSpan(
+              text: '۞ ',
+              style: baseStyle.copyWith(
+                color: _frameGreen,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        }
         spans.add(
           TextSpan(
             text: ayah.textAr,
@@ -943,13 +1264,27 @@ class _MushafPageViewState extends State<_MushafPageView> {
           ),
         );
         spans.add(const TextSpan(text: ' '));
+        prevAyah = ayah;
       }
+      final ayahText = Text.rich(
+        TextSpan(children: spans),
+        textAlign: TextAlign.justify,
+        textDirection: TextDirection.rtl,
+      );
+      // The waqf marks, sajda sign and ۞/۝ markers above get their color
+      // either from the font's own glyphs (Amiri Quran ships several of
+      // these in color) or from an explicit [TextStyle.color] — a
+      // [ColorFilter] in `srcIn` mode replaces every opaque pixel with one
+      // flat color regardless of which of those it came from, so this is
+      // the one place that can turn both off at once for
+      // [SettingsProvider.quranSignsColored].
       addBlock(
-        Text.rich(
-          TextSpan(children: spans),
-          textAlign: TextAlign.justify,
-          textDirection: TextDirection.rtl,
-        ),
+        signsColored
+            ? ayahText
+            : ColorFiltered(
+                colorFilter: ColorFilter.mode(_ink, BlendMode.srcIn),
+                child: ayahText,
+              ),
       );
     }
 
@@ -961,20 +1296,38 @@ class _MushafPageViewState extends State<_MushafPageView> {
       children: blocks,
     );
 
-    // Page-number footer — pinned right above the frame's own bottom
+    // Page-number/Hizb footer — pinned right above the frame's own bottom
     // border (see [pageArea] below) rather than inside the
     // scaled/scrollable content, so it no longer eats into Small/Medium's
-    // fill-the-page height budget. Hizb and Juz' aren't repeated here
-    // since they're already shown in the green bar above the frame for
-    // every page. Just the bare number, in either locale, like a real
-    // Mushaf's printed page number rather than a "Page N" caption.
-    final footer = Text(
-      localizedNumber(context, lastAyah.page),
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        color: _frameGreen,
-        fontWeight: FontWeight.w600,
-        fontSize: 9,
+    // fill-the-page height budget. Juz' isn't repeated here since it's
+    // already shown in the green bar above the frame for every page. Both
+    // numbers share one small rectangular frame, like the printed marks on
+    // a real Mushaf page, in the same Amiri Quran font as the body text
+    // rather than the app's UI font. The Hizb side only appears on the
+    // page where a quarter-Hizb actually begins (see [_isQuarterStart]) —
+    // showing it on every page it merely continues through would just
+    // repeat the same label for several pages in a row.
+    String? hizbWord;
+    String? hizbNumber;
+    String? hizbFraction;
+    if (_isQuarterStart(screenPageIndex)) {
+      // The quarter that just started may have been reached partway
+      // through this page rather than right at its first ayah — e.g. Al
+      // Baqarah's ¼-Hizb mark falls at ayah 26, mid-page — so the Hizb/
+      // quarter to announce is whichever one is active by the page's
+      // *last* ayah, not its first.
+      final newQuarterAyah = pageAyahs.last;
+      hizbWord = 'quran.hizb_word'.tr();
+      hizbNumber = localizedNumber(context, newQuarterAyah.hizb);
+      hizbFraction = _hizbQuarterFraction(context, newQuarterAyah.quarterInHizb);
+    }
+    final footer = Center(
+      child: _footerBadge(
+        context,
+        hizbWord: hizbWord,
+        hizbNumber: hizbNumber,
+        hizbFraction: hizbFraction,
+        pageText: localizedNumber(context, lastAyah.page),
       ),
     );
 
@@ -1058,45 +1411,234 @@ class _MushafPageViewState extends State<_MushafPageView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (pageAyahs.isNotEmpty)
-          Container(
-            color: _frameGreen,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
-            // Juz' sits at the start side and Hizb at the end side of the
-            // bar, following the ambient reading direction: in Arabic
-            // (RTL) that puts Juz' on the right and Hizb on the left; in
-            // English (LTR) it puts Juz' on the left and Hizb on the
-            // right.
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'quran.juz_label'.tr(
-                    args: [localizedNumber(context, pageAyahs.first.juz)],
-                  ),
-                  style: const TextStyle(
-                    color: _pageBg,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Text(
-                  'quran.hizb_label'.tr(
-                    args: [localizedNumber(context, pageAyahs.first.hizb)],
-                  ),
-                  style: const TextStyle(
-                    color: _pageBg,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        if (pageAyahs.isNotEmpty) _buildGreenBar(context, pageAyahs),
         Expanded(child: pageArea),
       ],
+    );
+  }
+
+  /// The screen's permanent top chrome (the tap-to-reveal overlay in
+  /// [build] sits *above* this, covering it while shown): the surah name
+  /// and Juz' number sit at the bar's start/end sides — following the
+  /// ambient reading direction, so in Arabic (RTL) that's surah-name-right,
+  /// Juz'-left, and in English (LTR) surah-name-left, Juz'-right — with
+  /// the play/pause button fixed dead-center via the [Stack] regardless of
+  /// how long either label is.
+  Widget _buildGreenBar(BuildContext context, List<Ayah> pageAyahs) {
+    return Material(
+      color: _frameGreen,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 52,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.surahNameAr,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.quranNameStyle(
+                          context,
+                          fontSize: 16,
+                          color: _pageBg,
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: Text(
+                          'quran.juz_label'.tr(
+                            args: [
+                              localizedNumber(context, pageAyahs.first.juz),
+                            ],
+                          ),
+                          style: const TextStyle(
+                            color: _pageBg,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildPlayButton(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayButton(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final audio = context.watch<AudioProvider>();
+    final reciter = settings.reciter;
+    final isPlayingThis =
+        audio.currentSurah == widget.surahNumber &&
+        audio.currentReciter?.id == reciter.id &&
+        audio.isPlaying;
+    return Material(
+      color: _pageBg,
+      shape: const CircleBorder(),
+      elevation: 2,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () async {
+          if (!reciter.hasSurah(widget.surahNumber)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('quran.reciter_unavailable'.tr())),
+            );
+            return;
+          }
+          await context.read<AudioProvider>().playSurah(
+            widget.surahNumber,
+            reciter,
+            resume: true,
+            surahTitle: widget.surahNameAr,
+          );
+        },
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Icon(
+            isPlayingThis ? Icons.pause : Icons.play_arrow,
+            color: _frameGreen,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A page belongs to the same quarter-Hizb as several pages around it
+  /// (each quarter spans roughly 2-3 Mushaf pages), so the quarter only
+  /// "begins" on whichever single page first reaches it — every other
+  /// page in that span is a continuation. The boundary ayah is almost
+  /// never a page's first ayah — e.g. Al Baqarah's ¼-Hizb mark falls at
+  /// ayah 26, mid-page — so this checks for *any* change in
+  /// [Ayah.hizbQuarter] from this page's first ayah to its last, not just
+  /// at the page edge; it also checks against the previous screen page's
+  /// last ayah to catch a boundary that lands exactly on this page's
+  /// first ayah. The very first loaded screen page has no earlier ayah to
+  /// compare against for that second check, so it can only detect a
+  /// mid-page change there.
+  bool _isQuarterStart(int screenPageIndex) {
+    final pageAyahs = _screenPages[screenPageIndex];
+    final first = pageAyahs.first;
+    // The Quran's very first ayah is unconditionally Hizb 1's own start —
+    // the one boundary that's always knowable even with no earlier ayah
+    // loaded to compare against.
+    if (first.surahNumber == 1 && first.numberInSurah == 1) return true;
+    if (screenPageIndex > 0) {
+      final prevLast = _screenPages[screenPageIndex - 1].last;
+      if (prevLast.hizbQuarter != first.hizbQuarter) return true;
+    }
+    return pageAyahs.last.hizbQuarter != first.hizbQuarter;
+  }
+
+  /// [Ayah.quarterInHizb] 1 is the Hizb's own start (no fraction mark
+  /// needed — the bare Hizb number already says that); 2/3/4 are a
+  /// quarter, half and three-quarters of the way through it.
+  String? _hizbQuarterFraction(BuildContext context, int quarterInHizb) {
+    switch (quarterInHizb) {
+      case 2:
+        return '${localizedNumber(context, 1)}/${localizedNumber(context, 4)}';
+      case 3:
+        return '${localizedNumber(context, 1)}/${localizedNumber(context, 2)}';
+      case 4:
+        return '${localizedNumber(context, 3)}/${localizedNumber(context, 4)}';
+      default:
+        return null;
+    }
+  }
+
+  Widget _footerBadge(
+    BuildContext context, {
+    String? hizbWord,
+    String? hizbNumber,
+    String? hizbFraction,
+    required String pageText,
+  }) {
+    final style = AppTheme.quranTextStyle(context, fontSize: 11).copyWith(
+      color: _frameGreen,
+      fontWeight: FontWeight.bold,
+      height: 1,
+    );
+    const gap = SizedBox(width: 4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: _frameGreen, width: 1.2),
+      ),
+      // Literal child order, left as-is rather than swapped for RTL/LTR —
+      // ambient [Directionality] already mirrors a [Row]'s start/end edge
+      // per locale, which is exactly the "fraction beside the Hizb word on
+      // one side, number on the other, swapped between Arabic and English"
+      // layout asked for: in Arabic this renders fraction-word-number
+      // right-to-left (fraction visually on the word's right, number on
+      // its left), and the same order in English renders left-to-right
+      // (fraction on the word's left, number on its right).
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hizbWord != null) ...[
+            if (hizbFraction != null) ...[
+              Text(hizbFraction, style: style),
+              gap,
+            ],
+            Text(hizbWord, style: style),
+            gap,
+            Text(hizbNumber!, style: style),
+            gap,
+            Text('-', style: style),
+            gap,
+          ],
+          Text(pageText, style: style),
+        ],
+      ),
+    );
+  }
+}
+
+/// Slides + fades a chrome overlay bar in/out of view, and stops it from
+/// intercepting taps (which would otherwise still land on, say, an
+/// invisible back button) while hidden.
+class _ChromeOverlay extends StatelessWidget {
+  final bool visible;
+  final bool fromTop;
+  final Widget child;
+
+  const _ChromeOverlay({
+    required this.visible,
+    required this.fromTop,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        offset: visible ? Offset.zero : Offset(0, fromTop ? -1 : 1),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: visible ? 1 : 0,
+          child: child,
+        ),
+      ),
     );
   }
 }

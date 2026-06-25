@@ -47,11 +47,16 @@ class AppTheme {
     );
   }
 
+  /// Amiri Quran (rather than plain Amiri) is purpose-built for Uthmani
+  /// Quran typesetting — its waqf marks, the sajda sign (۩) and other
+  /// recitation annotations are drawn larger and more distinctly than in
+  /// the general-purpose Amiri face, which renders them too small/thin to
+  /// read clearly at normal Mushaf font sizes.
   static TextStyle quranTextStyle(
     BuildContext context, {
     double fontSize = 26,
   }) {
-    return GoogleFonts.amiri(
+    return GoogleFonts.amiriQuran(
       fontSize: responsiveFontSize(context, fontSize),
       height: 1.9,
       color: Theme.of(context).colorScheme.onSurface,
