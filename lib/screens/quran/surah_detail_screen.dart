@@ -55,12 +55,19 @@ class SurahDetailScreen extends StatefulWidget {
   /// the next surah's first page, so land one page before the last.
   final bool skipLastPage;
 
+  /// Opens directly to this real Mushaf page number instead of the
+  /// surah's first page — used to resume at the last-read position (see
+  /// [HomeShell]) rather than always starting over from page one. Takes
+  /// precedence over [startAtLastPage]/[skipFirstPage]/[skipLastPage].
+  final int? startPage;
+
   const SurahDetailScreen({
     super.key,
     required this.surah,
     this.startAtLastPage = false,
     this.skipFirstPage = false,
     this.skipLastPage = false,
+    this.startPage,
   });
 
   @override
@@ -230,6 +237,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               startAtLastPage: widget.startAtLastPage,
               skipFirstPage: widget.skipFirstPage,
               skipLastPage: widget.skipLastPage,
+              startPage: widget.startPage,
               onAdjacentSurah: (delta) => _goToAdjacentSurah(
                 context,
                 delta,
@@ -626,6 +634,7 @@ class _MushafPageView extends StatefulWidget {
   final bool startAtLastPage;
   final bool skipFirstPage;
   final bool skipLastPage;
+  final int? startPage;
   final void Function(int delta) onAdjacentSurah;
 
   const _MushafPageView({
@@ -638,6 +647,7 @@ class _MushafPageView extends StatefulWidget {
     required this.startAtLastPage,
     required this.skipFirstPage,
     required this.skipLastPage,
+    required this.startPage,
     required this.onAdjacentSurah,
   });
 
@@ -691,7 +701,14 @@ class _MushafPageViewState extends State<_MushafPageView> {
     final totalScreens = _screenPages.length;
     var fullySkip = false;
     int initialPage;
-    if (widget.startAtLastPage) {
+    final resumeIdx = widget.startPage == null
+        ? -1
+        : _screenPages.indexWhere((p) => p.first.page == widget.startPage);
+    if (resumeIdx >= 0) {
+      // Resuming at a specific, previously-read Mushaf page (see
+      // [HomeShell]) rather than the surah's first/last page.
+      initialPage = _realPagesStart + resumeIdx;
+    } else if (widget.startAtLastPage) {
       final idx = totalScreens - 1 - (widget.skipLastPage ? 1 : 0);
       if (idx < 0) {
         fullySkip = true;
@@ -710,6 +727,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
     }
     _currentIndex = initialPage;
     _pageController = PageController(initialPage: initialPage);
+    if (!fullySkip) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _persistCurrentPage(initialPage);
+      });
+    }
 
     // This surah's entire content was already shown combined into the
     // adjacent surah's boundary page, so there's nothing unique to land on
@@ -739,7 +761,20 @@ class _MushafPageViewState extends State<_MushafPageView> {
     } else if (index == _nextSentinelIndex) {
       _navigating = true;
       widget.onAdjacentSurah(1);
+    } else {
+      _persistCurrentPage(index);
     }
+  }
+
+  /// Remembers the real Mushaf page currently on screen so the Quran tab
+  /// can resume here — see [SettingsProvider.setLastRead] and
+  /// [HomeShell] — instead of always reopening to the surah list.
+  void _persistCurrentPage(int index) {
+    final pageAyahs = _screenPages[index - _realPagesStart];
+    context.read<SettingsProvider>().setLastRead(
+      widget.surahNumber,
+      pageAyahs.first.page,
+    );
   }
 
   /// Swipe direction is driven explicitly here (instead of relying on
@@ -931,11 +966,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // scaled/scrollable content, so it no longer eats into Small/Medium's
     // fill-the-page height budget. Hizb and Juz' aren't repeated here
     // since they're already shown in the green bar above the frame for
-    // every page.
+    // every page. Just the bare number, in either locale, like a real
+    // Mushaf's printed page number rather than a "Page N" caption.
     final footer = Text(
-      'quran.page_footer'.tr(
-        args: [localizedNumber(context, lastAyah.page)],
-      ),
+      localizedNumber(context, lastAyah.page),
       textAlign: TextAlign.center,
       style: TextStyle(
         color: _frameGreen,

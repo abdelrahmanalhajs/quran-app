@@ -64,16 +64,28 @@ class SettingsProvider extends ChangeNotifier {
   static const _kReciterId = 'reciter_id';
   static const _kQuranFontSize = 'quran_font_size';
   static const _kQuranViewMode = 'quran_view_mode';
+  static const _kLastReadSurah = 'last_read_surah';
+  static const _kLastReadPage = 'last_read_page';
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
   double _quranFontSize = 40;
   QuranViewMode _quranViewMode = QuranViewMode.page;
+  int? _lastReadSurah;
+  int? _lastReadPage;
 
   ThemeMode get themeMode => _themeMode;
   Reciter get reciter => _reciter;
   double get quranFontSize => _quranFontSize;
   QuranViewMode get quranViewMode => _quranViewMode;
+
+  /// The surah/Mushaf-page the user was last reading, persisted so the
+  /// Quran tab can resume there instead of the surah list — both when
+  /// switching back to the tab after visiting another one, and after
+  /// fully closing and reopening the app. Null until the user has opened
+  /// a surah at least once.
+  int? get lastReadSurah => _lastReadSurah;
+  int? get lastReadPage => _lastReadPage;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -94,6 +106,8 @@ class SettingsProvider extends ChangeNotifier {
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list
         : QuranViewMode.page;
+    _lastReadSurah = prefs.getInt(_kLastReadSurah);
+    _lastReadPage = prefs.getInt(_kLastReadPage);
     notifyListeners();
   }
 
@@ -133,5 +147,18 @@ class SettingsProvider extends ChangeNotifier {
       _kQuranViewMode,
       mode == QuranViewMode.list ? 'list' : 'page',
     );
+  }
+
+  /// Called on every Mushaf page change, so it's deliberately silent
+  /// (no [notifyListeners]) — nothing in the widget tree watches these
+  /// two fields, only [HomeShell] reads them imperatively when resuming,
+  /// so notifying here would just be a wasted broadcast on every swipe.
+  Future<void> setLastRead(int surahNumber, int page) async {
+    if (_lastReadSurah == surahNumber && _lastReadPage == page) return;
+    _lastReadSurah = surahNumber;
+    _lastReadPage = page;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_kLastReadSurah, surahNumber);
+    await prefs.setInt(_kLastReadPage, page);
   }
 }

@@ -1,12 +1,17 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/responsive.dart';
 import '../../core/services/notification_prefs.dart';
 import '../../core/services/notification_service.dart';
+import '../../models/surah.dart';
+import '../../state/quran_provider.dart';
+import '../../state/settings_provider.dart';
 import '../athkar/athkar_screen.dart';
 import '../hadith/hadith_screen.dart';
 import '../prayer/prayer_screen.dart';
+import '../quran/surah_detail_screen.dart';
 import '../quran/surah_list_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -35,6 +40,51 @@ class _HomeShellState extends State<HomeShell> {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _rescheduleEnabledNotifications(),
       );
+    }
+    // Resumes straight into the last-read Mushaf page on a cold start —
+    // see [_resumeLastRead] — rather than always opening to the surah
+    // list, mirroring what switching back to the Quran tab does within a
+    // session (see [_onDestinationSelected]).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resumeLastRead());
+  }
+
+  /// Pushes the last-read surah/page (persisted by
+  /// [SettingsProvider.setLastRead] as the user reads) on top of whichever
+  /// tab is currently showing, if one was ever recorded. No-ops silently
+  /// if the surah no longer resolves (e.g. stale data).
+  Future<void> _resumeLastRead() async {
+    final settings = context.read<SettingsProvider>();
+    final surahNumber = settings.lastReadSurah;
+    final page = settings.lastReadPage;
+    if (surahNumber == null || page == null) return;
+
+    final list = await context.read<QuranProvider>().repository.getSurahList();
+    if (!mounted) return;
+    SurahSummary? surah;
+    for (final s in list) {
+      if (s.number == surahNumber) {
+        surah = s;
+        break;
+      }
+    }
+    if (surah == null) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SurahDetailScreen(surah: surah!, startPage: page),
+      ),
+    );
+  }
+
+  void _onDestinationSelected(int i) {
+    final wasQuranTab = _index == 0;
+    setState(() => _index = i);
+    // Switching back into the Quran tab from a different one should
+    // resume reading rather than always landing on the surah list — the
+    // cold-start case above only covers app launch, not this in-session
+    // tab switch.
+    if (!wasQuranTab && i == 0) {
+      _resumeLastRead();
     }
   }
 
@@ -112,7 +162,7 @@ class _HomeShellState extends State<HomeShell> {
           children: [
             NavigationRail(
               selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              onDestinationSelected: _onDestinationSelected,
               labelType: NavigationRailLabelType.all,
               destinations: [
                 for (final (icon, label) in destinations)
@@ -133,7 +183,7 @@ class _HomeShellState extends State<HomeShell> {
       body: body,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: _onDestinationSelected,
         destinations: [
           for (final (icon, label) in destinations)
             NavigationDestination(icon: Icon(icon), label: label),
