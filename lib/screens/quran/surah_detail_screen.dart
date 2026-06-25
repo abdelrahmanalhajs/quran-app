@@ -934,7 +934,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
   Widget _buildTopOverlay(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final matches = _searchMatches;
-    final juzMatch = _searchJuzMatch;
+    final juzMatches = _searchJuzMatches;
     final hasQuery = _searchQuery.trim().isNotEmpty;
     return Material(
       color: _frameGreen,
@@ -1018,7 +1018,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
                 // the ambient (theme-dependent) defaults — in dark mode
                 // those default to a near-white color that's nearly
                 // invisible against this light background.
-                child: (matches.isEmpty && juzMatch == null)
+                child: (matches.isEmpty && juzMatches.isEmpty)
                     ? Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
@@ -1029,7 +1029,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
                     : ListView(
                         shrinkWrap: true,
                         children: [
-                          if (juzMatch != null)
+                          for (final juzNumber in juzMatches)
                             ListTile(
                               dense: true,
                               leading: const Icon(
@@ -1038,14 +1038,14 @@ class _MushafPageViewState extends State<_MushafPageView> {
                               ),
                               title: Text(
                                 'quran.juz_label'.tr(
-                                  args: [localizedNumber(context, juzMatch)],
+                                  args: [localizedNumber(context, juzNumber)],
                                 ),
                                 style: const TextStyle(
                                   color: _ink,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              onTap: () => _jumpToJuz(juzMatch),
+                              onTap: () => _jumpToJuz(juzNumber),
                             ),
                           for (final s in matches)
                             ListTile(
@@ -1142,17 +1142,27 @@ class _MushafPageViewState extends State<_MushafPageView> {
         .toList();
   }
 
-  int? get _searchJuzMatch {
-    // [int.tryParse] only understands Western digits — without converting
-    // first, typing the Arabic-Indic numerals (١٢٣...) the rest of this
-    // app displays everywhere else (or words like "Juz'"/"جزء" alongside
-    // the number) would silently never match.
-    final normalized = westernDigits(_searchQuery.trim());
+  /// Every Juz' number (1-30) that matches the current search query.
+  ///
+  /// A query containing a number (Western or Arabic-Indic digits, with or
+  /// without the word "Juz'"/"جزء" alongside it) matches that one specific
+  /// Juz' exactly. A query that's just the word itself, with no number —
+  /// since that's how someone browsing for "a Juz'" rather than a specific
+  /// one would naturally type — matches every Juz', the same way typing
+  /// part of a surah's name lists every surah containing it.
+  List<int> get _searchJuzMatches {
+    final raw = _searchQuery.trim();
+    if (raw.isEmpty) return const [];
+    final normalized = westernDigits(raw);
     final digits = RegExp(r'\d+').firstMatch(normalized)?.group(0);
-    if (digits == null) return null;
-    final n = int.tryParse(digits);
-    if (n == null || n < 1 || n > 30) return null;
-    return n;
+    if (digits != null) {
+      final n = int.tryParse(digits);
+      return (n != null && n >= 1 && n <= 30) ? [n] : const [];
+    }
+    final isJuzWord =
+        normalizeArabicSearch(raw).contains('جز') ||
+        raw.toLowerCase().contains('juz');
+    return isJuzWord ? List<int>.generate(30, (i) => i + 1) : const [];
   }
 
   void _jumpToSurah(SurahSummary target, {int? startPage}) {
