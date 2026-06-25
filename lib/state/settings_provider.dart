@@ -44,6 +44,13 @@ const List<FontWeight> kQuranFontSizeWeight = [
   FontWeight.normal,
 ];
 
+/// Parallel to [kQuranFontSizeSteps]: the literal font size to render at in
+/// the separate (non-Mushaf) list view, where each ayah is its own card and
+/// there's no auto-fit scaler to normalize away the raw step values — using
+/// [kQuranFontSizeSteps] directly there made Medium (65) render far bigger
+/// than Large (36), and Large smaller than Small (40).
+const List<double> kQuranListViewFontSizes = [25, 30, 35];
+
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].
 int quranFontSizeStepIndex(double fontSize) {

@@ -231,7 +231,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     textDirection: TextDirection.rtl,
                     style: AppTheme.quranTextStyle(
                       context,
-                      fontSize: settings.quranFontSize,
+                      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
+                        settings.quranFontSize,
+                      )],
                     ).copyWith(fontWeight: FontWeight.bold),
                   ),
                 );
@@ -392,7 +394,9 @@ class _AyahCard extends StatelessWidget {
                   textDirection: TextDirection.rtl,
                   style: AppTheme.quranTextStyle(
                     context,
-                    fontSize: settings.quranFontSize,
+                    fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
+                      settings.quranFontSize,
+                    )],
                   ),
                 ),
               ),
@@ -1166,10 +1170,12 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
   void _jumpToJuz(int juzNumber) {
     final boundary = kJuzBoundaries[juzNumber - 1];
-    final target = _allSurahs.firstWhere(
-      (s) => s.number == boundary.startSurah,
-      orElse: () => widget.surahsByNumber.values.first,
-    );
+    // [widget.surahsByNumber] (built from the same full surah list as
+    // [_allSurahs], but already available synchronously when this page
+    // first renders) rather than [_allSurahs] — that field is only
+    // populated once its own async fetch resolves, so a Juz' tapped before
+    // it lands would silently fall through to an unrelated arbitrary surah.
+    final target = widget.surahsByNumber[boundary.startSurah]!;
     // Jump straight to this Juz's own starting page — most Juz' boundaries
     // fall mid-surah, so opening [target]'s default first page would land
     // well before (or, for surahs split across Juz', well after) the
@@ -1321,10 +1327,18 @@ class _MushafPageViewState extends State<_MushafPageView> {
           // marked word — we don't have per-word position data from the
           // API, only the ayah-level obligatory flag, so the overline is
           // drawn on the sign itself rather than a specific word.
+          //
+          // Deliberately *not* [baseStyle] (Amiri Quran) here: that face
+          // draws U+06E9 as an ornate rosette nearly indistinguishable from
+          // the ۞ quarter-Hizb mark at this size, reading as a duplicate of
+          // it rather than its own distinct sajda sign. The plain default
+          // font's glyph is the simple, immediately-recognizable ۩ shape.
           spans.add(
             TextSpan(
               text: ' ۩',
-              style: baseStyle.copyWith(
+              style: TextStyle(
+                fontSize: baseStyle.fontSize,
+                height: baseStyle.height,
                 color: _frameGreen,
                 fontWeight: FontWeight.bold,
                 background: highlight,
@@ -1477,7 +1491,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
             child: footer,
           ),
         ],
@@ -1662,8 +1676,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     );
     const gap = SizedBox(width: 4);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: _frameGreen, width: 1.2),
