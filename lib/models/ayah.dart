@@ -71,11 +71,14 @@ class Ayah {
 
   factory Ayah.fromArabicJson(Map<String, dynamic> json, int surahNumber) {
     final sajdaValue = json['sajda'];
+    var text = json['text'] as String;
+    text = _stripTrailingSajdaMark(text);
+    text = _stripLeadingHizbMark(text);
     return Ayah(
       number: json['number'] as int,
       numberInSurah: json['numberInSurah'] as int,
       surahNumber: surahNumber,
-      textAr: _stripTrailingSajdaMark(json['text'] as String),
+      textAr: text,
       juz: json['juz'] as int,
       page: json['page'] as int,
       hizbQuarter: json['hizbQuarter'] as int,
@@ -94,5 +97,16 @@ class Ayah {
   /// the app's own sign.
   static String _stripTrailingSajdaMark(String text) {
     return text.replaceAll(RegExp('\\s*۩\\s*\$'), '');
+  }
+
+  /// The quran-uthmani edition embeds its own ۞ glyph at the very start of
+  /// 199 of the ~240 quarter-Hizb-start ayahs across the Quran (the
+  /// remaining ones, like 4:1, have no embedded mark at all — the data is
+  /// simply inconsistent), while the app independently works out and
+  /// renders its own ۞ for every quarter start via [Ayah.hizbQuarter].
+  /// Left unstripped, those 199 ayahs ended up showing the mark twice.
+  /// Stripped here so the app's own logic is the single source of truth.
+  static String _stripLeadingHizbMark(String text) {
+    return text.replaceAll(RegExp('^۞\\s*'), '');
   }
 }

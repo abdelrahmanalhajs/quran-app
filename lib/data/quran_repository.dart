@@ -72,7 +72,7 @@ class QuranRepository {
     int surahNumber, {
     bool withTranslation = true,
   }) async {
-    final cacheKey = 'surah_v4_$surahNumber';
+    final cacheKey = 'surah_v5_$surahNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
       return _ayahsFromCache(cached, surahNumber);
@@ -167,7 +167,7 @@ class QuranRepository {
     int pageNumber, {
     bool withTranslation = true,
   }) async {
-    final cacheKey = 'page_v2_$pageNumber';
+    final cacheKey = 'page_v3_$pageNumber';
     final cached = await FileCache.read(cacheKey);
     if (cached != null) {
       return _ayahsFromPageCache(cached);
