@@ -18,15 +18,23 @@ import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
 
+/// Whether [text] contains any word built on the س-ج-د (prostration) root —
+/// used both to find the actual word to overline within an obligatory-sajda
+/// ayah, and to detect the one case in the Quran (41:38) where the sajda
+/// *sign* sits on an ayah whose own text has no such word at all, because
+/// the real trigger ("وَٱسْجُدُوا۟") falls in the ayah just before it.
+bool ayahHasSajdaTriggerWord(String text) {
+  return text.split(' ').any((w) => normalizeArabicSearch(w).contains('سجد'));
+}
+
 /// Splits an ayah's text into spans, drawing an overline over the one word
-/// that actually commands prostration (any word containing the س-ج-د root,
-/// e.g. "وَٱسْجُدْ") when [overlineSajdaWord] is set — matching how a
-/// printed Mushaf marks an *obligatory* sajda: the place-of-sajda sign at
-/// the ayah's end never changes, but the specific trigger word earlier in
-/// the ayah gets a line above it. The word itself keeps its normal ink
-/// color; only the line is green, matching the sajda sign's color rather
-/// than the surrounding text. Shared by the Mushaf page view and the
-/// separate list view so both mark the trigger word identically.
+/// that actually commands prostration when [overlineSajdaWord] is set —
+/// matching how a printed Mushaf marks an *obligatory* sajda: the place-of-
+/// sajda sign at the ayah's end never changes, but the specific trigger
+/// word gets a line above it. The word itself keeps its normal ink color;
+/// only the line is green, matching the sajda sign's color rather than the
+/// surrounding text. Shared by the Mushaf page view and the separate list
+/// view so both mark the trigger word identically.
 List<InlineSpan> _ayahTextSpans({
   required String text,
   required TextStyle style,
@@ -37,7 +45,13 @@ List<InlineSpan> _ayahTextSpans({
     return [TextSpan(text: text, style: style, recognizer: recognizer)];
   }
   final words = text.split(' ');
-  final sajdaWordIndex = words.indexWhere(
+  // The *last* matching word, not the first: 41:37 — the one ayah where the
+  // overline lands on a different ayah than the sajda sign itself (see
+  // [ayahHasSajdaTriggerWord]) — says "do not prostrate to the sun or
+  // moon, but prostrate to Allah" (لَا تَسْجُدُوا۟ ... وَٱسْجُدُوا۟
+  // لِلَّهِ), so the first سجد-rooted word is the *negated* one; the actual
+  // command is always the last.
+  final sajdaWordIndex = words.lastIndexWhere(
     (w) => normalizeArabicSearch(w).contains('سجد'),
   );
   if (sajdaWordIndex == -1) {
@@ -299,12 +313,26 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               final isQuarterStart = prevAyah == null
                   ? (ayah.surahNumber == 1 && ayah.numberInSurah == 1)
                   : prevAyah.hizbQuarter != ayah.hizbQuarter;
+              // See the matching comment in [_MushafPageViewState]: 41:38
+              // is the one ayah in the Quran where the sajda sign sits on
+              // an ayah whose own text has no سجد-rooted word, because the
+              // real trigger word is in the ayah just before it.
+              final nextAyah = ayahIndex + 1 < ayahs.length
+                  ? ayahs[ayahIndex + 1]
+                  : null;
+              final overlineSajdaWord = ayah.sajdaObligatory
+                  ? ayahHasSajdaTriggerWord(ayah.textAr)
+                  : (nextAyah != null &&
+                        nextAyah.sajdaObligatory &&
+                        ayahHasSajdaTriggerWord(ayah.textAr) &&
+                        !ayahHasSajdaTriggerWord(nextAyah.textAr));
               return _AyahCard(
                 ayah: ayah,
                 totalAyahs: widget.surah.numberOfAyahs,
                 isActive: activeAyah == ayah.numberInSurah,
                 surahNameAr: widget.surah.nameAr,
                 isQuarterStart: isQuarterStart,
+                overlineSajdaWord: overlineSajdaWord,
               );
             },
           ),
@@ -411,6 +439,7 @@ class _AyahCard extends StatelessWidget {
   final bool isActive;
   final String surahNameAr;
   final bool isQuarterStart;
+  final bool overlineSajdaWord;
 
   const _AyahCard({
     required this.ayah,
@@ -418,6 +447,7 @@ class _AyahCard extends StatelessWidget {
     required this.isActive,
     required this.surahNameAr,
     required this.isQuarterStart,
+    required this.overlineSajdaWord,
   });
 
   @override
@@ -444,7 +474,7 @@ class _AyahCard extends StatelessWidget {
         text: ayah.textAr,
         style: baseStyle,
         recognizer: null,
-        overlineSajdaWord: ayah.sajdaObligatory,
+        overlineSajdaWord: overlineSajdaWord,
       ),
       if (ayah.sajda)
         TextSpan(
@@ -1374,7 +1404,24 @@ class _MushafPageViewState extends State<_MushafPageView> {
       }
 
       final spans = <InlineSpan>[];
-      for (final ayah in run) {
+      for (var ayahIndex = 0; ayahIndex < run.length; ayahIndex++) {
+        final ayah = run[ayahIndex];
+        // Almost always the ayah carrying the sajda *sign* also carries the
+        // trigger word itself, but 41:38 is the one exception in the whole
+        // Quran: its sign sits at the end of ayah 38, while the actual
+        // imperative ("وَٱسْجُدُوا۟") is back in ayah 37's own text — so
+        // when an obligatory ayah's own text has no سجد-rooted word, the
+        // overline belongs on the *previous* ayah instead (see
+        // [ayahHasSajdaTriggerWord]).
+        final nextAyah = ayahIndex + 1 < run.length
+            ? run[ayahIndex + 1]
+            : null;
+        final overlineSajdaWord = ayah.sajdaObligatory
+            ? ayahHasSajdaTriggerWord(ayah.textAr)
+            : (nextAyah != null &&
+                  nextAyah.sajdaObligatory &&
+                  ayahHasSajdaTriggerWord(ayah.textAr) &&
+                  !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
         final recognizer = LongPressGestureRecognizer()
           ..onLongPress = () => _showAyahSheet(
@@ -1421,7 +1468,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             text: ayah.textAr,
             style: baseStyle.copyWith(background: highlight),
             recognizer: recognizer,
-            overlineSajdaWord: ayah.sajdaObligatory,
+            overlineSajdaWord: overlineSajdaWord,
           ),
         );
         if (ayah.sajda) {
