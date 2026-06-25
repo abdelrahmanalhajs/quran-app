@@ -5,20 +5,27 @@ import '../responsive.dart';
 class AppTheme {
   static const Color _seed = Color(0xFF0E6E55);
 
+  // [MaterialApp] always evaluates both `theme` and `darkTheme` on every
+  // single rebuild (regardless of which one is actually active), and
+  // [QuranApp] rebuilds on *any* [SettingsProvider] change — not just a
+  // theme switch. Recomputing [ColorScheme.fromSeed] (a full Material 3
+  // tonal palette) plus a 15-entry Google Fonts [TextTheme] from scratch
+  // every time was real, avoidable work sitting on the critical path of
+  // every settings change, including the theme toggle itself — memoized
+  // here so each is built once and reused.
+  static ThemeData? _light;
+  static ThemeData? _dark;
+
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: _seed,
-      brightness: Brightness.light,
+    return _light ??= _build(
+      ColorScheme.fromSeed(seedColor: _seed, brightness: Brightness.light),
     );
-    return _build(scheme);
   }
 
   static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: _seed,
-      brightness: Brightness.dark,
+    return _dark ??= _build(
+      ColorScheme.fromSeed(seedColor: _seed, brightness: Brightness.dark),
     );
-    return _build(scheme);
   }
 
   static ThemeData _build(ColorScheme scheme) {

@@ -310,9 +310,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               final ayahIndex = showBismillah ? index - 1 : index;
               final ayah = ayahs[ayahIndex];
               final prevAyah = ayahIndex > 0 ? ayahs[ayahIndex - 1] : null;
-              final isQuarterStart = prevAyah == null
-                  ? (ayah.surahNumber == 1 && ayah.numberInSurah == 1)
-                  : prevAyah.hizbQuarter != ayah.hizbQuarter;
+              final isQuarterStart = prevAyah != null
+                  ? prevAyah.hizbQuarter != ayah.hizbQuarter
+                  : (ayah.numberInSurah == 1 &&
+                        (ayah.surahNumber == 1 ||
+                            kSurahsStartingNewQuarterAtAyah1.contains(
+                              ayah.surahNumber,
+                            )));
               // See the matching comment in [_MushafPageViewState]: 41:38
               // is the one ayah in the Quran where the sajda sign sits on
               // an ayah whose own text has no سجد-rooted word, because the
@@ -1449,9 +1453,20 @@ class _MushafPageViewState extends State<_MushafPageView> {
         final highlight = isActive
             ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
             : null;
-        final startsQuarter = prevAyah == null
-            ? (ayah.surahNumber == 1 && ayah.numberInSurah == 1)
-            : prevAyah.hizbQuarter != ayah.hizbQuarter;
+        // [prevAyah] is null not just for the Quran's very first ayah, but
+        // for *any* surah's first ayah when that surah is opened directly
+        // (rather than swiped into from the previous one) and its first
+        // page has no carried-over ayahs from the previous surah to compare
+        // against — 40 surahs' opening ayah is itself a genuine quarter
+        // start, and without this fallback the ۞ mark silently went
+        // missing on all of them (see [kSurahsStartingNewQuarterAtAyah1]).
+        final startsQuarter = prevAyah != null
+            ? prevAyah.hizbQuarter != ayah.hizbQuarter
+            : (ayah.numberInSurah == 1 &&
+                  (ayah.surahNumber == 1 ||
+                      kSurahsStartingNewQuarterAtAyah1.contains(
+                        ayah.surahNumber,
+                      )));
         if (startsQuarter) {
           spans.add(
             TextSpan(
@@ -1781,8 +1796,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
   /// at the page edge; it also checks against the previous screen page's
   /// last ayah to catch a boundary that lands exactly on this page's
   /// first ayah. The very first loaded screen page has no earlier ayah to
-  /// compare against for that second check, so it can only detect a
-  /// mid-page change there.
+  /// compare against for that second check — when that page is also a
+  /// fresh page opening directly on one of the 40 surahs in
+  /// [kSurahsStartingNewQuarterAtAyah1], it falls back to that lookup
+  /// instead of silently missing the badge.
   bool _isQuarterStart(int screenPageIndex) {
     final pageAyahs = _screenPages[screenPageIndex];
     final first = pageAyahs.first;
@@ -1793,6 +1810,9 @@ class _MushafPageViewState extends State<_MushafPageView> {
     if (screenPageIndex > 0) {
       final prevLast = _screenPages[screenPageIndex - 1].last;
       if (prevLast.hizbQuarter != first.hizbQuarter) return true;
+    } else if (first.numberInSurah == 1 &&
+        kSurahsStartingNewQuarterAtAyah1.contains(first.surahNumber)) {
+      return true;
     }
     return pageAyahs.last.hizbQuarter != first.hizbQuarter;
   }

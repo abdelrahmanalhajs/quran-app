@@ -30,6 +30,21 @@ class JuzBoundary {
   ];
 }
 
+/// Every surah (other than Al-Fatiha) whose very first ayah is itself the
+/// start of a new quarter-Hizb (۞) — i.e. the previous ayah, wherever it
+/// falls, belongs to a different quarter. Detecting a quarter-Hizb start
+/// normally just compares an ayah's [Ayah.hizbQuarter] to the one before
+/// it, but the ayah *before* a surah's first one isn't loaded when the
+/// surah is opened directly (rather than swiped into from the previous
+/// one) — without this lookup, the ۞ mark silently went missing on these
+/// 40 surahs' opening ayah specifically because there was nothing loaded
+/// to compare against.
+const Set<int> kSurahsStartingNewQuarterAtAyah1 = {
+  4, 5, 7, 8, 9, 15, 16, 17, 20, 21, 22, 23, 24, 25, 26, 27, 29, 30, 33, 40,
+  46, 49, 55, 56, 58, 62, 65, 66, 67, 68, 69, 72, 75, 78, 80, 82, 84, 87, 90,
+  94,
+};
+
 const List<JuzBoundary> kJuzBoundaries = [
   JuzBoundary(number: 1, startSurah: 1, endSurah: 2, startPage: 1),
   JuzBoundary(number: 2, startSurah: 2, endSurah: 2, startPage: 22),
