@@ -19,7 +19,7 @@ enum QuranViewMode { page, list }
 /// a given page), the raw values here can't make Medium look bigger than
 /// Small on their own — see [kQuranFontSizeLineHeight] for what actually
 /// does.
-const List<double> kQuranFontSizeSteps = [40, 65, 36];
+const List<double> kQuranFontSizeSteps = [40, 68, 36];
 
 /// Parallel to [kQuranFontSizeSteps]: whether that step auto-fits the page
 /// without scrolling. Kept separate from the raw font-size values so
@@ -32,24 +32,28 @@ const List<bool> kQuranFontSizeFitsPage = [true, true, false];
 /// step. This — not the font-size value — is what makes Medium look bigger
 /// than Small: a tighter line height means less of the page's fixed height
 /// budget goes to the gap between lines once the page is scaled to fill the
-/// frame exactly, leaving more of it for the letters themselves.
-const List<double> kQuranFontSizeLineHeight = [2.1, 1.7, 1.9];
+/// frame exactly, leaving more of it for the letters themselves. Medium was
+/// tightened further (1.7 -> 1.5) to read as noticeably bigger now that it's
+/// regular weight rather than bold (see [kQuranFontSizeWeight]).
+const List<double> kQuranFontSizeLineHeight = [2.1, 1.5, 1.9];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
-/// Medium is bold (in addition to its tighter line height) to read as a
-/// clearly bigger/bolder option than Small, which stays regular weight.
+/// All 3 steps render at regular weight — Medium previously used bold to
+/// read as clearly bigger than Small, but its tighter [kQuranFontSizeLineHeight]
+/// already does that on its own now, so bold was dropped in favor of a
+/// plain, less heavy-looking step.
 const List<FontWeight> kQuranFontSizeWeight = [
   FontWeight.normal,
-  FontWeight.bold,
+  FontWeight.normal,
   FontWeight.normal,
 ];
 
 /// Parallel to [kQuranFontSizeSteps]: the literal font size to render at in
 /// the separate (non-Mushaf) list view, where each ayah is its own card and
 /// there's no auto-fit scaler to normalize away the raw step values — using
-/// [kQuranFontSizeSteps] directly there made Medium (65) render far bigger
+/// [kQuranFontSizeSteps] directly there made Medium (68) render far bigger
 /// than Large (36), and Large smaller than Small (40).
-const List<double> kQuranListViewFontSizes = [25, 30, 35];
+const List<double> kQuranListViewFontSizes = [25, 33, 35];
 
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].

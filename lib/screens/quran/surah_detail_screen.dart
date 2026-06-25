@@ -828,15 +828,48 @@ class _MushafPageViewState extends State<_MushafPageView> {
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
 
-  final List<LongPressGestureRecognizer> _recognizers = [];
+  // Keyed by [Ayah.number] (global, unique across the whole Quran) and kept
+  // alive for this whole surah-viewing session rather than recreated every
+  // build — a long press has a real, multi-frame pending window between the
+  // finger going down and [LongPressGestureRecognizer.onLongPress] firing,
+  // and recreating+disposing every ayah's recognizer on each rebuild (as a
+  // plain per-build list used to) would tear down whichever one is mid-press
+  // the moment a rebuild happens for *any* reason — including the rebuild
+  // [_pressedAyahNumber]'s own setState now triggers on every press-down, so
+  // the long-press would never get the chance to actually fire.
+  final Map<int, LongPressGestureRecognizer> _recognizersByAyah = {};
   late final PageController _pageController;
   late int _realPagesStart;
   late List<List<Ayah>> _screenPages;
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
   bool _navigating = false;
-  int _currentIndex = 0;
   int _itemCount = 0;
+  int _currentIndex = 0;
+
+  /// Manual pinch-zoom for the current page, on top of Small/Medium's own
+  /// auto-fit scale (see [kQuranFontSizeFitsPage]) — Large already renders
+  /// at its natural size and scrolls, so it doesn't need this. Reset back to
+  /// 1.0/[Offset.zero] every time the page changes, see [_onPageChanged].
+  double _zoomScale = 1.0;
+  Offset _zoomOffset = Offset.zero;
+
+  /// The ayah currently being held down on (identified by its global
+  /// [Ayah.number], unique across the whole Quran), so it can show a
+  /// pressed-state shadow for as long as the finger stays down — set as
+  /// soon as the pointer lands (not just once the long-press threshold to
+  /// open the tafsir/translation sheet is actually met), so the feedback
+  /// reads as an immediate response to touch rather than a delayed one.
+  int? _pressedAyahNumber;
+
+  /// Whether the in-progress gesture turned out to be a pinch (`true`), a
+  /// page-turn drag (`false`), or hasn't received enough info yet to tell
+  /// (`null` — only a single pointer has been seen so far). Decided once a
+  /// 2nd pointer joins, or immediately if already zoomed in; see
+  /// [_handleScaleUpdate].
+  bool? _gestureIsZoom;
+  double _gestureBaseScale = 1.0;
+  Offset _gestureBaseOffset = Offset.zero;
 
   /// Whether the tap-to-reveal back/reciter/view-toggle/search bar (top)
   /// and embedded app-tab bar (bottom) are showing. Off by default so the
@@ -846,11 +879,11 @@ class _MushafPageViewState extends State<_MushafPageView> {
   String _searchQuery = '';
   List<SurahSummary> _allSurahs = [];
 
-  void _clearRecognizers() {
-    for (final r in _recognizers) {
+  void _disposeRecognizers() {
+    for (final r in _recognizersByAyah.values) {
       r.dispose();
     }
-    _recognizers.clear();
+    _recognizersByAyah.clear();
   }
 
   void _toggleChrome() => setState(() => _chromeVisible = !_chromeVisible);
@@ -933,7 +966,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
   @override
   void dispose() {
-    _clearRecognizers();
+    _disposeRecognizers();
     _pageController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -941,6 +974,12 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
   void _onPageChanged(int index) {
     _currentIndex = index;
+    if (_zoomScale != 1.0 || _zoomOffset != Offset.zero) {
+      setState(() {
+        _zoomScale = 1.0;
+        _zoomOffset = Offset.zero;
+      });
+    }
     if (_navigating) return;
     if (index == _prevSentinelIndex) {
       _navigating = true;
@@ -972,21 +1011,85 @@ class _MushafPageViewState extends State<_MushafPageView> {
   /// sidesteps Flutter web's default [ScrollBehavior], which only enables
   /// touch/stylus drag-to-scroll and ignores mouse drags — a plain
   /// [GestureDetector] responds to every pointer kind.
-  void _handleHorizontalDragEnd(DragEndDetails details) {
-    final velocity = details.primaryVelocity ?? 0;
-    if (velocity.abs() < 150) return;
-    final target = velocity > 0 ? _currentIndex + 1 : _currentIndex - 1;
-    if (target < 0 || target >= _itemCount) return;
-    _pageController.animateToPage(
-      target,
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOut,
+  ///
+  /// Deliberately *not* driving [PageController.position] live as the
+  /// finger moves: this view's ambient [Directionality] is RTL (the whole
+  /// app's locale is Arabic) and [PageView.reverse] is `true`, and that
+  /// specific combination makes increasing scroll `pixels` paint in the
+  /// *opposite* screen direction from increasing index — a fixed property
+  /// of how [PageView] resolves `AxisDirection` for RTL-and-reversed, not
+  /// something fixable by flipping a sign on our own delta (the existing,
+  /// already-correct "swipe right -> next page" outcome below depends on
+  /// that exact same pixels/index relationship, so flipping it to fix the
+  /// live visual would just break the outcome instead). Tried it — the page
+  /// visibly slid opposite the finger. Deciding the target purely on
+  /// release and letting [PageController.animateToPage] run its own
+  /// (already-correct) transition avoids the mismatch entirely, at the cost
+  /// of the page not following the finger mid-drag.
+  ///
+  /// A single [GestureDetector.onScale*] trio (rather than separate drag and
+  /// scale recognizers competing for the same pointer) handles both page
+  /// turning AND pinch-zoom, deciding which one a gesture is as soon as it
+  /// can tell: a 2nd pointer joining mid-gesture (or already being zoomed
+  /// in) commits it to zoom. Routing both through one recognizer avoids the
+  /// framework ever having to arbitrate between two competing ones for the
+  /// same finger.
+  void _handleScaleStart(ScaleStartDetails details) {
+    _gestureIsZoom = null;
+    _gestureBaseScale = _zoomScale;
+    _gestureBaseOffset = _zoomOffset;
+  }
+
+  void _handleScaleUpdate(ScaleUpdateDetails details) {
+    final stepIndex = quranFontSizeStepIndex(widget.fontSize);
+    final zoomAllowed = kQuranFontSizeFitsPage[stepIndex];
+    if (!zoomAllowed) return;
+
+    if (_gestureIsZoom == null) {
+      _gestureIsZoom = details.pointerCount >= 2 || _zoomScale > 1.01;
+    } else if (_gestureIsZoom == false && details.pointerCount >= 2) {
+      _gestureIsZoom = true;
+      _gestureBaseScale = _zoomScale;
+      _gestureBaseOffset = _zoomOffset;
+    }
+
+    if (_gestureIsZoom == true) {
+      setState(() {
+        _zoomScale = (_gestureBaseScale * details.scale).clamp(1.0, 2.5);
+        _zoomOffset = _gestureBaseOffset + details.focalPointDelta / _zoomScale;
+      });
+    }
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    if (_gestureIsZoom != true) {
+      final velocity = details.velocity.pixelsPerSecond.dx;
+      if (velocity.abs() >= 150) {
+        final target = (velocity > 0 ? _currentIndex + 1 : _currentIndex - 1)
+            .clamp(0, _itemCount - 1);
+        _pageController.animateToPage(
+          target,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        );
+      }
+    }
+    _gestureIsZoom = null;
+  }
+
+  Widget _applyZoom(Widget child) {
+    if (_zoomScale == 1.0 && _zoomOffset == Offset.zero) return child;
+    return Transform.scale(
+      scale: _zoomScale,
+      child: Transform.translate(offset: _zoomOffset, child: child),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    _clearRecognizers();
+    // Recognizers are no longer cleared/recreated here on every build (see
+    // [_recognizersByAyah]) — they're created lazily, once per ayah, the
+    // first time each one is built, and only ever disposed in [dispose].
 
     // No outer padding/SafeArea-on-every-side here — the green bar sits at
     // the literal top of the screen and the creamy frame's own bottom
@@ -1006,7 +1109,9 @@ class _MushafPageViewState extends State<_MushafPageView> {
           // `deferToChild` behavior only recognizes gestures where a
           // child actually paints.
           behavior: HitTestBehavior.opaque,
-          onHorizontalDragEnd: _handleHorizontalDragEnd,
+          onScaleStart: _handleScaleStart,
+          onScaleUpdate: _handleScaleUpdate,
+          onScaleEnd: _handleScaleEnd,
           // A quick tap anywhere on the page (including directly on an
           // ayah's own text, see [_buildMushafPage]'s recognizers) toggles
           // the chrome overlay; only a *held* tap on an ayah opens its
@@ -1029,7 +1134,9 @@ class _MushafPageViewState extends State<_MushafPageView> {
               }
               final screenPageIndex = index - _realPagesStart;
               final pageAyahs = _screenPages[screenPageIndex];
-              return _buildMushafPage(context, pageAyahs, screenPageIndex);
+              final page = _buildMushafPage(context, pageAyahs, screenPageIndex);
+              final stepIndex = quranFontSizeStepIndex(widget.fontSize);
+              return kQuranFontSizeFitsPage[stepIndex] ? _applyZoom(page) : page;
             },
           ),
         ),
@@ -1427,17 +1534,33 @@ class _MushafPageViewState extends State<_MushafPageView> {
                   ayahHasSajdaTriggerWord(ayah.textAr) &&
                   !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
-        final recognizer = LongPressGestureRecognizer()
-          ..onLongPress = () => _showAyahSheet(
+        final recognizer = _recognizersByAyah.putIfAbsent(ayah.number, () {
+          final r = LongPressGestureRecognizer();
+          r.onLongPressDown = (_) {
+            setState(() => _pressedAyahNumber = ayah.number);
+          };
+          r.onLongPressCancel = () {
+            if (_pressedAyahNumber == ayah.number) {
+              setState(() => _pressedAyahNumber = null);
+            }
+          };
+          r.onLongPressUp = () {
+            if (_pressedAyahNumber == ayah.number) {
+              setState(() => _pressedAyahNumber = null);
+            }
+          };
+          r.onLongPress = () => _showAyahSheet(
             context,
             ayah,
             surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
             surahInfo?.nameAr ?? '',
           );
-        _recognizers.add(recognizer);
+          return r;
+        });
         final isActive =
             widget.activeSurahNumber == ayah.surahNumber &&
             widget.activeAyahNumber == ayah.numberInSurah;
+        final isPressed = _pressedAyahNumber == ayah.number;
 
         // The ayah-end marker is plain text glued directly to its own
         // ayah's span with no space in between, never a WidgetSpan. A
@@ -1450,7 +1573,13 @@ class _MushafPageViewState extends State<_MushafPageView> {
         // a line break, so the marker can only ever travel with its own
         // ayah. The breakable space goes after the marker, where wrapping
         // just starts the next ayah on a new line.
-        final highlight = isActive
+        // A held-down ayah shows a darker, neutral shadow rather than the
+        // green "currently playing" tint below — that color already means
+        // something else, so reusing it here would read as the recitation
+        // having jumped to this ayah rather than as a simple press response.
+        final highlight = isPressed
+            ? (Paint()..color = _ink.withValues(alpha: 0.12))
+            : isActive
             ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
             : null;
         // [prevAyah] is null not just for the Quran's very first ayah, but
