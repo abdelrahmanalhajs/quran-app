@@ -136,24 +136,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
-                  SegmentedButton<ThemeMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: ThemeMode.system,
-                        label: Text('settings.theme_system'.tr()),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<ThemeMode>(
+                      // Drop the selected-state check mark: in Material 3 it's
+                      // inserted *before* the label on the chosen segment,
+                      // stealing width and truncating longer words (e.g.
+                      // "System") so the selected option couldn't show its
+                      // full word while the others could. Without it every
+                      // segment keeps the same width and shows its full label,
+                      // selected or not, in both English and Arabic.
+                      showSelectedIcon: false,
+                      style: SegmentedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 12,
+                        ),
                       ),
-                      ButtonSegment(
-                        value: ThemeMode.light,
-                        label: Text('settings.theme_light'.tr()),
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.dark,
-                        label: Text('settings.theme_dark'.tr()),
-                      ),
-                    ],
-                    selected: {settings.themeMode},
-                    onSelectionChanged: (selection) =>
-                        settings.setThemeMode(selection.first),
+                      segments: [
+                        ButtonSegment(
+                          value: ThemeMode.system,
+                          label: Text(
+                            'settings.theme_system'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                          ),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.light,
+                          label: Text(
+                            'settings.theme_light'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                          ),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.dark,
+                          label: Text(
+                            'settings.theme_dark'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                          ),
+                        ),
+                      ],
+                      selected: {settings.themeMode},
+                      onSelectionChanged: (selection) =>
+                          settings.setThemeMode(selection.first),
+                    ),
                   ),
                 ],
               ),
@@ -349,64 +381,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             if (!kIsWeb) ...[
               const Divider(),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  responsiveHorizontalPadding(context),
-                  8,
-                  responsiveHorizontalPadding(context),
-                  0,
+              // Collapsed by default so the six test rows don't clutter the
+              // settings list — the user expands this only when they actually
+              // want to preview a notification.
+              ExpansionTile(
+                shape: const Border(),
+                collapsedShape: const Border(),
+                tilePadding: EdgeInsets.symmetric(
+                  horizontal: responsiveHorizontalPadding(context),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'settings.test_notifications'.tr(),
-                      style: Theme.of(context).textTheme.titleMedium,
+                childrenPadding: const EdgeInsets.only(bottom: 8),
+                leading: const Icon(Icons.notifications_none),
+                title: Text(
+                  'settings.test_notifications'.tr(),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                subtitle: Text('settings.test_notifications_hint'.tr()),
+                children: [
+                  _TestNotificationTile(
+                    label: 'settings.notifications'.tr(),
+                    onSend: () => NotificationService.simulateDailyHadith(
+                      arabic: isArabic,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'settings.test_notifications_hint'.tr(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                  ),
+                  _TestNotificationTile(
+                    label: 'settings.hourly_zikr'.tr(),
+                    onSend: () => NotificationService.simulateHourlyZikr(
+                      arabic: isArabic,
                     ),
-                  ],
-                ),
+                  ),
+                  _TestNotificationTile(
+                    label: 'settings.sleep_athkar_notif'.tr(),
+                    onSend: () => NotificationService.simulateSleepReminder(
+                      arabic: isArabic,
+                    ),
+                  ),
+                  _TestNotificationTile(
+                    label: 'settings.jumaa_athkar_notif'.tr(),
+                    onSend: () => NotificationService.simulateJumaaReminder(
+                      arabic: isArabic,
+                    ),
+                  ),
+                  _TestNotificationTile(
+                    label: 'settings.athkar_prayer_reminders'.tr(),
+                    onSend: () =>
+                        NotificationService.simulateAthkarPrayerReminder(
+                          arabic: isArabic,
+                        ),
+                  ),
+                  _TestNotificationTile(
+                    label: 'settings.athan_notifications'.tr(),
+                    onSend: () => NotificationService.simulatePrayerAthan(
+                      athan: _athanReciter,
+                      arabic: isArabic,
+                    ),
+                  ),
+                ],
               ),
-              _TestNotificationTile(
-                label: 'settings.notifications'.tr(),
-                onSend: () =>
-                    NotificationService.simulateDailyHadith(arabic: isArabic),
-              ),
-              _TestNotificationTile(
-                label: 'settings.hourly_zikr'.tr(),
-                onSend: () =>
-                    NotificationService.simulateHourlyZikr(arabic: isArabic),
-              ),
-              _TestNotificationTile(
-                label: 'settings.sleep_athkar_notif'.tr(),
-                onSend: () =>
-                    NotificationService.simulateSleepReminder(arabic: isArabic),
-              ),
-              _TestNotificationTile(
-                label: 'settings.jumaa_athkar_notif'.tr(),
-                onSend: () =>
-                    NotificationService.simulateJumaaReminder(arabic: isArabic),
-              ),
-              _TestNotificationTile(
-                label: 'settings.athkar_prayer_reminders'.tr(),
-                onSend: () => NotificationService.simulateAthkarPrayerReminder(
-                  arabic: isArabic,
-                ),
-              ),
-              _TestNotificationTile(
-                label: 'settings.athan_notifications'.tr(),
-                onSend: () => NotificationService.simulatePrayerAthan(
-                  athan: _athanReciter,
-                  arabic: isArabic,
-                ),
-              ),
-              const SizedBox(height: 8),
             ],
           ],
         ),
