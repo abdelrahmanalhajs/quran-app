@@ -63,7 +63,12 @@ class NotificationService {
       );
     }
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // The app's own launcher icon resource is named `launcher_icon`, not the
+    // Flutter-default `ic_launcher` (see flutter_launcher_icons config in
+    // pubspec.yaml) — referencing the default name here throws an unhandled
+    // PlatformException(invalid_icon) at startup, before the app ever
+    // renders anything, since that resource doesn't exist.
+    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iosInit = DarwinInitializationSettings();
     await _plugin.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
