@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:adhan/adhan.dart' as adhan;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:geolocator/geolocator.dart';
 import '../models/prayer_times.dart';
 
@@ -18,33 +20,54 @@ class LocationServiceDisabledException implements Exception {}
 const _kLocationTimeout = Duration(seconds: 20);
 
 class PrayerRepository {
+  static bool get _isAndroid =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  /// On Android, force geolocator to use the platform [LocationManager]
+  /// rather than the default fused provider (Google Play Services). The
+  /// fused provider silently fails to return a fix on devices/emulators
+  /// where Play Services is missing or misbehaving — the most common cause
+  /// of "location doesn't work at all" — so going straight to the OS
+  /// LocationManager is far more reliable.
+  static LocationSettings get _locationSettings {
+    if (_isAndroid) {
+      return AndroidSettings(
+        accuracy: LocationAccuracy.medium,
+        forceLocationManager: true,
+        timeLimit: _kLocationTimeout,
+      );
+    }
+    return const LocationSettings(
+      accuracy: LocationAccuracy.medium,
+      timeLimit: _kLocationTimeout,
+    );
+  }
+
   Future<Position> getCurrentPosition() async {
     await _ensurePermission();
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw LocationServiceDisabledException();
     }
+
+    // A recent cached fix is plenty for prayer times/qibla and is instant —
+    // it skips both the wait for a fresh GPS lock and the fused-provider
+    // failures above. Use it whenever one exists.
+    try {
+      final last = await Geolocator.getLastKnownPosition(
+        forceAndroidLocationManager: _isAndroid,
+      );
+      if (last != null) return last;
+    } catch (_) {
+      // getLastKnownPosition is best-effort; fall through to a live fix.
+    }
+
     try {
       return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: _kLocationTimeout,
-        ),
+        locationSettings: _locationSettings,
       );
     } on TimeoutException {
-      // A fresh GPS fix can time out indoors / on a cold sensor. A previously
-      // cached fix is good enough for prayer times and qibla, so fall back to
-      // it rather than failing the whole screen.
-      final last = await Geolocator.getLastKnownPosition();
-      if (last != null) return last;
       throw TimeoutException('Location request timed out');
-    } catch (_) {
-      // Some Android OEMs surface a raw PlatformException from
-      // getCurrentPosition rather than a clean timeout — try the last known
-      // fix here too before letting the error reach the UI.
-      final last = await Geolocator.getLastKnownPosition();
-      if (last != null) return last;
-      rethrow;
     }
   }
 

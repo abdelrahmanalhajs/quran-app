@@ -24,6 +24,14 @@ Future<void> main() async {
       androidNotificationChannelId: 'com.abdelrahmanalhajs.quranapp.audio',
       androidNotificationChannelName: 'Quran audio playback',
       androidNotificationOngoing: true,
+      // just_audio_background defaults this to 'mipmap/ic_launcher', which
+      // doesn't exist here — the app's launcher resource is `launcher_icon`
+      // (see flutter_launcher_icons in pubspec / AndroidManifest). With the
+      // default, the media notification posted as soon as any audio plays
+      // throws "Invalid notification (no valid small icon)" and crashes the
+      // app — which is what happened the moment the athan/Quran audio
+      // actually reached playback.
+      androidNotificationIcon: 'mipmap/launcher_icon',
     );
   }
 

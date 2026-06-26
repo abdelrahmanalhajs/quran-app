@@ -22,6 +22,16 @@ class NotificationService {
 
   static final AudioPlayer _athanPlayer = AudioPlayer();
 
+  // Exact alarms (SCHEDULE_EXACT_ALARM) are not granted by default on
+  // Android 13+. Attempting an exact schedule then throws
+  // PlatformException(exact_alarms_not_permitted), which previously went
+  // unhandled at startup and left the prayer-athan and reminder
+  // notifications never scheduled at all. Resolved once in [init]: use exact
+  // alarms when the OS allows them, otherwise fall back to inexact (still
+  // fires, just not to the exact minute) so scheduling always succeeds.
+  static AndroidScheduleMode _scheduleMode =
+      AndroidScheduleMode.exactAllowWhileIdle;
+
   static const List<Map<String, String>> _zikrPhrases = [
     {
       'ar': 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
@@ -75,6 +85,15 @@ class NotificationService {
       const InitializationSettings(android: androidInit, iOS: iosInit),
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final canExact = await android?.canScheduleExactNotifications() ?? true;
+    if (canExact == false) {
+      _scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+    }
   }
 
   static void _onNotificationTapped(NotificationResponse response) {
@@ -149,7 +168,7 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -174,7 +193,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
     );
   }
 
@@ -248,7 +267,7 @@ class NotificationService {
           ),
         ),
         matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: athan.id,
@@ -316,7 +335,7 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -349,7 +368,7 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -403,7 +422,7 @@ class NotificationService {
           iOS: DarwinNotificationDetails(),
         ),
         matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
@@ -430,7 +449,7 @@ class NotificationService {
           iOS: DarwinNotificationDetails(),
         ),
         matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
