@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/athan.dart';
 import '../../core/responsive.dart';
@@ -64,7 +65,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
     setState(() => _previewingAthanId = athan.id);
-    await _previewPlayer.setAsset(athan.assetPath);
+    // Once JustAudioBackground.init() has run (see main.dart), every
+    // AudioSource loaded by any just_audio player must carry a MediaItem
+    // tag — a bare setAsset() throws (assert in debug, a null cast in
+    // release), which is why the preview produced no sound at all.
+    await _previewPlayer.setAudioSource(
+      AudioSource.asset(
+        athan.assetPath,
+        tag: MediaItem(
+          id: 'athan_preview_${athan.id}',
+          title: athan.nameEn,
+        ),
+      ),
+    );
     await _previewPlayer.play();
   }
 
@@ -334,8 +347,104 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }).toList(),
                 ),
               ),
+            if (!kIsWeb) ...[
+              const Divider(),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsiveHorizontalPadding(context),
+                  8,
+                  responsiveHorizontalPadding(context),
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'settings.test_notifications'.tr(),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'settings.test_notifications_hint'.tr(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _TestNotificationTile(
+                label: 'settings.notifications'.tr(),
+                onSend: () =>
+                    NotificationService.simulateDailyHadith(arabic: isArabic),
+              ),
+              _TestNotificationTile(
+                label: 'settings.hourly_zikr'.tr(),
+                onSend: () =>
+                    NotificationService.simulateHourlyZikr(arabic: isArabic),
+              ),
+              _TestNotificationTile(
+                label: 'settings.sleep_athkar_notif'.tr(),
+                onSend: () =>
+                    NotificationService.simulateSleepReminder(arabic: isArabic),
+              ),
+              _TestNotificationTile(
+                label: 'settings.jumaa_athkar_notif'.tr(),
+                onSend: () =>
+                    NotificationService.simulateJumaaReminder(arabic: isArabic),
+              ),
+              _TestNotificationTile(
+                label: 'settings.athkar_prayer_reminders'.tr(),
+                onSend: () => NotificationService.simulateAthkarPrayerReminder(
+                  arabic: isArabic,
+                ),
+              ),
+              _TestNotificationTile(
+                label: 'settings.athan_notifications'.tr(),
+                onSend: () => NotificationService.simulatePrayerAthan(
+                  athan: _athanReciter,
+                  arabic: isArabic,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// One row in the "Test Notifications" section: a label plus a Send button
+/// that requests notification permission (if not yet granted) and then fires
+/// that notification immediately so the user can preview it. Confirms with a
+/// SnackBar so a silent/heads-up-suppressed notification still gives feedback
+/// that the tap did something.
+class _TestNotificationTile extends StatelessWidget {
+  final String label;
+  final Future<void> Function() onSend;
+
+  const _TestNotificationTile({required this.label, required this.onSend});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(label),
+      trailing: FilledButton.tonalIcon(
+        icon: const Icon(Icons.notifications_active_outlined, size: 18),
+        label: Text('settings.test_send'.tr()),
+        onPressed: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final granted = await NotificationService.requestPermission();
+          if (!granted) return;
+          await onSend();
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('settings.test_sent'.tr()),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,43 +1,45 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../core/constants/api_constants.dart';
-import '../core/services/file_cache.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
+/// Serves tafsir from bundled assets so it works fully offline and opens
+/// instantly: Al-Muyassar (Arabic) and Ibn Kathir (English), each a
+/// `verse_key -> text` map covering all 6236 ayahs (ranges already expanded
+/// to every ayah and HTML stripped at build time). Loaded lazily once and
+/// cached on static fields shared across instances.
 class TafsirRepository {
+  static Map<String, String>? _ar;
+  static Map<String, String>? _en;
+  static Future<void>? _loadingAr;
+  static Future<void>? _loadingEn;
+
+  static Future<void> _ensure(bool arabic) {
+    if (arabic) {
+      if (_ar != null) return Future.value();
+      return _loadingAr ??= rootBundle
+          .loadString('assets/data/tafsir_ar.json')
+          .then((s) => _ar = _decode(s));
+    } else {
+      if (_en != null) return Future.value();
+      return _loadingEn ??= rootBundle
+          .loadString('assets/data/tafsir_en.json')
+          .then((s) => _en = _decode(s));
+    }
+  }
+
+  static Map<String, String> _decode(String s) {
+    return (jsonDecode(s) as Map<String, dynamic>).map(
+      (k, v) => MapEntry(k, v as String),
+    );
+  }
+
   Future<String> getTafsir({
     required int surahNumber,
     required int ayahNumberInSurah,
     required bool arabic,
   }) async {
-    final resourceId = arabic
-        ? ApiConstants.tafsirMuyassarAr
-        : ApiConstants.tafsirIbnKathirEn;
+    await _ensure(arabic);
     final verseKey = '$surahNumber:$ayahNumberInSurah';
-    final cacheKey = 'tafsir_${resourceId}_$verseKey';
-
-    final cached = await FileCache.read(cacheKey);
-    if (cached != null) {
-      return cached['text'] as String;
-    }
-
-    final uri = Uri.parse(
-      '${ApiConstants.tafsirBase}/tafsirs/$resourceId/by_ayah/$verseKey',
-    );
-    final res = await http.get(uri);
-    if (res.statusCode != 200) {
-      throw Exception('Failed to load tafsir');
-    }
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
-    final text = (body['tafsir']?['text'] as String?) ?? '';
-    final clean = _stripHtml(text);
-    await FileCache.write(cacheKey, {'text': clean});
-    return clean;
-  }
-
-  String _stripHtml(String input) {
-    return input
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final map = arabic ? _ar! : _en!;
+    return map[verseKey] ?? '';
   }
 }

@@ -1,12 +1,23 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../core/constants/api_constants.dart';
-import '../core/services/file_cache.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import '../models/ayah.dart';
 import '../models/surah.dart';
 
+/// Reads the entire Quran (Uthmani Arabic + English Sahih International
+/// translation) from a single bundled asset, `assets/data/quran_full.json`,
+/// rather than fetching it page-by-page/surah-by-surah over the network.
+///
+/// This makes every reading screen open instantly and work fully offline:
+/// the ~2.8 MB asset is parsed once on first access into in-memory indexes
+/// (by surah and by real Mushaf page), then reused for the rest of the app's
+/// lifetime. The parse is intentionally cached on static fields so that the
+/// several [QuranRepository] instances created across the app all share the
+/// same one-time work.
 class QuranRepository {
-  List<SurahSummary>? _surahCache;
+  static List<SurahSummary>? _summaries;
+  static Map<int, List<Ayah>>? _ayahsBySurah;
+  static Map<int, List<Ayah>>? _ayahsByPage;
+  static Future<void>? _loading;
 
   /// Whether [surahNumber] should show a separate Bismillah line under the
   /// surah banner. False for Al-Fatiha (it's already ayah 1) and At-Tawbah
@@ -33,228 +44,77 @@ class QuranRepository {
     return text;
   }
 
-  Future<List<SurahSummary>> getSurahList() async {
-    if (_surahCache != null) return _surahCache!;
-
-    final cached = await FileCache.read('surah_list');
-    if (cached != null) {
-      final list = (cached['data'] as List)
-          .map((e) => SurahSummary.fromJson(e as Map<String, dynamic>))
-          .toList();
-      _surahCache = list;
-      // Refresh in background; ignore errors.
-      _fetchAndCacheSurahList();
-      return list;
-    }
-
-    return _fetchAndCacheSurahList();
+  Future<void> _ensureLoaded() {
+    if (_summaries != null) return Future.value();
+    return _loading ??= _load();
   }
 
-  Future<List<SurahSummary>> _fetchAndCacheSurahList() async {
-    final uri = Uri.parse('${ApiConstants.quranBase}/surah');
-    final res = await http.get(uri);
-    if (res.statusCode != 200) {
-      if (_surahCache != null) return _surahCache!;
-      throw Exception('Failed to load surah list');
+  static Future<void> _load() async {
+    final raw = await rootBundle.loadString('assets/data/quran_full.json');
+    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final surahs = (data['surahs'] as List).cast<Map<String, dynamic>>();
+
+    final summaries = <SurahSummary>[];
+    final bySurah = <int, List<Ayah>>{};
+    final byPage = <int, List<Ayah>>{};
+
+    for (final surah in surahs) {
+      final surahNumber = surah['number'] as int;
+      final ayahsJson = (surah['ayahs'] as List).cast<Map<String, dynamic>>();
+
+      summaries.add(
+        SurahSummary.fromJson({
+          'number': surahNumber,
+          'name': surah['name'],
+          'englishName': surah['englishName'],
+          'englishNameTranslation': surah['englishNameTranslation'],
+          'numberOfAyahs': ayahsJson.length,
+          'revelationType': surah['revelationType'],
+        }),
+      );
+
+      final list = <Ayah>[];
+      for (final aj in ayahsJson) {
+        var ayah = Ayah.fromArabicJson(
+          aj,
+          surahNumber,
+        ).copyWithTranslation(aj['en'] as String?);
+        if (ayah.numberInSurah == 1 && hasSeparateBismillah(surahNumber)) {
+          ayah = ayah.copyWithArabicText(_stripBismillahPrefix(ayah.textAr));
+        }
+        list.add(ayah);
+        (byPage[ayah.page] ??= <Ayah>[]).add(ayah);
+      }
+      bySurah[surahNumber] = list;
     }
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
-    final list = (body['data'] as List)
-        .map((e) => SurahSummary.fromJson(e as Map<String, dynamic>))
-        .toList();
-    _surahCache = list;
-    await FileCache.write('surah_list', {
-      'data': list.map((e) => e.toJson()).toList(),
-    });
-    return list;
+
+    _summaries = summaries;
+    _ayahsBySurah = bySurah;
+    _ayahsByPage = byPage;
+  }
+
+  Future<List<SurahSummary>> getSurahList() async {
+    await _ensureLoaded();
+    return _summaries!;
   }
 
   Future<List<Ayah>> getSurahAyahs(
     int surahNumber, {
     bool withTranslation = true,
   }) async {
-    final cacheKey = 'surah_v5_$surahNumber';
-    final cached = await FileCache.read(cacheKey);
-    if (cached != null) {
-      return _ayahsFromCache(cached, surahNumber);
-    }
-
-    final arUri = Uri.parse(
-      '${ApiConstants.quranBase}/surah/$surahNumber/${ApiConstants.arabicEdition}',
-    );
-    final arRes = await http.get(arUri);
-    if (arRes.statusCode != 200) {
-      throw Exception('Failed to load surah $surahNumber');
-    }
-    final arBody = jsonDecode(arRes.body) as Map<String, dynamic>;
-    final arAyahs = (arBody['data']['ayahs'] as List)
-        .map((e) => Ayah.fromArabicJson(e as Map<String, dynamic>, surahNumber))
-        .toList();
-
-    List<String>? translations;
-    if (withTranslation) {
-      final enUri = Uri.parse(
-        '${ApiConstants.quranBase}/surah/$surahNumber/${ApiConstants.englishEdition}',
-      );
-      final enRes = await http.get(enUri);
-      if (enRes.statusCode == 200) {
-        final enBody = jsonDecode(enRes.body) as Map<String, dynamic>;
-        translations = (enBody['data']['ayahs'] as List)
-            .map((e) => (e as Map<String, dynamic>)['text'] as String)
-            .toList();
-      }
-    }
-
-    final ayahs = <Ayah>[];
-    for (var i = 0; i < arAyahs.length; i++) {
-      final translation = translations != null && i < translations.length
-          ? translations[i]
-          : null;
-      ayahs.add(arAyahs[i].copyWithTranslation(translation));
-    }
-
-    if (hasSeparateBismillah(surahNumber) && ayahs.isNotEmpty) {
-      final first = ayahs[0];
-      ayahs[0] = first.copyWithArabicText(_stripBismillahPrefix(first.textAr));
-    }
-
-    await FileCache.write(cacheKey, {
-      'ayahs': ayahs
-          .map(
-            (a) => {
-              'number': a.number,
-              'numberInSurah': a.numberInSurah,
-              'textAr': a.textAr,
-              'textEn': a.textEn,
-              'juz': a.juz,
-              'page': a.page,
-              'hizbQuarter': a.hizbQuarter,
-              'sajda': a.sajda,
-              'sajdaObligatory': a.sajdaObligatory,
-            },
-          )
-          .toList(),
-    });
-
-    return ayahs;
+    await _ensureLoaded();
+    return _ayahsBySurah![surahNumber] ?? const [];
   }
 
-  List<Ayah> _ayahsFromCache(Map<String, dynamic> cached, int surahNumber) {
-    return (cached['ayahs'] as List).map((e) {
-      final m = e as Map<String, dynamic>;
-      return Ayah(
-        number: m['number'] as int,
-        numberInSurah: m['numberInSurah'] as int,
-        surahNumber: surahNumber,
-        textAr: m['textAr'] as String,
-        textEn: m['textEn'] as String?,
-        juz: m['juz'] as int,
-        page: m['page'] as int,
-        hizbQuarter: m['hizbQuarter'] as int,
-        sajda: m['sajda'] as bool,
-        sajdaObligatory: m['sajdaObligatory'] as bool? ?? false,
-      );
-    }).toList();
-  }
-
-  /// Fetches every ayah on a real, absolute Mushaf page (1-604), regardless
-  /// of which surah(s) it belongs to. Unlike [getSurahAyahs] (scoped to one
-  /// surah), a page that's shared between the end of one surah and the
-  /// start of the next comes back with both, each ayah carrying its own
-  /// correct [Ayah.surahNumber] (read from the API's per-ayah `surah`
-  /// object) — this is what makes rendering a real Mushaf page's true
-  /// content (not just "this surah's lines for this page") possible.
+  /// Every ayah on a real, absolute Mushaf page (1-604), regardless of which
+  /// surah(s) it belongs to — a page shared between the end of one surah and
+  /// the start of the next comes back with both, each ayah carrying its own
+  /// correct [Ayah.surahNumber], exactly like a printed Mushaf.
   Future<List<Ayah>> getPageAyahs(
     int pageNumber, {
     bool withTranslation = true,
   }) async {
-    final cacheKey = 'page_v3_$pageNumber';
-    final cached = await FileCache.read(cacheKey);
-    if (cached != null) {
-      return _ayahsFromPageCache(cached);
-    }
-
-    final arUri = Uri.parse(
-      '${ApiConstants.quranBase}/page/$pageNumber/${ApiConstants.arabicEdition}',
-    );
-    final arRes = await http.get(arUri);
-    if (arRes.statusCode != 200) {
-      throw Exception('Failed to load page $pageNumber');
-    }
-    final arBody = jsonDecode(arRes.body) as Map<String, dynamic>;
-    final arAyahsJson = (arBody['data']['ayahs'] as List)
-        .cast<Map<String, dynamic>>();
-    final arAyahs = arAyahsJson
-        .map(
-          (e) => Ayah.fromArabicJson(
-            e,
-            (e['surah'] as Map<String, dynamic>)['number'] as int,
-          ),
-        )
-        .toList();
-
-    List<String>? translations;
-    if (withTranslation) {
-      final enUri = Uri.parse(
-        '${ApiConstants.quranBase}/page/$pageNumber/${ApiConstants.englishEdition}',
-      );
-      final enRes = await http.get(enUri);
-      if (enRes.statusCode == 200) {
-        final enBody = jsonDecode(enRes.body) as Map<String, dynamic>;
-        translations = (enBody['data']['ayahs'] as List)
-            .map((e) => (e as Map<String, dynamic>)['text'] as String)
-            .toList();
-      }
-    }
-
-    final ayahs = <Ayah>[];
-    for (var i = 0; i < arAyahs.length; i++) {
-      final translation = translations != null && i < translations.length
-          ? translations[i]
-          : null;
-      var ayah = arAyahs[i].copyWithTranslation(translation);
-      if (ayah.numberInSurah == 1 && hasSeparateBismillah(ayah.surahNumber)) {
-        ayah = ayah.copyWithArabicText(_stripBismillahPrefix(ayah.textAr));
-      }
-      ayahs.add(ayah);
-    }
-
-    await FileCache.write(cacheKey, {
-      'ayahs': ayahs
-          .map(
-            (a) => {
-              'number': a.number,
-              'numberInSurah': a.numberInSurah,
-              'surahNumber': a.surahNumber,
-              'textAr': a.textAr,
-              'textEn': a.textEn,
-              'juz': a.juz,
-              'page': a.page,
-              'hizbQuarter': a.hizbQuarter,
-              'sajda': a.sajda,
-              'sajdaObligatory': a.sajdaObligatory,
-            },
-          )
-          .toList(),
-    });
-
-    return ayahs;
-  }
-
-  List<Ayah> _ayahsFromPageCache(Map<String, dynamic> cached) {
-    return (cached['ayahs'] as List).map((e) {
-      final m = e as Map<String, dynamic>;
-      return Ayah(
-        number: m['number'] as int,
-        numberInSurah: m['numberInSurah'] as int,
-        surahNumber: m['surahNumber'] as int,
-        textAr: m['textAr'] as String,
-        textEn: m['textEn'] as String?,
-        juz: m['juz'] as int,
-        page: m['page'] as int,
-        hizbQuarter: m['hizbQuarter'] as int,
-        sajda: m['sajda'] as bool,
-        sajdaObligatory: m['sajdaObligatory'] as bool? ?? false,
-      );
-    }).toList();
+    await _ensureLoaded();
+    return _ayahsByPage![pageNumber] ?? const [];
   }
 }

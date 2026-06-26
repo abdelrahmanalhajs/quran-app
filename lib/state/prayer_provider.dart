@@ -44,12 +44,10 @@ class PrayerProvider extends ChangeNotifier {
       _status = PrayerLoadStatus.loadingData;
       notifyListeners();
 
-      final results = await Future.wait([
-        _repo.getPrayerTimes(_latitude!, _longitude!),
-        _repo.getQiblaDirection(_latitude!, _longitude!),
-      ]);
-      _times = results[0] as PrayerTimes;
-      _qiblaDirection = results[1] as double;
+      // Prayer times and qibla are computed locally (see PrayerRepository),
+      // so this no longer depends on a network call that can fail.
+      _times = _repo.getPrayerTimes(_latitude!, _longitude!);
+      _qiblaDirection = _repo.getQiblaDirection(_latitude!, _longitude!);
       _status = PrayerLoadStatus.loaded;
 
       if (!kIsWeb && await AthanSettings.isEnabled()) {

@@ -139,8 +139,11 @@ class _StatusMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Scrollable so a long error message (e.g. a raw platform exception
+    // string) can never overflow the column and push the action button
+    // off-screen — that's how "an error with no retry button" happened.
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -102,7 +102,11 @@
     "athkar_prayer_reminders_hint": "Get reminded shortly after Fajr for the morning athkar, and after Asr for the evening athkar",
     "athan_notifications": "Athan Notifications",
     "athan_notifications_hint": "Get notified with the athan sound at each of the 5 daily prayer times",
-    "preview_athan": "Preview"
+    "preview_athan": "Preview",
+    "test_notifications": "Test Notifications",
+    "test_notifications_hint": "Send any notification now to preview how it looks and sounds",
+    "test_send": "Send",
+    "test_sent": "Test notification sent"
   },
   "onboarding": {
     "skip": "Skip",

@@ -102,7 +102,11 @@
     "athkar_prayer_reminders_hint": "تذكير بعد صلاة الفجر بأذكار الصباح، وبعد صلاة العصر بأذكار المساء",
     "athan_notifications": "إشعارات الأذان",
     "athan_notifications_hint": "تلقَّ إشعارًا بصوت الأذان عند دخول كل وقت من أوقات الصلاة الخمس",
-    "preview_athan": "استماع"
+    "preview_athan": "استماع",
+    "test_notifications": "تجربة الإشعارات",
+    "test_notifications_hint": "أرسِل أي إشعار الآن لمعاينة شكله وصوته",
+    "test_send": "إرسال",
+    "test_sent": "تم إرسال إشعار التجربة"
   },
   "onboarding": {
     "skip": "تخطّي",

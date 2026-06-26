@@ -50,6 +50,23 @@ Future<void> main() async {
   );
 }
 
+/// Android's default [MaterialScrollBehavior] wraps every scrollable in a
+/// stretch-on-overscroll indicator that visually expands the page when you
+/// scroll past its top/bottom edge — disabled app-wide here since it reads
+/// as a glitch on a Mushaf page rather than a deliberate effect.
+class _NoOverscrollBehavior extends MaterialScrollBehavior {
+  const _NoOverscrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
+  }
+}
+
 class QuranApp extends StatelessWidget {
   const QuranApp({super.key});
 
@@ -65,6 +82,7 @@ class QuranApp extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
+      scrollBehavior: const _NoOverscrollBehavior(),
       home: settings.onboardingDone
           ? const HomeShell()
           : const OnboardingScreen(),

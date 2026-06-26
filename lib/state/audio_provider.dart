@@ -107,7 +107,10 @@ class AudioProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await _player.setAudioSource(
-        AudioSource.uri(
+        // LockCachingAudioSource streams while saving the file to disk, so a
+        // surah played once is then available fully offline on replay.
+        // ignore: experimental_member_use
+        LockCachingAudioSource(
           Uri.parse(reciter.audioUrlForSurah(surahNumber)),
           tag: MediaItem(
             id: 'surah_${surahNumber}_${reciter.id}',
@@ -156,7 +159,10 @@ class AudioProvider extends ChangeNotifier {
       final title = surahTitle ?? 'Surah $surahNumber';
       final sources = [
         for (var ayah = ayahNumberInSurah; ayah <= totalAyahsInSurah; ayah++)
-          AudioSource.uri(
+          // Cached to disk on first play so per-ayah recitation also replays
+          // offline (see [playSurah]).
+          // ignore: experimental_member_use
+          LockCachingAudioSource(
             Uri.parse(reciter.audioUrlForAyah(surahNumber, ayah)!),
             tag: MediaItem(
               id: 'ayah_${surahNumber}_${ayah}_${reciter.id}',

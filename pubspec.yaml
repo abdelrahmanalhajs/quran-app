@@ -2,7 +2,7 @@ name: quran_app
 description: "Quran app with audio recitation, translation, tafsir, prayer times, qiblah, athkar and daily hadith."
 publish_to: 'none'
 
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.12.1
@@ -13,7 +13,6 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   provider: ^6.1.2
-  http: ^1.2.2
   shared_preferences: ^2.3.3
   easy_localization: ^3.0.7
   just_audio: ^0.9.42
@@ -21,6 +20,7 @@ dependencies:
   audio_service: ^0.18.15
   audio_session: ^0.1.21
   geolocator: ^13.0.2
+  adhan: ^2.0.0
   permission_handler: ^11.3.1
   flutter_compass: ^0.8.1
   flutter_local_notifications: ^18.0.1

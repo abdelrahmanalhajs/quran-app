@@ -823,7 +823,8 @@ class _MushafPageView extends StatefulWidget {
   State<_MushafPageView> createState() => _MushafPageViewState();
 }
 
-class _MushafPageViewState extends State<_MushafPageView> {
+class _MushafPageViewState extends State<_MushafPageView>
+    with SingleTickerProviderStateMixin {
   static const _pageBg = Color(0xFFFBF3E0);
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
@@ -846,6 +847,16 @@ class _MushafPageViewState extends State<_MushafPageView> {
   bool _navigating = false;
   int _itemCount = 0;
   int _currentIndex = 0;
+
+  /// Drives the manual page-turn slide (see [_startPageTurn]) — built
+  /// entirely ourselves, independent of [PageView]'s own `reverse`/ambient
+  /// [Directionality]-driven transition, so its on-screen slide direction
+  /// always matches the swipe by construction rather than depending on how
+  /// [PageView] happens to resolve `AxisDirection` for RTL-and-reversed.
+  AnimationController? _turnController;
+  int? _turnFromIndex;
+  int? _turnToIndex;
+  bool _turnSlideLeft = false;
 
   /// Manual pinch-zoom for the current page, on top of Small/Medium's own
   /// auto-fit scale (see [kQuranFontSizeFitsPage]) — Large already renders
@@ -969,6 +980,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _disposeRecognizers();
     _pageController.dispose();
     _searchController.dispose();
+    _turnController?.dispose();
     super.dispose();
   }
 
@@ -1013,19 +1025,19 @@ class _MushafPageViewState extends State<_MushafPageView> {
   /// [GestureDetector] responds to every pointer kind.
   ///
   /// Deliberately *not* driving [PageController.position] live as the
-  /// finger moves: this view's ambient [Directionality] is RTL (the whole
+  /// finger moves, and *not* using [PageController.animateToPage] for the
+  /// turn either: this view's ambient [Directionality] is RTL (the whole
   /// app's locale is Arabic) and [PageView.reverse] is `true`, and that
-  /// specific combination makes increasing scroll `pixels` paint in the
-  /// *opposite* screen direction from increasing index — a fixed property
-  /// of how [PageView] resolves `AxisDirection` for RTL-and-reversed, not
-  /// something fixable by flipping a sign on our own delta (the existing,
-  /// already-correct "swipe right -> next page" outcome below depends on
-  /// that exact same pixels/index relationship, so flipping it to fix the
-  /// live visual would just break the outcome instead). Tried it — the page
-  /// visibly slid opposite the finger. Deciding the target purely on
-  /// release and letting [PageController.animateToPage] run its own
-  /// (already-correct) transition avoids the mismatch entirely, at the cost
-  /// of the page not following the finger mid-drag.
+  /// specific combination makes [PageView]'s own scroll/animate direction
+  /// resolve inconsistently with the swipe — the page landed on is correct
+  /// either way, but the visual slide can end up going the opposite screen
+  /// direction from the finger. Rather than fight `AxisDirection`
+  /// resolution, [_startPageTurn] plays a slide we build and position
+  /// ourselves (see [_buildTurnOverlay]), so its direction is set directly
+  /// from the swipe's velocity sign and can never depend on `reverse`/
+  /// `Directionality` semantics. The target index (which page it lands on)
+  /// is still decided exactly as before; only how that change is animated
+  /// is now ours to control.
   ///
   /// A single [GestureDetector.onScale*] trio (rather than separate drag and
   /// scale recognizers competing for the same pointer) handles both page
@@ -1062,19 +1074,111 @@ class _MushafPageViewState extends State<_MushafPageView> {
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
-    if (_gestureIsZoom != true) {
+    if (_gestureIsZoom != true && _turnController == null) {
       final velocity = details.velocity.pixelsPerSecond.dx;
       if (velocity.abs() >= 150) {
         final target = (velocity > 0 ? _currentIndex + 1 : _currentIndex - 1)
             .clamp(0, _itemCount - 1);
-        _pageController.animateToPage(
-          target,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-        );
+        if (target != _currentIndex) {
+          _startPageTurn(target, slideLeft: velocity < 0);
+        }
       }
     }
     _gestureIsZoom = null;
+  }
+
+  /// Plays the page-turn slide and only swaps [_pageController] to [target]
+  /// once it finishes — see the doc comment above [_handleScaleStart] for
+  /// why this is driven manually instead of [PageController.animateToPage].
+  /// [slideLeft] is taken directly from the swipe's velocity sign, so the
+  /// whole transition (outgoing page leaving, incoming page entering) moves
+  /// in that exact screen direction, matching the finger by construction.
+  void _startPageTurn(int target, {required bool slideLeft}) {
+    final controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    setState(() {
+      _turnController = controller;
+      _turnFromIndex = _currentIndex;
+      _turnToIndex = target;
+      _turnSlideLeft = slideLeft;
+    });
+    controller.forward(from: 0).whenComplete(() {
+      controller.dispose();
+      if (!mounted || !identical(_turnController, controller)) return;
+      _pageController.jumpToPage(target);
+      setState(() {
+        _turnController = null;
+        _turnFromIndex = null;
+        _turnToIndex = null;
+      });
+    });
+  }
+
+  Widget _buildStaticPage(BuildContext context, int index) {
+    return SafeArea(
+      bottom: false,
+      child: ResponsiveCenter(maxWidth: 900, child: _buildPageForIndex(context, index)),
+    );
+  }
+
+  Widget _buildTurnOverlay(BuildContext context) {
+    final controller = _turnController;
+    final fromIndex = _turnFromIndex;
+    final toIndex = _turnToIndex;
+    // Positioned even when idle: a bare (non-Positioned) SizedBox.shrink()
+    // here would become the outer Stack's only non-Positioned child (every
+    // other child is Positioned), which makes the Stack size itself to that
+    // 0x0 child instead of filling the screen — collapsing the whole page
+    // to nothing.
+    if (controller == null || fromIndex == null || toIndex == null) {
+      return const Positioned.fill(child: SizedBox.shrink());
+    }
+    final width = MediaQuery.sizeOf(context).width;
+    final sign = _turnSlideLeft ? -1.0 : 1.0;
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: ColoredBox(
+          color: _pageBg,
+          child: AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              final dx = sign * width * controller.value;
+              return Stack(
+                children: [
+                  Transform.translate(
+                    offset: Offset(dx, 0),
+                    child: _buildStaticPage(context, fromIndex),
+                  ),
+                  Transform.translate(
+                    offset: Offset(dx - sign * width, 0),
+                    child: _buildStaticPage(context, toIndex),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Shared by the real [PageView]'s `itemBuilder` and [_buildStaticPage]
+  /// (the manual page-turn overlay), so both render identical content for
+  /// a given page index.
+  Widget _buildPageForIndex(BuildContext context, int index) {
+    if (index == _prevSentinelIndex) {
+      return const _AdjacentSurahTransitionPage(forward: false);
+    }
+    if (index == _nextSentinelIndex) {
+      return const _AdjacentSurahTransitionPage(forward: true);
+    }
+    final screenPageIndex = index - _realPagesStart;
+    final pageAyahs = _screenPages[screenPageIndex];
+    final page = _buildMushafPage(context, pageAyahs, screenPageIndex);
+    final stepIndex = quranFontSizeStepIndex(widget.fontSize);
+    return kQuranFontSizeFitsPage[stepIndex] ? _applyZoom(page) : page;
   }
 
   Widget _applyZoom(Widget child) {
@@ -1125,19 +1229,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _itemCount,
             onPageChanged: _onPageChanged,
-            itemBuilder: (context, index) {
-              if (index == _prevSentinelIndex) {
-                return const _AdjacentSurahTransitionPage(forward: false);
-              }
-              if (index == _nextSentinelIndex) {
-                return const _AdjacentSurahTransitionPage(forward: true);
-              }
-              final screenPageIndex = index - _realPagesStart;
-              final pageAyahs = _screenPages[screenPageIndex];
-              final page = _buildMushafPage(context, pageAyahs, screenPageIndex);
-              final stepIndex = quranFontSizeStepIndex(widget.fontSize);
-              return kQuranFontSizeFitsPage[stepIndex] ? _applyZoom(page) : page;
-            },
+            itemBuilder: _buildPageForIndex,
           ),
         ),
       ),
@@ -1148,6 +1240,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
       child: Stack(
         children: [
           Positioned.fill(child: pageContent),
+          _buildTurnOverlay(context),
           Positioned(
             top: 0,
             left: 0,
@@ -1535,7 +1628,17 @@ class _MushafPageViewState extends State<_MushafPageView> {
                   !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
         final recognizer = _recognizersByAyah.putIfAbsent(ayah.number, () {
-          final r = LongPressGestureRecognizer();
+          // A shorter-than-default (500ms) long-press deadline: the page's
+          // parent scale/pan recognizer (one-finger swipe = page turn) shares
+          // the gesture arena with this one, and any finger-drift past the
+          // touch slop while holding lets the pan recognizer claim the gesture
+          // first — which is why opening the tafsir/translation sheet silently
+          // failed on some ayahs. Claiming the long-press sooner (300ms) wins
+          // the arena before that drift accumulates, so the hold reliably
+          // opens the sheet instead of being mistaken for a swipe.
+          final r = LongPressGestureRecognizer(
+            duration: const Duration(milliseconds: 300),
+          );
           r.onLongPressDown = (_) {
             setState(() => _pressedAyahNumber = ayah.number);
           };
@@ -1604,6 +1707,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
                 color: _frameGreen,
                 fontWeight: FontWeight.bold,
               ),
+              // Carry the same long-press recognizer as the rest of the ayah
+              // so holding on the leading quarter mark opens the sheet too,
+              // rather than being a dead spot.
+              recognizer: recognizer,
             ),
           );
         }
