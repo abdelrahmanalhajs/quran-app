@@ -19,22 +19,19 @@ enum QuranViewMode { page, list }
 /// a given page), the raw values here can't make Medium look bigger than
 /// Small on their own — see [kQuranFontSizeLineHeight] for what actually
 /// does.
-/// Small / Medium / Large. Small and Medium auto-fit each Mushaf page to the
-/// screen (no scrolling — see [kQuranFontSizeFitsPage]), so their value is a
-/// base the page scaler works from; the line height (below) is what makes
-/// Medium read bigger than Small once both are scaled to fill the page.
-/// Large renders at its literal 36 px and scrolls.
+/// Small / Medium / Large, in logical pixels. Only Small auto-fits each
+/// Mushaf page to the screen (no scrolling — see [kQuranFontSizeFitsPage]);
+/// Medium and Large render at their literal 30 / 36 px and the page scrolls.
 const List<double> kQuranFontSizeSteps = [24, 30, 36];
 
-/// Parallel to [kQuranFontSizeSteps]: Small and Medium auto-fit the page
-/// without scrolling; Large renders at its literal size and scrolls.
-const List<bool> kQuranFontSizeFitsPage = [true, true, false];
+/// Parallel to [kQuranFontSizeSteps]: only Small auto-fits the page without
+/// scrolling; Medium and Large render at their literal size and scroll.
+const List<bool> kQuranFontSizeFitsPage = [true, false, false];
 
 /// Parallel to [kQuranFontSizeSteps]: the line-height multiplier for that
-/// step. For the two fit-the-page steps a tighter line height leaves more of
-/// the page's fixed height for the letters once scaled to fill it, so Medium
-/// (1.6) reads noticeably bigger than Small (2.1).
-const List<double> kQuranFontSizeLineHeight = [2.1, 1.6, 1.9];
+/// step. Small (the fit-the-page step) uses a looser height; the literal
+/// Medium/Large use generous spacing so the Uthmani diacritics never collide.
+const List<double> kQuranFontSizeLineHeight = [2.1, 2.0, 2.0];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
 /// All regular — the Mushaf face is never bold.

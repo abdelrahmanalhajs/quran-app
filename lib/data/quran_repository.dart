@@ -37,25 +37,6 @@ class QuranRepository {
   static bool hasSeparateBismillah(int surahNumber) =>
       surahNumber != 1 && surahNumber != 9;
 
-  // The Uthmani-script edition prepends the 4-word Bismillah phrase to the
-  // text of ayah 1 for every surah except Al-Fatiha and At-Tawbah (see
-  // [hasSeparateBismillah]). Diacritic encoding of that prefix isn't always
-  // byte-identical (e.g. shadda placement can vary), so rather than matching
-  // an exact literal string, strip everything up to and including the 4th
-  // space — robust to those encoding differences.
-  static String _stripBismillahPrefix(String text) {
-    var spaceCount = 0;
-    for (var i = 0; i < text.length; i++) {
-      if (text[i] == ' ') {
-        spaceCount++;
-        if (spaceCount == 4) {
-          return text.substring(i + 1).trimLeft();
-        }
-      }
-    }
-    return text;
-  }
-
   Future<void> _ensureLoaded() {
     if (_summaries != null) return Future.value();
     return _loading ??= _load();
@@ -97,13 +78,13 @@ class QuranRepository {
 
       final list = <Ayah>[];
       for (final aj in ayahsJson) {
-        var ayah = Ayah.fromArabicJson(
+        // The bundled text (quran.com Uthmani, matched to the KFGQPC font)
+        // already excludes the Bismillah from ayah 1 — it's shown as its own
+        // line via [hasSeparateBismillah] — so nothing needs stripping here.
+        final ayah = Ayah.fromArabicJson(
           aj,
           surahNumber,
         ).copyWithTranslation(aj['en'] as String?);
-        if (ayah.numberInSurah == 1 && hasSeparateBismillah(surahNumber)) {
-          ayah = ayah.copyWithArabicText(_stripBismillahPrefix(ayah.textAr));
-        }
         list.add(ayah);
         (byPage[ayah.page] ??= <Ayah>[]).add(ayah);
       }

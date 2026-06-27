@@ -30,7 +30,6 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
         val times = widgetData.getString("prayer_times", null)?.split(",")
         // Matching localized names, same order.
         val names = widgetData.getString("prayer_names", null)?.split(",")
-        val label = widgetData.getString("prayer_label", "Next prayer")
         val placeholder = widgetData.getString("prayer_placeholder", "Open the app to set your location")
 
         appWidgetIds.forEach { id ->
@@ -41,19 +40,21 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
             } else null
 
             if (next != null) {
-                views.setTextViewText(R.id.widget_label, label)
+                views.setViewVisibility(R.id.widget_row, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_countdown, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.widget_label, android.view.View.GONE)
                 views.setTextViewText(R.id.widget_name, next.name)
                 views.setTextViewText(R.id.widget_time, next.time)
-                val base = SystemClock.elapsedRealtime() + (next.epochMillis - System.currentTimeMillis())
+                val base = SystemClock.elapsedRealtime() +
+                    (next.epochMillis - System.currentTimeMillis())
                 views.setChronometer(R.id.widget_countdown, base, null, true)
                 views.setChronometerCountDown(R.id.widget_countdown, true)
-                views.setViewVisibility(R.id.widget_countdown, android.view.View.VISIBLE)
             } else {
-                views.setTextViewText(R.id.widget_label, "")
-                views.setTextViewText(R.id.widget_name, placeholder)
-                views.setTextViewText(R.id.widget_time, "")
-                views.setChronometer(R.id.widget_countdown, SystemClock.elapsedRealtime(), null, false)
+                views.setViewVisibility(R.id.widget_row, android.view.View.GONE)
                 views.setViewVisibility(R.id.widget_countdown, android.view.View.GONE)
+                views.setViewVisibility(R.id.widget_label, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.widget_label, placeholder)
+                views.setChronometer(R.id.widget_countdown, SystemClock.elapsedRealtime(), null, false)
             }
 
             context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { launch ->

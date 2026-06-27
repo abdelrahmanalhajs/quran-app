@@ -2,7 +2,7 @@ name: quran_app
 description: "Quran app with audio recitation, translation, tafsir, prayer times, qiblah, athkar and daily hadith."
 publish_to: 'none'
 
-version: 1.0.0+18
+version: 1.0.0+19
 
 environment:
   sdk: ^3.12.1

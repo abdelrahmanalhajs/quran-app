@@ -888,7 +888,7 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// completes. ~0.6s is a responsive but deliberate hold — long enough not
   /// to fire on a tap (which toggles the chrome), short enough that it
   /// triggers before the user lifts.
-  static const Duration _holdDuration = Duration(milliseconds: 600);
+  static const Duration _holdDuration = Duration(milliseconds: 500);
   static const double _holdMoveTolerance = 60;
   Timer? _holdTimer;
   Offset? _holdStart;

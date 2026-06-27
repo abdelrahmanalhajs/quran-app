@@ -6,41 +6,50 @@
     android:orientation="vertical"
     android:gravity="center"
     android:background="@drawable/prayer_widget_bg"
-    android:padding="12dp">
+    android:padding="8dp">
 
-    <TextView
-        android:id="@+id/widget_label"
+    <LinearLayout
+        android:id="@+id/widget_row"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#B8E0CE"
-        android:textSize="12sp"
-        android:text="Next prayer" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/widget_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:layout_marginTop="2dp"
-        android:text="—" />
+        <TextView
+            android:id="@+id/widget_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="—" />
 
-    <TextView
-        android:id="@+id/widget_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:text="" />
+        <TextView
+            android:id="@+id/widget_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#D6F0E4"
+            android:textSize="14sp"
+            android:layout_marginStart="6dp"
+            android:text="" />
+    </LinearLayout>
 
     <Chronometer
         android:id="@+id/widget_countdown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="#FFD27A"
-        android:textSize="20sp"
+        android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_marginTop="4dp" />
+        android:layout_marginTop="2dp" />
+
+    <!-- Hidden label/placeholder holder reused for the no-data message. -->
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#B8E0CE"
+        android:textSize="11sp"
+        android:visibility="gone" />
 
 </LinearLayout>
