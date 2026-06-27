@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -873,6 +874,22 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// reads as an immediate response to touch rather than a delayed one.
   int? _pressedAyahNumber;
 
+  /// The tafsir/translation hold is driven by a plain [Listener] + timer
+  /// (below) rather than the gesture arena: a [LongPressGestureRecognizer]
+  /// has a fixed ~18px pre-accept slop, so a 2-second hold was silently
+  /// cancelled by the ordinary finger drift that builds up over that long a
+  /// press — which is why the sheet failed to open on so many ayahs. The
+  /// per-ayah recognizers are kept only to identify which ayah is under the
+  /// finger (their `onLongPressDown` fires the instant the finger lands and
+  /// captures [_holdAction]); this timer, with a far more forgiving 60px
+  /// tolerance, is what actually opens the sheet once the hold completes.
+  static const Duration _holdDuration = Duration(seconds: 2);
+  static const double _holdMoveTolerance = 60;
+  Timer? _holdTimer;
+  Offset? _holdStart;
+  VoidCallback? _holdAction;
+  bool _suppressNextTap = false;
+
   /// Whether the in-progress gesture turned out to be a pinch (`true`), a
   /// page-turn drag (`false`), or hasn't received enough info yet to tell
   /// (`null` — only a single pointer has been seen so far). Decided once a
@@ -898,6 +915,17 @@ class _MushafPageViewState extends State<_MushafPageView>
   }
 
   void _toggleChrome() => setState(() => _chromeVisible = !_chromeVisible);
+
+  /// The page's tap handler. When a 2-second hold has just opened an ayah's
+  /// sheet, the finger lift still arrives here as a tap — swallow that one so
+  /// the chrome doesn't toggle underneath the sheet.
+  void _handleTap() {
+    if (_suppressNextTap) {
+      _suppressNextTap = false;
+      return;
+    }
+    _toggleChrome();
+  }
 
   @override
   void initState() {
@@ -977,6 +1005,7 @@ class _MushafPageViewState extends State<_MushafPageView>
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _disposeRecognizers();
     _pageController.dispose();
     _searchController.dispose();
@@ -1206,30 +1235,62 @@ class _MushafPageViewState extends State<_MushafPageView>
       bottom: false,
       child: ResponsiveCenter(
         maxWidth: 900,
-        child: GestureDetector(
-          // Without this, a drag/tap starting on empty space (e.g. the
-          // letterboxed margins FittedBox leaves around a shrunk page)
-          // wouldn't be hit-tested at all, since the default
-          // `deferToChild` behavior only recognizes gestures where a
-          // child actually paints.
-          behavior: HitTestBehavior.opaque,
-          onScaleStart: _handleScaleStart,
-          onScaleUpdate: _handleScaleUpdate,
-          onScaleEnd: _handleScaleEnd,
-          // A quick tap anywhere on the page (including directly on an
-          // ayah's own text, see [_buildMushafPage]'s recognizers) toggles
-          // the chrome overlay; only a *held* tap on an ayah opens its
-          // translation/tafsir sheet, since a plain LongPressGestureRecognizer
-          // on the ayah text simply loses the gesture arena to this tap
-          // recognizer on anything shorter than the long-press threshold.
-          onTap: _toggleChrome,
-          child: PageView.builder(
-            controller: _pageController,
-            reverse: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _itemCount,
-            onPageChanged: _onPageChanged,
-            itemBuilder: _buildPageForIndex,
+        // A passive [Listener] (it never claims the gesture, so scale/tap/
+        // page-turn are untouched) drives the tafsir hold: start a 2-second
+        // timer on touch-down, cancel it if the finger drifts past 60px or
+        // lifts early, and open the held ayah's sheet when it completes.
+        child: Listener(
+          onPointerDown: (event) {
+            _holdStart = event.position;
+            _holdTimer?.cancel();
+            _holdTimer = Timer(_holdDuration, () {
+              final action = _holdAction;
+              if (action == null || !mounted) return;
+              _suppressNextTap = true;
+              setState(() => _pressedAyahNumber = null);
+              action();
+            });
+          },
+          onPointerMove: (event) {
+            if (_holdStart != null &&
+                (event.position - _holdStart!).distance > _holdMoveTolerance) {
+              _holdTimer?.cancel();
+            }
+          },
+          onPointerUp: (_) {
+            _holdTimer?.cancel();
+            _holdAction = null;
+            _holdStart = null;
+          },
+          onPointerCancel: (_) {
+            _holdTimer?.cancel();
+            _holdAction = null;
+            _holdStart = null;
+          },
+          child: GestureDetector(
+            // Without this, a drag/tap starting on empty space (e.g. the
+            // letterboxed margins FittedBox leaves around a shrunk page)
+            // wouldn't be hit-tested at all, since the default
+            // `deferToChild` behavior only recognizes gestures where a
+            // child actually paints.
+            behavior: HitTestBehavior.opaque,
+            onScaleStart: _handleScaleStart,
+            onScaleUpdate: _handleScaleUpdate,
+            onScaleEnd: _handleScaleEnd,
+            // A quick tap anywhere on the page toggles the chrome overlay;
+            // a held tap (see the page [Listener] above) opens the ayah's
+            // sheet instead. [_handleTap] swallows the up-tap that would
+            // otherwise follow a completed hold so the chrome doesn't toggle
+            // underneath the sheet that just opened.
+            onTap: _handleTap,
+            child: PageView.builder(
+              controller: _pageController,
+              reverse: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _itemCount,
+              onPageChanged: _onPageChanged,
+              itemBuilder: _buildPageForIndex,
+            ),
           ),
         ),
       ),
@@ -1628,12 +1689,23 @@ class _MushafPageViewState extends State<_MushafPageView>
                   !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
         final recognizer = _recognizersByAyah.putIfAbsent(ayah.number, () {
-          // A deliberate 2-second hold opens the tafsir/translation sheet.
+          // Fires the instant the finger lands on this ayah, so it's a
+          // reliable way to know which ayah is being held (the actual
+          // 2-second timing + drift tolerance live in the page [Listener],
+          // not here — see [_holdAction]). A long deadline keeps this
+          // recognizer from ever claiming the gesture arena, so taps and
+          // page-turn swipes keep working normally.
           final r = LongPressGestureRecognizer(
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 10),
           );
           r.onLongPressDown = (_) {
             setState(() => _pressedAyahNumber = ayah.number);
+            _holdAction = () => _showAyahSheet(
+              this.context,
+              ayah,
+              surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
+              surahInfo?.nameAr ?? '',
+            );
           };
           r.onLongPressCancel = () {
             if (_pressedAyahNumber == ayah.number) {
@@ -1645,12 +1717,6 @@ class _MushafPageViewState extends State<_MushafPageView>
               setState(() => _pressedAyahNumber = null);
             }
           };
-          r.onLongPress = () => _showAyahSheet(
-            context,
-            ayah,
-            surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
-            surahInfo?.nameAr ?? '',
-          );
           return r;
         });
         final isActive =

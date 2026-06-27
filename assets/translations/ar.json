@@ -106,7 +106,9 @@
     "test_notifications": "تجربة الإشعارات",
     "test_notifications_hint": "أرسِل أي إشعار الآن لمعاينة شكله وصوته",
     "test_send": "إرسال",
-    "test_sent": "تم إرسال إشعار التجربة"
+    "test_sent": "تم إرسال إشعار التجربة",
+    "test_needs_permission": "الإشعارات معطّلة — فعّلها لمعاينة الإشعار.",
+    "open_settings": "فتح الإعدادات"
   },
   "onboarding": {
     "skip": "تخطّي",

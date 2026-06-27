@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
 import '../../core/constants/athan.dart';
 import '../../core/responsive.dart';
@@ -467,7 +468,24 @@ class _TestNotificationTile extends StatelessWidget {
         onPressed: () async {
           final messenger = ScaffoldMessenger.of(context);
           final granted = await NotificationService.requestPermission();
-          if (!granted) return;
+          // Without this feedback the button looked broken when notifications
+          // were turned off (the common case right after a fresh install,
+          // where the OS denies them by default): it would silently do
+          // nothing. Tell the user why and offer a one-tap jump to the system
+          // settings where they can enable them.
+          if (!granted) {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text('settings.test_needs_permission'.tr()),
+                duration: const Duration(seconds: 4),
+                action: SnackBarAction(
+                  label: 'settings.open_settings'.tr(),
+                  onPressed: ph.openAppSettings,
+                ),
+              ),
+            );
+            return;
+          }
           await onSend();
           messenger.showSnackBar(
             SnackBar(
