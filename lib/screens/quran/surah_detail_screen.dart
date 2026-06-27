@@ -1813,11 +1813,12 @@ class _MushafPageViewState extends State<_MushafPageView>
         }
         spans.add(
           TextSpan(
-            // U+06DD (۝) is the "end of ayah" sign and encloses the digits
-            // that follow it, putting the ayah number inside the ornament.
-            // Amiri Quran (the body font) shapes this; synthetic bold breaks
-            // it, so this marker is kept at regular weight.
-            text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
+            // The KFGQPC Mushaf font draws the Arabic-Indic ayah digits
+            // *inside* its own end-of-ayah ornament, so just the number is
+            // needed — prefixing the U+06DD (۝) sign would add a second,
+            // empty rosette beside it. Regular weight (synthetic bold breaks
+            // the ornament shaping).
+            text: arabicIndicNumber(ayah.numberInSurah),
             style: baseStyle.copyWith(
               fontWeight: FontWeight.normal,
               color: _frameGreen,

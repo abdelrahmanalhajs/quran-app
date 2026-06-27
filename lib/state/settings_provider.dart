@@ -19,41 +19,34 @@ enum QuranViewMode { page, list }
 /// a given page), the raw values here can't make Medium look bigger than
 /// Small on their own — see [kQuranFontSizeLineHeight] for what actually
 /// does.
-const List<double> kQuranFontSizeSteps = [40, 68, 36];
+/// Small / Medium / Large, in logical pixels. These are the literal rendered
+/// sizes — the Mushaf page no longer auto-scales to fill the screen (see
+/// [kQuranFontSizeFitsPage]); it renders at the chosen size and scrolls — so
+/// the text is exactly this big at every step.
+const List<double> kQuranFontSizeSteps = [24, 30, 36];
 
 /// Parallel to [kQuranFontSizeSteps]: whether that step auto-fits the page
-/// without scrolling. Kept separate from the raw font-size values so
-/// Small/Medium's values can be tuned independently without being mistaken
-/// for Large (which would flip which ones scroll if inferred from a `>=`
-/// comparison).
-const List<bool> kQuranFontSizeFitsPage = [true, true, false];
+/// without scrolling. All false now — every size renders at its literal pixel
+/// value (see [kQuranFontSizeSteps]) and the page scrolls when it overflows,
+/// rather than being scaled up/down to fill the screen exactly.
+const List<bool> kQuranFontSizeFitsPage = [false, false, false];
 
 /// Parallel to [kQuranFontSizeSteps]: the line-height multiplier for that
-/// step. This — not the font-size value — is what makes Medium look bigger
-/// than Small: a tighter line height means less of the page's fixed height
-/// budget goes to the gap between lines once the page is scaled to fill the
-/// frame exactly, leaving more of it for the letters themselves. Medium was
-/// tightened further (1.7 -> 1.5) to read as noticeably bigger now that it's
-/// regular weight rather than bold (see [kQuranFontSizeWeight]).
-const List<double> kQuranFontSizeLineHeight = [2.1, 1.5, 1.9];
+/// step. Uniform now that sizes are literal — generous spacing so the
+/// Uthmani diacritics never collide between lines.
+const List<double> kQuranFontSizeLineHeight = [2.0, 2.0, 2.0];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
-/// All 3 steps render at regular weight — Medium previously used bold to
-/// read as clearly bigger than Small, but its tighter [kQuranFontSizeLineHeight]
-/// already does that on its own now, so bold was dropped in favor of a
-/// plain, less heavy-looking step.
+/// All regular — the Mushaf face is never bold.
 const List<FontWeight> kQuranFontSizeWeight = [
   FontWeight.normal,
   FontWeight.normal,
   FontWeight.normal,
 ];
 
-/// Parallel to [kQuranFontSizeSteps]: the literal font size to render at in
-/// the separate (non-Mushaf) list view, where each ayah is its own card and
-/// there's no auto-fit scaler to normalize away the raw step values — using
-/// [kQuranFontSizeSteps] directly there made Medium (68) render far bigger
-/// than Large (36), and Large smaller than Small (40).
-const List<double> kQuranListViewFontSizes = [25, 33, 35];
+/// Parallel to [kQuranFontSizeSteps]: the font size in the separate list
+/// view. The same literal Small/Medium/Large pixel sizes as the page.
+const List<double> kQuranListViewFontSizes = [24, 30, 36];
 
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].
@@ -82,7 +75,7 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 40;
+  double _quranFontSize = 30;
   QuranViewMode _quranViewMode = QuranViewMode.page;
   int? _lastReadSurah;
   int? _lastReadPage;
@@ -130,7 +123,12 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 40;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 30;
+    // Migrate users whose saved value is from the old (40/68/36) scale onto
+    // the new literal Small/Medium/Large pixel sizes, defaulting to Medium.
+    if (!kQuranFontSizeSteps.contains(_quranFontSize)) {
+      _quranFontSize = 30;
+    }
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list

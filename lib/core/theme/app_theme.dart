@@ -8,12 +8,10 @@ class AppTheme {
   /// rather than via google_fonts so they always render offline — see the
   /// `fonts:` note in pubspec.
   static const String _uiFont = 'Tajawal';
-  // Amiri Quran is purpose-built for Uthmani Quran typesetting and shapes the
-  // whole range correctly. A lighter general-purpose face (Scheherazade New)
-  // was tried for a cleaner look, but it mis-rendered some Uthmani letter
-  // combinations (e.g. the hamza+alef in وَبِٱلْءَاخِرَةِ), which is
-  // unacceptable for the Mushaf text — correctness wins over weight.
-  static const String _quranFont = 'Amiri Quran';
+  // The official King Fahd Complex (Madinah Mushaf) HAFS Uthmanic face — the
+  // standard, instantly-recognizable Quran typeface, and a Unicode font that
+  // shapes the bundled Uthmani text correctly. Bundled so it works offline.
+  static const String _quranFont = 'KFGQPC HAFS Uthmanic Script';
   static const String _arabicFont = 'Amiri';
 
   // [MaterialApp] always evaluates both `theme` and `darkTheme` on every
