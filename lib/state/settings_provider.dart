@@ -19,22 +19,22 @@ enum QuranViewMode { page, list }
 /// a given page), the raw values here can't make Medium look bigger than
 /// Small on their own — see [kQuranFontSizeLineHeight] for what actually
 /// does.
-/// Small / Medium / Large, in logical pixels. These are the literal rendered
-/// sizes — the Mushaf page no longer auto-scales to fill the screen (see
-/// [kQuranFontSizeFitsPage]); it renders at the chosen size and scrolls — so
-/// the text is exactly this big at every step.
+/// Small / Medium / Large. Small and Medium auto-fit each Mushaf page to the
+/// screen (no scrolling — see [kQuranFontSizeFitsPage]), so their value is a
+/// base the page scaler works from; the line height (below) is what makes
+/// Medium read bigger than Small once both are scaled to fill the page.
+/// Large renders at its literal 36 px and scrolls.
 const List<double> kQuranFontSizeSteps = [24, 30, 36];
 
-/// Parallel to [kQuranFontSizeSteps]: whether that step auto-fits the page
-/// without scrolling. All false now — every size renders at its literal pixel
-/// value (see [kQuranFontSizeSteps]) and the page scrolls when it overflows,
-/// rather than being scaled up/down to fill the screen exactly.
-const List<bool> kQuranFontSizeFitsPage = [false, false, false];
+/// Parallel to [kQuranFontSizeSteps]: Small and Medium auto-fit the page
+/// without scrolling; Large renders at its literal size and scrolls.
+const List<bool> kQuranFontSizeFitsPage = [true, true, false];
 
 /// Parallel to [kQuranFontSizeSteps]: the line-height multiplier for that
-/// step. Uniform now that sizes are literal — generous spacing so the
-/// Uthmani diacritics never collide between lines.
-const List<double> kQuranFontSizeLineHeight = [2.0, 2.0, 2.0];
+/// step. For the two fit-the-page steps a tighter line height leaves more of
+/// the page's fixed height for the letters once scaled to fill it, so Medium
+/// (1.6) reads noticeably bigger than Small (2.1).
+const List<double> kQuranFontSizeLineHeight = [2.1, 1.6, 1.9];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
 /// All regular — the Mushaf face is never bold.

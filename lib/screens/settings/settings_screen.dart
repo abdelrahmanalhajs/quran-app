@@ -219,12 +219,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            SwitchListTile(
-              title: Text('settings.quran_signs_colored'.tr()),
-              subtitle: Text('settings.quran_signs_colored_hint'.tr()),
-              value: settings.quranSignsColored,
-              onChanged: (value) => settings.setQuranSignsColored(value),
-            ),
             const Divider(),
             SwitchListTile(
               title: Text('settings.notifications'.tr()),
