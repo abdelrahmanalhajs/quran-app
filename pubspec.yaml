@@ -2,7 +2,7 @@ name: quran_app
 description: "Quran app with audio recitation, translation, tafsir, prayer times, qiblah, athkar and daily hadith."
 publish_to: 'none'
 
-version: 1.0.0+10
+version: 1.0.0+11
 
 environment:
   sdk: ^3.12.1
@@ -46,6 +46,27 @@ flutter:
     - assets/data/
     - assets/audio/
     - assets/icon/
+
+  # Bundled so the proper Arabic faces always render offline. Previously
+  # these came from google_fonts, which downloads at runtime — useless for
+  # an offline Quran app, so the script fell back to a system font that
+  # shaped the Uthmani text poorly (looked heavy and pixelated).
+  fonts:
+    - family: Amiri Quran
+      fonts:
+        - asset: assets/fonts/AmiriQuran-Regular.ttf
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: "launcher_icon"

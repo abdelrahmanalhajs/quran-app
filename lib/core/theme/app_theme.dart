@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../responsive.dart';
 
 class AppTheme {
   static const Color _seed = Color(0xFF0E6E55);
+
+  /// Bundled Arabic font families (declared in pubspec.yaml). Used directly
+  /// rather than via google_fonts so they always render offline — see the
+  /// `fonts:` note in pubspec.
+  static const String _uiFont = 'Tajawal';
+  static const String _quranFont = 'Amiri Quran';
+  static const String _arabicFont = 'Amiri';
 
   // [MaterialApp] always evaluates both `theme` and `darkTheme` on every
   // single rebuild (regardless of which one is actually active), and
@@ -48,9 +54,11 @@ class AppTheme {
         color: scheme.surfaceContainerHigh,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      textTheme: GoogleFonts.tajawalTextTheme(
-        ThemeData(brightness: scheme.brightness).textTheme,
-      ).apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface),
+      textTheme: ThemeData(brightness: scheme.brightness).textTheme.apply(
+        fontFamily: _uiFont,
+        bodyColor: scheme.onSurface,
+        displayColor: scheme.onSurface,
+      ),
     );
   }
 
@@ -63,7 +71,9 @@ class AppTheme {
     BuildContext context, {
     double fontSize = 26,
   }) {
-    return GoogleFonts.amiriQuran(
+    return TextStyle(
+      fontFamily: _quranFont,
+      fontWeight: FontWeight.normal,
       fontSize: responsiveFontSize(context, fontSize),
       height: 1.9,
       color: Theme.of(context).colorScheme.onSurface,
@@ -78,10 +88,11 @@ class AppTheme {
   static TextStyle quranNameStyle(
     BuildContext context, {
     double fontSize = 18,
-    FontWeight fontWeight = FontWeight.w600,
+    FontWeight fontWeight = FontWeight.normal,
     Color? color,
   }) {
-    return GoogleFonts.amiri(
+    return TextStyle(
+      fontFamily: _arabicFont,
       fontSize: responsiveFontSize(context, fontSize),
       fontWeight: fontWeight,
       color: color ?? Theme.of(context).colorScheme.onSurface,
@@ -97,7 +108,9 @@ class AppTheme {
     double fontSize = 18,
     double height = 1.7,
   }) {
-    return GoogleFonts.amiri(
+    return TextStyle(
+      fontFamily: _arabicFont,
+      fontWeight: FontWeight.normal,
       fontSize: responsiveFontSize(context, fontSize),
       height: height,
       color: Theme.of(context).colorScheme.onSurface,

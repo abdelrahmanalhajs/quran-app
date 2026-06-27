@@ -1661,7 +1661,7 @@ class _MushafPageViewState extends State<_MushafPageView>
               'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
               textAlign: TextAlign.center,
               textDirection: TextDirection.rtl,
-              style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+              style: baseStyle,
             ),
           );
         }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  just_audio's LockCachingAudioSource (used to cache recitation audio for
+  offline replay) streams the file through a small local HTTP proxy on the
+  loopback address. Android blocks cleartext HTTP by default (API 28+), which
+  silently killed all Quran audio playback with "Cleartext HTTP traffic to
+  127.0.0.1 not permitted". Permit cleartext only for the loopback address so
+  the local cache proxy works, while every real network request stays
+  HTTPS-only.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

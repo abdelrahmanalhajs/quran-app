@@ -430,13 +430,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           arabic: isArabic,
                         ),
                   ),
-                  _TestNotificationTile(
-                    label: 'settings.athan_notifications'.tr(),
-                    onSend: () => NotificationService.simulatePrayerAthan(
-                      athan: _athanReciter,
-                      arabic: isArabic,
-                    ),
-                  ),
                 ],
               ),
             ],
