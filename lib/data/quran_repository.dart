@@ -1,7 +1,19 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/ayah.dart';
 import '../models/surah.dart';
+
+/// The fully-parsed Quran, returned from the background-isolate parse in
+/// [QuranRepository._load] so the heavy [jsonDecode] + object construction
+/// never runs on the UI thread.
+class _ParsedQuran {
+  final List<SurahSummary> summaries;
+  final Map<int, List<Ayah>> bySurah;
+  final Map<int, List<Ayah>> byPage;
+
+  _ParsedQuran(this.summaries, this.bySurah, this.byPage);
+}
 
 /// Reads the entire Quran (Uthmani Arabic + English Sahih International
 /// translation) from a single bundled asset, `assets/data/quran_full.json`,
@@ -51,6 +63,16 @@ class QuranRepository {
 
   static Future<void> _load() async {
     final raw = await rootBundle.loadString('assets/data/quran_full.json');
+    // Parse on a background isolate: decoding ~2.8 MB of JSON and building
+    // 6236 Ayah objects is enough work to drop frames if done on the UI
+    // thread the first time a reading screen opens.
+    final parsed = await compute(_parse, raw);
+    _summaries = parsed.summaries;
+    _ayahsBySurah = parsed.bySurah;
+    _ayahsByPage = parsed.byPage;
+  }
+
+  static _ParsedQuran _parse(String raw) {
     final data = jsonDecode(raw) as Map<String, dynamic>;
     final surahs = (data['surahs'] as List).cast<Map<String, dynamic>>();
 
@@ -88,9 +110,7 @@ class QuranRepository {
       bySurah[surahNumber] = list;
     }
 
-    _summaries = summaries;
-    _ayahsBySurah = bySurah;
-    _ayahsByPage = byPage;
+    return _ParsedQuran(summaries, bySurah, byPage);
   }
 
   Future<List<SurahSummary>> getSurahList() async {

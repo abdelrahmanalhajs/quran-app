@@ -158,23 +158,25 @@ class _HomeShellState extends State<HomeShell> {
     // instead of relying on each individual screen happening to depend on
     // locale itself.
     final index = context.watch<HomeNavigationProvider>().index;
-    // Watching the theme mode here (and folding it into the IndexedStack key
-    // below) is what makes a light<->dark switch actually repaint the
-    // *kept-alive* tabs. The IndexedStack keeps every tab built and mounted;
-    // an offstage tab that was built under the old brightness otherwise holds
-    // onto that brightness's text/background colors until something else
-    // happens to rebuild it — which is why hadith/athkar/the Quran list kept
-    // showing the previous theme's colors after a toggle. Re-keying remounts
-    // them fresh under the new theme, exactly as it already does on a locale
-    // change.
-    final themeMode = context.watch<SettingsProvider>().themeMode;
-    final localeKey = ValueKey('${context.locale.languageCode}_$themeMode');
+    // Watching SettingsProvider makes HomeShell itself rebuild on a theme
+    // change; building the tab screens as non-const instances below then
+    // rebuilds each kept-alive tab *in place* under the new theme. Together
+    // they make a light<->dark switch repaint hadith/athkar/the Quran list
+    // instantly with the new colors, while preserving each tab's state (no
+    // remount, no reload, no flash) — the IndexedStack otherwise leaves an
+    // offstage tab painted in whichever brightness it was first built under.
+    context.watch<SettingsProvider>();
+    final localeKey = ValueKey(context.locale.languageCode);
+    // Deliberately not const: see the SettingsProvider watch above — these
+    // must be fresh instances on each HomeShell rebuild so the kept-alive
+    // tabs rebuild in place (and pick up theme changes) instead of being
+    // skipped as identical const widgets.
     final screens = [
-      const SurahListScreen(),
-      const PrayerScreen(),
-      const AthkarScreen(),
-      const HadithScreen(),
-      const SettingsScreen(),
+      SurahListScreen(),
+      PrayerScreen(),
+      AthkarScreen(),
+      HadithScreen(),
+      SettingsScreen(),
     ];
     final destinations = [
       (Icons.menu_book, 'nav.quran'.tr()),

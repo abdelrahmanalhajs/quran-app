@@ -87,7 +87,7 @@ class SettingsProvider extends ChangeNotifier {
   int? _lastReadSurah;
   int? _lastReadPage;
   bool _onboardingDone = false;
-  bool _quranSignsColored = true;
+  bool _quranSignsColored = false;
 
   ThemeMode get themeMode => _themeMode;
   Reciter get reciter => _reciter;
@@ -138,7 +138,7 @@ class SettingsProvider extends ChangeNotifier {
     _lastReadSurah = prefs.getInt(_kLastReadSurah);
     _lastReadPage = prefs.getInt(_kLastReadPage);
     _onboardingDone = prefs.getBool(_kOnboardingDone) ?? false;
-    _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? true;
+    _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? false;
     notifyListeners();
   }
 

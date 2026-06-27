@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 
 /// One tafsir edition loaded from a bundled asset. Many ayahs share a single
@@ -14,7 +15,10 @@ class _TafsirEdition {
 
   _TafsirEdition(this.anchors, this.refs);
 
-  factory _TafsirEdition.fromJson(String source) {
+  // Static (not a factory) so it can be handed to [compute] to run on a
+  // background isolate — parsing ~2 MB of JSON into these maps would
+  // otherwise drop frames the first time a tafsir sheet is opened.
+  static _TafsirEdition parse(String source) {
     final json = jsonDecode(source) as Map<String, dynamic>;
     return _TafsirEdition(
       (json['a'] as Map<String, dynamic>).cast<String, String>(),
@@ -43,12 +47,14 @@ class TafsirRepository {
       if (_ar != null) return Future.value();
       return _loadingAr ??= rootBundle
           .loadString('assets/data/tafsir_ar.json')
-          .then((s) => _ar = _TafsirEdition.fromJson(s));
+          .then((s) => compute(_TafsirEdition.parse, s))
+          .then((edition) => _ar = edition);
     } else {
       if (_en != null) return Future.value();
       return _loadingEn ??= rootBundle
           .loadString('assets/data/tafsir_en.json')
-          .then((s) => _en = _TafsirEdition.fromJson(s));
+          .then((s) => compute(_TafsirEdition.parse, s))
+          .then((edition) => _en = edition);
     }
   }
 

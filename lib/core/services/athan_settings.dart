@@ -7,7 +7,7 @@ class AthanSettings {
 
   static Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_kEnabled) ?? false;
+    return prefs.getBool(_kEnabled) ?? true;
   }
 
   static Future<void> setEnabled(bool value) async {

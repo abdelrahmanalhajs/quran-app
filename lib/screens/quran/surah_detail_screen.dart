@@ -1628,16 +1628,9 @@ class _MushafPageViewState extends State<_MushafPageView>
                   !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
         final recognizer = _recognizersByAyah.putIfAbsent(ayah.number, () {
-          // A shorter-than-default (500ms) long-press deadline: the page's
-          // parent scale/pan recognizer (one-finger swipe = page turn) shares
-          // the gesture arena with this one, and any finger-drift past the
-          // touch slop while holding lets the pan recognizer claim the gesture
-          // first — which is why opening the tafsir/translation sheet silently
-          // failed on some ayahs. Claiming the long-press sooner (300ms) wins
-          // the arena before that drift accumulates, so the hold reliably
-          // opens the sheet instead of being mistaken for a swipe.
+          // A deliberate 2-second hold opens the tafsir/translation sheet.
           final r = LongPressGestureRecognizer(
-            duration: const Duration(milliseconds: 300),
+            duration: const Duration(seconds: 2),
           );
           r.onLongPressDown = (_) {
             setState(() => _pressedAyahNumber = ayah.number);
