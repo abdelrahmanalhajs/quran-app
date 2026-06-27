@@ -280,6 +280,7 @@ class _QiblaTabState extends State<_QiblaTab> {
     final qibla = provider.qiblaDirection!;
 
     if (kIsWeb || _compassUnavailable) {
+      // No magnetometer: a live "rotate to face" simulation isn't possible.
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -294,11 +295,6 @@ class _QiblaTabState extends State<_QiblaTab> {
                     : 'prayer.compass_unavailable_native'.tr(),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'prayer.degrees_from_north'.tr(args: ['${qibla.round()}°']),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
             ],
           ),
         ),
@@ -306,49 +302,127 @@ class _QiblaTabState extends State<_QiblaTab> {
     }
 
     final heading = _heading ?? 0;
+    // How far (and which way) the Kaaba sits from where the phone is
+    // currently pointing. 0 = the Kaaba is straight ahead (facing Qiblah).
     var diff = (qibla - heading) % 360;
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
     final aligned = diff.abs() <= _alignmentThresholdDegrees;
-
     final angle = diff * (math.pi / 180);
-    final color = aligned
-        ? Colors.green
-        : Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final accent = aligned ? Colors.green : scheme.primary;
+
+    const dialSize = 300.0;
+    const orbitRadius = 118.0;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Spacer(),
         Text(
-          aligned ? 'prayer.facing_qiblah'.tr() : 'prayer.qibla_hint'.tr(),
+          aligned ? 'prayer.facing_qiblah'.tr() : 'prayer.qibla_rotate_hint'.tr(),
           textAlign: TextAlign.center,
-          style: aligned
-              ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                )
-              : null,
-        ),
-        const SizedBox(height: 32),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: 3),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Transform.rotate(
-            angle: angle,
-            child: Icon(Icons.navigation, size: 100, color: color),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: aligned ? Colors.green : null,
+            fontWeight: aligned ? FontWeight.bold : null,
           ),
         ),
-        const SizedBox(height: 24),
-        Text(
-          'prayer.degrees_from_north'.tr(args: ['${qibla.round()}°']),
-          style: Theme.of(context).textTheme.titleMedium,
+        const SizedBox(height: 28),
+        SizedBox(
+          width: dialSize,
+          height: dialSize,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // The dial.
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: dialSize,
+                height: dialSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: aligned
+                      ? Colors.green.withValues(alpha: 0.12)
+                      : scheme.surfaceContainerHighest,
+                  border: Border.all(
+                    color: accent.withValues(alpha: 0.6),
+                    width: 2,
+                  ),
+                ),
+              ),
+              // Fixed marker at the top: the direction the phone is pointing.
+              // When the Kaaba reaches it, the user faces the Qiblah.
+              Positioned(
+                top: 2,
+                child: Icon(Icons.arrow_drop_down, color: accent, size: 40),
+              ),
+              // "You are here" at the centre.
+              Icon(Icons.my_location, size: 18, color: scheme.outline),
+              // The Kaaba, kept upright but orbited to the Qiblah bearing
+              // relative to where the phone points. Rotate the phone until it
+              // sits under the top marker.
+              Transform.translate(
+                offset: Offset(
+                  orbitRadius * math.sin(angle),
+                  -orbitRadius * math.cos(angle),
+                ),
+                child: _KaabaMarker(highlighted: aligned),
+              ),
+            ],
+          ),
         ),
         const Spacer(),
+      ],
+    );
+  }
+}
+
+/// A small upright Kaaba (black cube with the gold kiswah band) used as the
+/// Qiblah marker on the compass dial.
+class _KaabaMarker extends StatelessWidget {
+  final bool highlighted;
+
+  const _KaabaMarker({required this.highlighted});
+
+  @override
+  Widget build(BuildContext context) {
+    final border = highlighted ? Colors.green : Colors.amber.shade700;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: border, width: 2),
+            boxShadow: highlighted
+                ? [
+                    BoxShadow(
+                      color: Colors.green.withValues(alpha: 0.5),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          // The gold band of the kiswah, sitting near the top of the cube.
+          child: Align(
+            alignment: const Alignment(0, -0.35),
+            child: Container(height: 6, color: Colors.amber.shade600),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'prayer.kaaba'.tr(),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: highlighted
+                ? Colors.green
+                : Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }

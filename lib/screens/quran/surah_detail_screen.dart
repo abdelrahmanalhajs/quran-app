@@ -1813,10 +1813,17 @@ class _MushafPageViewState extends State<_MushafPageView>
         }
         spans.add(
           TextSpan(
+            // U+06DD (۝) is the "end of ayah" sign and is meant to *enclose*
+            // the digits that follow it, putting the ayah number inside the
+            // ornament. That shaping only happens with a font built for it —
+            // Amiri Quran does it (the lighter body font doesn't) — and is
+            // broken by synthetic bold, so render this marker in Amiri Quran
+            // at regular weight even though the body text is Scheherazade.
             text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
             style: baseStyle.copyWith(
+              fontFamily: 'Amiri Quran',
+              fontWeight: FontWeight.normal,
               color: _frameGreen,
-              fontWeight: FontWeight.bold,
               background: highlight,
             ),
             recognizer: recognizer,

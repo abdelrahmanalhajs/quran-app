@@ -38,6 +38,8 @@
     "times": "Prayer Times",
     "qibla": "Qibla Direction",
     "qibla_hint": "Point your phone flat and rotate until the arrow points up",
+    "qibla_rotate_hint": "Hold your phone flat and turn until the Kaaba reaches the top",
+    "kaaba": "Kaaba",
     "compass_unavailable_web": "The compass sensor isn't available in a web browser. Install the app on your phone to use the live Qiblah compass.",
     "facing_qiblah": "You are facing the Qiblah",
     "fajr": "Fajr",
