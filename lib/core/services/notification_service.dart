@@ -144,7 +144,7 @@ class NotificationService {
   }
 
   static Future<void> scheduleDailyHadith({
-    int hour = 17,
+    int hour = 16,
     int minute = 0,
     bool arabic = false,
   }) async {
@@ -176,28 +176,48 @@ class NotificationService {
 
   static Future<void> cancelDailyHadith() => _plugin.cancel(_dailyHadithId);
 
+  // 24 ids (one per hour of the day) so each hour can carry its own zikr,
+  // cycling through [_zikrPhrases]. periodicallyShow can't do this — it
+  // repeats one fixed message — so a different remembrance every hour means
+  // scheduling a separate daily-repeating notification at each hour.
+  static const int _hourlyZikrIdBase = 1100;
+
   static Future<void> scheduleHourlyZikr({bool arabic = true}) async {
-    final phrase = _zikrPhrases[DateTime.now().hour % _zikrPhrases.length];
-    await _plugin.periodicallyShow(
-      _hourlyZikrId,
-      arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
-      arabic ? phrase['ar'] : phrase['en'],
-      RepeatInterval.hourly,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'hourly_zikr',
-          'Hourly Zikr',
-          channelDescription: 'A short remembrance of Allah every hour',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
+    await cancelHourlyZikr();
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'hourly_zikr',
+        'Hourly Zikr',
+        channelDescription: 'A short remembrance of Allah every hour',
+        importance: Importance.high,
+        priority: Priority.high,
       ),
-      androidScheduleMode: _scheduleMode,
+      iOS: DarwinNotificationDetails(),
     );
+    for (var hour = 0; hour < 24; hour++) {
+      final phrase = _zikrPhrases[hour % _zikrPhrases.length];
+      await _plugin.zonedSchedule(
+        _hourlyZikrIdBase + hour,
+        arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
+        arabic ? phrase['ar'] : phrase['en'],
+        _nextInstanceOf(hour, 0),
+        details,
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: _scheduleMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
 
-  static Future<void> cancelHourlyZikr() => _plugin.cancel(_hourlyZikrId);
+  static Future<void> cancelHourlyZikr() async {
+    // Cancel the old single periodic id too, for users upgrading from the
+    // previous one-message-an-hour implementation.
+    await _plugin.cancel(_hourlyZikrId);
+    for (var hour = 0; hour < 24; hour++) {
+      await _plugin.cancel(_hourlyZikrIdBase + hour);
+    }
+  }
 
   /// Schedules a notification for each of today's remaining prayer times
   /// (Fajr, Dhuhr, Asr, Maghrib, Isha), using [athan]'s recording as the

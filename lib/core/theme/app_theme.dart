@@ -8,7 +8,10 @@ class AppTheme {
   /// rather than via google_fonts so they always render offline — see the
   /// `fonts:` note in pubspec.
   static const String _uiFont = 'Tajawal';
-  static const String _quranFont = 'Amiri Quran';
+  // Scheherazade New (SIL) is a lighter, very clean Naskh face — clearer and
+  // less heavy-looking than Amiri Quran for the ayah body text, while still
+  // shaping the full Uthmani range (waqf marks, ayah-end numbers, etc.).
+  static const String _quranFont = 'Scheherazade New';
   static const String _arabicFont = 'Amiri';
 
   // [MaterialApp] always evaluates both `theme` and `darkTheme` on every

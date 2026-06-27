@@ -492,10 +492,13 @@ class _AyahCard extends StatelessWidget {
           ),
         ),
     ];
-    // Same [ColorFilter] approach as the Mushaf page view (see
-    // [SettingsProvider.quranSignsColored]): flattens the quarter-Hizb,
-    // sajda and obligatory-sajda-overline colors down to the body ink
-    // color when signs are set to render uncolored.
+    // Unlike the Mushaf page (always printed on a fixed cream background),
+    // the list view sits on the themed surface, so its text must follow the
+    // theme — white on dark, black on light. When signs are set to render
+    // uncolored, flatten the quarter-Hizb / sajda / overline colors down to
+    // that same themed body color (not the fixed Mushaf ink, which left the
+    // text near-black and invisible on a dark background).
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     final ayahText = Text.rich(
       TextSpan(children: spans),
       textAlign: TextAlign.right,
@@ -532,7 +535,7 @@ class _AyahCard extends StatelessWidget {
                     ? ayahText
                     : ColorFiltered(
                         colorFilter: ColorFilter.mode(
-                          _MushafPageViewState._ink,
+                          onSurface,
                           BlendMode.srcIn,
                         ),
                         child: ayahText,

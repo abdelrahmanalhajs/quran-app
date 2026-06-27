@@ -7,6 +7,7 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive.dart';
+import '../../state/navigation_provider.dart';
 import '../../state/prayer_provider.dart';
 import '../../widgets/responsive_center.dart';
 
@@ -25,11 +26,6 @@ class _PrayerScreenState extends State<PrayerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PrayerProvider>().load(
-        arabicAthanLabels: context.locale.languageCode == 'ar',
-      );
-    });
   }
 
   @override
@@ -38,8 +34,32 @@ class _PrayerScreenState extends State<PrayerScreen>
     super.dispose();
   }
 
+  /// Requests location (and loads prayer times / qiblah) the first time the
+  /// user actually opens this tab — not at app launch. The IndexedStack in
+  /// HomeShell builds every tab up front, so loading in initState fired the
+  /// system location prompt in the background before the user ever navigated
+  /// here; gating it on the prayer tab being selected makes the permission
+  /// pop-up appear in context, when they tap "Prayer".
+  void _maybeLoadOnOpen() {
+    final nav = context.read<HomeNavigationProvider>();
+    final provider = context.read<PrayerProvider>();
+    if (nav.index == 1 && provider.status == PrayerLoadStatus.idle) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final p = context.read<PrayerProvider>();
+        if (p.status == PrayerLoadStatus.idle) {
+          p.load(arabicAthanLabels: context.locale.languageCode == 'ar');
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Rebuilds on tab change (prayer tab is index 1) so [_maybeLoadOnOpen]
+    // fires the location request the moment this tab is opened.
+    context.watch<HomeNavigationProvider>();
+    _maybeLoadOnOpen();
     return Scaffold(
       appBar: AppBar(
         title: Text('prayer.title'.tr()),
