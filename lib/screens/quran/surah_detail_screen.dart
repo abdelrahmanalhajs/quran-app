@@ -879,14 +879,16 @@ class _MushafPageViewState extends State<_MushafPageView>
 
   /// The tafsir/translation hold is driven by a plain [Listener] + timer
   /// (below) rather than the gesture arena: a [LongPressGestureRecognizer]
-  /// has a fixed ~18px pre-accept slop, so a 2-second hold was silently
-  /// cancelled by the ordinary finger drift that builds up over that long a
-  /// press — which is why the sheet failed to open on so many ayahs. The
-  /// per-ayah recognizers are kept only to identify which ayah is under the
-  /// finger (their `onLongPressDown` fires the instant the finger lands and
-  /// captures [_holdAction]); this timer, with a far more forgiving 60px
-  /// tolerance, is what actually opens the sheet once the hold completes.
-  static const Duration _holdDuration = Duration(seconds: 2);
+  /// has a fixed ~18px pre-accept slop, so a long hold was silently cancelled
+  /// by ordinary finger drift — which is why the sheet failed to open on so
+  /// many ayahs. The per-ayah recognizers are kept only to identify which
+  /// ayah is under the finger (their `onLongPressDown` fires the instant the
+  /// finger lands and captures [_holdAction]); this timer, with a far more
+  /// forgiving 60px tolerance, is what actually opens the sheet once the hold
+  /// completes. ~0.6s is a responsive but deliberate hold — long enough not
+  /// to fire on a tap (which toggles the chrome), short enough that it
+  /// triggers before the user lifts.
+  static const Duration _holdDuration = Duration(milliseconds: 600);
   static const double _holdMoveTolerance = 60;
   Timer? _holdTimer;
   Offset? _holdStart;

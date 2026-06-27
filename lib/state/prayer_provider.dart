@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../core/services/athan_settings.dart';
 import '../core/services/athkar_prayer_reminder_settings.dart';
 import '../core/services/notification_service.dart';
+import '../core/services/prayer_widget.dart';
 import '../data/prayer_repository.dart';
 import '../models/prayer_times.dart';
 
@@ -49,6 +50,13 @@ class PrayerProvider extends ChangeNotifier {
       _times = _repo.getPrayerTimes(_latitude!, _longitude!);
       _qiblaDirection = _repo.getQiblaDirection(_latitude!, _longitude!);
       _status = PrayerLoadStatus.loaded;
+
+      if (!kIsWeb) {
+        await PrayerWidget.update(
+          times: _times!.obligatoryPrayers,
+          arabic: arabicAthanLabels,
+        );
+      }
 
       if (!kIsWeb && await AthanSettings.isEnabled()) {
         final athan = await AthanSettings.getReciter();
