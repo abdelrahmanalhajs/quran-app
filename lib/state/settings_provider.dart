@@ -29,9 +29,11 @@ const List<double> kQuranFontSizeSteps = [24, 30, 36];
 const List<bool> kQuranFontSizeFitsPage = [true, false, false];
 
 /// Parallel to [kQuranFontSizeSteps]: the line-height multiplier for that
-/// step. Small (the fit-the-page step) uses a looser height; the literal
-/// Medium/Large use generous spacing so the Uthmani diacritics never collide.
-const List<double> kQuranFontSizeLineHeight = [2.1, 2.0, 2.0];
+/// step. Deliberately generous — the KFGQPC face stacks tall marks (the
+/// superscript alef, the small-high ligatures, shadda+vowel) well above the
+/// letters, so the lines need enough gap that those marks never reach into
+/// the descenders of the line above.
+const List<double> kQuranFontSizeLineHeight = [2.6, 2.6, 2.6];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
 /// All regular — the Mushaf face is never bold.
