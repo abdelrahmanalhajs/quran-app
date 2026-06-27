@@ -2,7 +2,7 @@ name: quran_app
 description: "Quran app with audio recitation, translation, tafsir, prayer times, qiblah, athkar and daily hadith."
 publish_to: 'none'
 
-version: 1.0.0+14
+version: 1.0.0+15
 
 environment:
   sdk: ^3.12.1
@@ -52,9 +52,6 @@ flutter:
   # an offline Quran app, so the script fell back to a system font that
   # shaped the Uthmani text poorly (looked heavy and pixelated).
   fonts:
-    - family: Scheherazade New
-      fonts:
-        - asset: assets/fonts/ScheherazadeNew-Regular.ttf
     - family: Amiri Quran
       fonts:
         - asset: assets/fonts/AmiriQuran-Regular.ttf

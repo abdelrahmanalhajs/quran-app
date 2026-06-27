@@ -465,9 +465,6 @@ class _AyahCard extends StatelessWidget {
       fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
         settings.quranFontSize,
       )],
-      // Match the page view: Amiri Quran (with its coloured marks) when
-      // colored signs is on, the lighter Scheherazade otherwise.
-      fontFamily: signsColored ? AppTheme.mushafFont : null,
     );
     final spans = <InlineSpan>[
       if (isQuarterStart)
@@ -1606,13 +1603,9 @@ class _MushafPageViewState extends State<_MushafPageView>
     final stepIndex = quranFontSizeStepIndex(widget.fontSize);
     final lineHeight = kQuranFontSizeLineHeight[stepIndex];
     final fontWeight = kQuranFontSizeWeight[stepIndex];
-    // Colored signs on → render in Amiri Quran, whose waqf/sajda/hizb marks
-    // carry their own colours (that's what the toggle reveals); off → the
-    // lighter, cleaner Scheherazade with everything flattened to ink below.
     final baseStyle = AppTheme.quranTextStyle(
       context,
       fontSize: widget.fontSize,
-      fontFamily: signsColored ? AppTheme.mushafFont : null,
     ).copyWith(height: lineHeight, fontWeight: fontWeight, color: _ink);
 
     // The page's own starting surah's name banner is pinned above the
@@ -1820,15 +1813,12 @@ class _MushafPageViewState extends State<_MushafPageView>
         }
         spans.add(
           TextSpan(
-            // U+06DD (۝) is the "end of ayah" sign and is meant to *enclose*
-            // the digits that follow it, putting the ayah number inside the
-            // ornament. That shaping only happens with a font built for it —
-            // Amiri Quran does it (the lighter body font doesn't) — and is
-            // broken by synthetic bold, so render this marker in Amiri Quran
-            // at regular weight even though the body text is Scheherazade.
+            // U+06DD (۝) is the "end of ayah" sign and encloses the digits
+            // that follow it, putting the ayah number inside the ornament.
+            // Amiri Quran (the body font) shapes this; synthetic bold breaks
+            // it, so this marker is kept at regular weight.
             text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
             style: baseStyle.copyWith(
-              fontFamily: 'Amiri Quran',
               fontWeight: FontWeight.normal,
               color: _frameGreen,
               background: highlight,

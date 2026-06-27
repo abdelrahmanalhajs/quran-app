@@ -8,10 +8,12 @@ class AppTheme {
   /// rather than via google_fonts so they always render offline — see the
   /// `fonts:` note in pubspec.
   static const String _uiFont = 'Tajawal';
-  // Scheherazade New (SIL) is a lighter, very clean Naskh face — clearer and
-  // less heavy-looking than Amiri Quran for the ayah body text, while still
-  // shaping the full Uthmani range (waqf marks, ayah-end numbers, etc.).
-  static const String _quranFont = 'Scheherazade New';
+  // Amiri Quran is purpose-built for Uthmani Quran typesetting and shapes the
+  // whole range correctly. A lighter general-purpose face (Scheherazade New)
+  // was tried for a cleaner look, but it mis-rendered some Uthmani letter
+  // combinations (e.g. the hamza+alef in وَبِٱلْءَاخِرَةِ), which is
+  // unacceptable for the Mushaf text — correctness wins over weight.
+  static const String _quranFont = 'Amiri Quran';
   static const String _arabicFont = 'Amiri';
 
   // [MaterialApp] always evaluates both `theme` and `darkTheme` on every
@@ -65,20 +67,9 @@ class AppTheme {
     );
   }
 
-  /// The default light, clean ayah font (Scheherazade New). When the user
-  /// turns on "colored Quran signs" the rendering switches to [mushafFont]
-  /// (Amiri Quran), whose waqf marks / sajda sign / recitation annotations
-  /// ship as built-in colour glyphs — the actual source of the per-mark
-  /// colours that toggle is meant to show.
-  static const String mushafFont = 'Amiri Quran';
-
-  static TextStyle quranTextStyle(
-    BuildContext context, {
-    double fontSize = 26,
-    String? fontFamily,
-  }) {
+  static TextStyle quranTextStyle(BuildContext context, {double fontSize = 26}) {
     return TextStyle(
-      fontFamily: fontFamily ?? _quranFont,
+      fontFamily: _quranFont,
       fontWeight: FontWeight.normal,
       fontSize: responsiveFontSize(context, fontSize),
       height: 1.9,
