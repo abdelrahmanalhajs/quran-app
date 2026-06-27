@@ -65,17 +65,20 @@ class AppTheme {
     );
   }
 
-  /// Amiri Quran (rather than plain Amiri) is purpose-built for Uthmani
-  /// Quran typesetting — its waqf marks, the sajda sign (۩) and other
-  /// recitation annotations are drawn larger and more distinctly than in
-  /// the general-purpose Amiri face, which renders them too small/thin to
-  /// read clearly at normal Mushaf font sizes.
+  /// The default light, clean ayah font (Scheherazade New). When the user
+  /// turns on "colored Quran signs" the rendering switches to [mushafFont]
+  /// (Amiri Quran), whose waqf marks / sajda sign / recitation annotations
+  /// ship as built-in colour glyphs — the actual source of the per-mark
+  /// colours that toggle is meant to show.
+  static const String mushafFont = 'Amiri Quran';
+
   static TextStyle quranTextStyle(
     BuildContext context, {
     double fontSize = 26,
+    String? fontFamily,
   }) {
     return TextStyle(
-      fontFamily: _quranFont,
+      fontFamily: fontFamily ?? _quranFont,
       fontWeight: FontWeight.normal,
       fontSize: responsiveFontSize(context, fontSize),
       height: 1.9,
