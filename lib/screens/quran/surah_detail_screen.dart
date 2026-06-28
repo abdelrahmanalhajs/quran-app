@@ -835,7 +835,14 @@ class _MushafPageView extends StatefulWidget {
 }
 
 class _MushafPageViewState extends State<_MushafPageView>
-    with SingleTickerProviderStateMixin {
+    // Plural [TickerProviderStateMixin], not the Single- variant: every page
+    // turn spins up its own short-lived AnimationController (see
+    // [_startPageTurn]), and the single-ticker mixin only ever hands out one
+    // ticker for the State's whole life — so the first swipe worked but every
+    // turn after it silently failed to animate (and thus never committed the
+    // page change), which looked like swiping back/forward "stops working"
+    // after one page.
+    with TickerProviderStateMixin {
   static const _pageBg = Color(0xFFFBF3E0);
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);

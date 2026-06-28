@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/offline_recitations.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -33,6 +34,9 @@ Future<void> main() async {
       // actually reached playback.
       androidNotificationIcon: 'mipmap/launcher_icon',
     );
+    // Resolve the offline-recitations storage path up front so the audio
+    // player can synchronously prefer a downloaded surah on every play.
+    await OfflineRecitations.instance.warmUp();
   }
 
   final settings = SettingsProvider();

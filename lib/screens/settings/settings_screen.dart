@@ -6,13 +6,16 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
 import '../../core/constants/athan.dart';
+import '../../core/constants/reciters.dart';
 import '../../core/responsive.dart';
 import '../../core/services/athan_settings.dart';
 import '../../core/services/athkar_prayer_reminder_settings.dart';
 import '../../core/services/notification_prefs.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/offline_recitations.dart';
 import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -219,6 +222,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
+            if (!kIsWeb) ...[
+              const Divider(),
+              const _OfflineRecitationsSection(),
+            ],
             const Divider(),
             SwitchListTile(
               title: Text('settings.notifications'.tr()),
@@ -600,6 +607,160 @@ class LanguageToggle extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text('عربي'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings section to download the selected reciter's whole-Quran audio for
+/// fully offline playback (see [OfflineRecitations]). Self-contained state so
+/// the long-running download and its progress don't live in the big settings
+/// State above.
+class _OfflineRecitationsSection extends StatefulWidget {
+  const _OfflineRecitationsSection();
+
+  @override
+  State<_OfflineRecitationsSection> createState() =>
+      _OfflineRecitationsSectionState();
+}
+
+class _OfflineRecitationsSectionState
+    extends State<_OfflineRecitationsSection> {
+  String? _reciterId;
+  int _downloaded = 0;
+  int _total = 114;
+  bool _busy = false;
+  bool _cancel = false;
+  int _progress = 0;
+
+  Future<void> _refresh(Reciter reciter) async {
+    final n = await OfflineRecitations.instance.downloadedCount(reciter);
+    if (mounted) {
+      setState(() {
+        _downloaded = n;
+        _total = reciter.surahCount;
+      });
+    }
+  }
+
+  Future<void> _download(Reciter reciter) async {
+    setState(() {
+      _busy = true;
+      _cancel = false;
+      _progress = _downloaded;
+    });
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await OfflineRecitations.instance.downloadAll(
+        reciter,
+        isCancelled: () => _cancel,
+        onProgress: (done, total) {
+          if (mounted) setState(() => _progress = done);
+        },
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('settings.offline_failed'.tr())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+      await _refresh(reciter);
+    }
+  }
+
+  Future<void> _delete(Reciter reciter) async {
+    await OfflineRecitations.instance.deleteAll(reciter);
+    await _refresh(reciter);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reciter = context.watch<SettingsProvider>().reciter;
+    if (reciter.id != _reciterId && !_busy) {
+      _reciterId = reciter.id;
+      _total = reciter.surahCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _refresh(reciter);
+      });
+    }
+    final complete = _downloaded >= _total && _total > 0;
+
+    final String subtitle;
+    if (_busy) {
+      subtitle = 'settings.offline_downloading'.tr(
+        args: ['$_progress', '$_total'],
+      );
+    } else if (complete) {
+      subtitle = 'settings.offline_available'.tr(args: ['$_total', '$_total']);
+    } else if (_downloaded > 0) {
+      subtitle = 'settings.offline_partial'.tr(args: ['$_downloaded', '$_total']);
+    } else {
+      subtitle = 'settings.offline_recitations_hint'.tr();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.download_for_offline_outlined),
+          title: Text('settings.offline_recitations'.tr()),
+          subtitle: Text(subtitle),
+          onTap: _busy
+              ? null
+              : () async {
+                  final settingsProvider = context.read<SettingsProvider>();
+                  final picked = await showReciterPicker(context, reciter);
+                  if (picked != null) {
+                    await settingsProvider.setReciter(picked);
+                  }
+                },
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            'settings.offline_reciter'.tr(args: [
+              context.locale.languageCode == 'ar'
+                  ? reciter.nameAr
+                  : reciter.nameEn,
+            ]),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+          ),
+        ),
+        if (_busy)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: LinearProgressIndicator(
+              value: _total > 0 ? _progress / _total : null,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              if (_busy)
+                OutlinedButton(
+                  onPressed: () => setState(() => _cancel = true),
+                  child: Text('settings.offline_cancel'.tr()),
+                )
+              else ...[
+                FilledButton.icon(
+                  onPressed: complete ? null : () => _download(reciter),
+                  icon: const Icon(Icons.download, size: 18),
+                  label: Text('settings.offline_download'.tr()),
+                ),
+                if (_downloaded > 0) ...[
+                  const SizedBox(width: 12),
+                  TextButton(
+                    onPressed: () => _delete(reciter),
+                    child: Text('settings.offline_delete'.tr()),
+                  ),
+                ],
+              ],
+            ],
+          ),
         ),
       ],
     );

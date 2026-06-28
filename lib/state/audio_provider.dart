@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/reciters.dart';
+import '../core/services/offline_recitations.dart';
 
 class AudioProvider extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
@@ -120,16 +121,20 @@ class AudioProvider extends ChangeNotifier {
     _ayahPlaylistStart = null;
     notifyListeners();
     try {
-      await _player.setAudioSource(
-        _audioSource(
-          reciter.audioUrlForSurah(surahNumber),
-          MediaItem(
-            id: 'surah_${surahNumber}_${reciter.id}',
-            title: surahTitle ?? 'Surah $surahNumber',
-            artist: reciter.nameEn,
-          ),
-        ),
+      final tag = MediaItem(
+        id: 'surah_${surahNumber}_${reciter.id}',
+        title: surahTitle ?? 'Surah $surahNumber',
+        artist: reciter.nameEn,
       );
+      // Prefer a fully downloaded local file (see [OfflineRecitations]) so a
+      // downloaded surah plays with no network at all; otherwise stream.
+      final localPath = kIsWeb
+          ? null
+          : OfflineRecitations.instance.localSurahPath(reciter.id, surahNumber);
+      final source = (localPath != null && OfflineRecitations.instance.isDownloaded(reciter.id, surahNumber))
+          ? AudioSource.file(localPath, tag: tag)
+          : _audioSource(reciter.audioUrlForSurah(surahNumber), tag);
+      await _player.setAudioSource(source);
       if (resume) {
         final saved = await savedPositionFor(surahNumber, reciter);
         if (saved != null) {
