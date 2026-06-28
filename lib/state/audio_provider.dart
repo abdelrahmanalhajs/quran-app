@@ -74,6 +74,20 @@ class AudioProvider extends ChangeNotifier {
     return null;
   }
 
+  /// Builds the right [AudioSource] for the platform. On mobile/desktop we use
+  /// `LockCachingAudioSource`, which streams while saving to disk so a once-
+  /// played recording then replays fully offline. That source relies on a
+  /// local 127.0.0.1 proxy, which doesn't exist on the web — there it simply
+  /// never starts, which is why Quran audio "did nothing" in the browser. On
+  /// web, stream the URL directly instead.
+  AudioSource _audioSource(String url, MediaItem tag) {
+    if (kIsWeb) {
+      return AudioSource.uri(Uri.parse(url), tag: tag);
+    }
+    // ignore: experimental_member_use
+    return LockCachingAudioSource(Uri.parse(url), tag: tag);
+  }
+
   Future<void> playSurah(
     int surahNumber,
     Reciter reciter, {
@@ -107,12 +121,9 @@ class AudioProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await _player.setAudioSource(
-        // LockCachingAudioSource streams while saving the file to disk, so a
-        // surah played once is then available fully offline on replay.
-        // ignore: experimental_member_use
-        LockCachingAudioSource(
-          Uri.parse(reciter.audioUrlForSurah(surahNumber)),
-          tag: MediaItem(
+        _audioSource(
+          reciter.audioUrlForSurah(surahNumber),
+          MediaItem(
             id: 'surah_${surahNumber}_${reciter.id}',
             title: surahTitle ?? 'Surah $surahNumber',
             artist: reciter.nameEn,
@@ -159,12 +170,9 @@ class AudioProvider extends ChangeNotifier {
       final title = surahTitle ?? 'Surah $surahNumber';
       final sources = [
         for (var ayah = ayahNumberInSurah; ayah <= totalAyahsInSurah; ayah++)
-          // Cached to disk on first play so per-ayah recitation also replays
-          // offline (see [playSurah]).
-          // ignore: experimental_member_use
-          LockCachingAudioSource(
-            Uri.parse(reciter.audioUrlForAyah(surahNumber, ayah)!),
-            tag: MediaItem(
+          _audioSource(
+            reciter.audioUrlForAyah(surahNumber, ayah)!,
+            MediaItem(
               id: 'ayah_${surahNumber}_${ayah}_${reciter.id}',
               title: '$title · ${ayah.toString()}',
               artist: reciter.nameEn,

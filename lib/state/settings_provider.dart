@@ -74,7 +74,9 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 30;
+  // Default to Small (24) — the only size that fits a whole Mushaf page on
+  // screen without scrolling, matching a printed page out of the box.
+  double _quranFontSize = 24;
   QuranViewMode _quranViewMode = QuranViewMode.page;
   int? _lastReadSurah;
   int? _lastReadPage;
@@ -122,11 +124,11 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 30;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 24;
     // Migrate users whose saved value is from the old (40/68/36) scale onto
-    // the new literal Small/Medium/Large pixel sizes, defaulting to Medium.
+    // the new literal Small/Medium/Large pixel sizes, defaulting to Small.
     if (!kQuranFontSizeSteps.contains(_quranFontSize)) {
-      _quranFontSize = 30;
+      _quranFontSize = 24;
     }
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'

@@ -63,7 +63,14 @@ List<InlineSpan> _ayahTextSpans({
     if (i > 0) {
       spans.add(TextSpan(text: ' ', style: style, recognizer: recognizer));
     }
-    final isSajdaWord = i == sajdaWordIndex;
+    // The KFGQPC Mushaf text already marks most sajda trigger words with the
+    // authentic Madinah overline as a font glyph — U+06E4 (SMALL HIGH MADDA),
+    // the long bar above the word. Drawing our own TextDecoration.overline on
+    // top of those produced a doubled line (see 96:19 وَٱسۡجُدۡۤ). So only draw
+    // our overline for the few sajda words the text doesn't already mark, and
+    // otherwise leave the single font bar to stand on its own.
+    final fontAlreadyOverlines = words[i].contains('ۤ');
+    final isSajdaWord = i == sajdaWordIndex && !fontAlreadyOverlines;
     spans.add(
       TextSpan(
         text: words[i],
