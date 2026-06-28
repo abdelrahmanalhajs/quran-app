@@ -2150,15 +2150,22 @@ class _MushafPageViewState extends State<_MushafPageView>
     // Uthmani diacritics, which threw off vertical centering for this
     // badge's plain digits/short word and didn't add anything, since none
     // of that content needs Quranic glyph support.
+    //
+    // [TextLeadingDistribution.even] splits the line's leading equally above
+    // and below the glyphs (rather than the default, which puts more above),
+    // so the text sits exactly in the middle of the rectangle vertically;
+    // [Alignment.center] + symmetric padding centers it horizontally.
     const style = TextStyle(
       fontSize: 11,
       color: _frameGreen,
       fontWeight: FontWeight.bold,
-      height: 1,
+      height: 1.4,
+      leadingDistribution: TextLeadingDistribution.even,
     );
     const gap = SizedBox(width: 4);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: _frameGreen, width: 1.2),
