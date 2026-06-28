@@ -911,6 +911,14 @@ class _MushafPageViewState extends State<_MushafPageView>
   double _gestureBaseScale = 1.0;
   Offset _gestureBaseOffset = Offset.zero;
 
+  /// Horizontal distance the (single-finger, non-zoom) gesture has travelled
+  /// so far, accumulated in [_handleScaleUpdate]. Used so a deliberate but
+  /// *slow* swipe — one whose release velocity is under the flick threshold —
+  /// still turns the page once it has dragged far enough, instead of being
+  /// silently dropped (which felt like the swipe "didn't take", especially
+  /// turning back a page).
+  double _gesturePanDx = 0;
+
   /// Whether the tap-to-reveal back/reciter/view-toggle/search bar (top)
   /// and embedded app-tab bar (bottom) are showing. Off by default so the
   /// reading view stays fully immersive — see [_toggleChrome].
@@ -1091,6 +1099,7 @@ class _MushafPageViewState extends State<_MushafPageView>
     _gestureIsZoom = null;
     _gestureBaseScale = _zoomScale;
     _gestureBaseOffset = _zoomOffset;
+    _gesturePanDx = 0;
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails details) {
@@ -1111,21 +1120,34 @@ class _MushafPageViewState extends State<_MushafPageView>
         _zoomScale = (_gestureBaseScale * details.scale).clamp(1.0, 2.5);
         _zoomOffset = _gestureBaseOffset + details.focalPointDelta / _zoomScale;
       });
+    } else {
+      _gesturePanDx += details.focalPointDelta.dx;
     }
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
     if (_gestureIsZoom != true && _turnController == null) {
       final velocity = details.velocity.pixelsPerSecond.dx;
-      if (velocity.abs() >= 150) {
-        final target = (velocity > 0 ? _currentIndex + 1 : _currentIndex - 1)
+      // A page turns either on a quick flick (velocity) OR on a slow but
+      // deliberate drag past a fraction of the screen width (distance). The
+      // distance fallback is what makes a calm, low-velocity swipe — common
+      // when paging *back* — register instead of being dropped. When the flick
+      // is too weak to read a direction from, fall back to the drag's own
+      // sign so forward/back still resolve correctly.
+      final width = MediaQuery.sizeOf(context).width;
+      final flicked = velocity.abs() >= 150;
+      final dragged = _gesturePanDx.abs() >= width * 0.22;
+      if (flicked || dragged) {
+        final goNext = flicked ? velocity > 0 : _gesturePanDx > 0;
+        final target = (goNext ? _currentIndex + 1 : _currentIndex - 1)
             .clamp(0, _itemCount - 1);
         if (target != _currentIndex) {
-          _startPageTurn(target, slideLeft: velocity < 0);
+          _startPageTurn(target, slideLeft: !goNext);
         }
       }
     }
     _gestureIsZoom = null;
+    _gesturePanDx = 0;
   }
 
   /// Plays the page-turn slide and only swaps [_pageController] to [target]
