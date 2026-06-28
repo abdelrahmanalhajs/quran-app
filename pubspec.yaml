@@ -2,7 +2,7 @@ name: quran_app
 description: "Quran app with audio recitation, translation, tafsir, prayer times, qiblah, athkar and daily hadith."
 publish_to: 'none'
 
-version: 1.0.0+30
+version: 1.0.0+31
 
 environment:
   sdk: ^3.12.1
@@ -27,7 +27,6 @@ dependencies:
   timezone: ^0.9.4
   flutter_timezone: ^3.0.1
   hijri: ^3.0.0
-  google_fonts: ^6.2.1
   path_provider: ^2.1.5
   intl: any
   home_widget: ^0.9.0
