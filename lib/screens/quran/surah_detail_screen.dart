@@ -2465,7 +2465,17 @@ class _RenderPageScalerMulti extends RenderBox
   double _scaledNaturalHeightAt(List<RenderBox> scaledChildren, double width) {
     var total = 0.0;
     for (final child in scaledChildren) {
-      total += child.getDryLayout(BoxConstraints.tightFor(width: width)).height;
+      // Real layout, not getDryLayout: the dry estimate for these justified,
+      // diacritic-heavy paragraphs can come out a hair shorter than the height
+      // they actually render at, and that small mismatch is what left a strip
+      // of blank page under the last ayah at the fit-to-page size. Measuring
+      // the same way we finally lay them out makes the chosen scale fill the
+      // page exactly, so the last ayah's marker sits flush at the bottom. The
+      // children get laid out for real once more below at [chosenWidth]; an
+      // extra measure pass here is cheap since it only runs when the page
+      // (re)builds, never per frame.
+      child.layout(BoxConstraints.tightFor(width: width), parentUsesSize: true);
+      total += child.size.height;
     }
     return total;
   }
