@@ -22,7 +22,7 @@ enum QuranViewMode { page, list }
 /// Small / Medium / Large, in logical pixels. Only Small auto-fits each
 /// Mushaf page to the screen (no scrolling — see [kQuranFontSizeFitsPage]);
 /// Medium and Large render at their literal 30 / 36 px and the page scrolls.
-const List<double> kQuranFontSizeSteps = [24, 30, 36];
+const List<double> kQuranFontSizeSteps = [26, 30, 36];
 
 /// Parallel to [kQuranFontSizeSteps]: only Small auto-fits the page without
 /// scrolling; Medium and Large render at their literal size and scroll.
@@ -45,7 +45,7 @@ const List<FontWeight> kQuranFontSizeWeight = [
 
 /// Parallel to [kQuranFontSizeSteps]: the font size in the separate list
 /// view. The same literal Small/Medium/Large pixel sizes as the page.
-const List<double> kQuranListViewFontSizes = [24, 30, 36];
+const List<double> kQuranListViewFontSizes = [26, 30, 36];
 
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].
@@ -74,9 +74,9 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  // Default to Small (24) — the only size that fits a whole Mushaf page on
+  // Default to Small (26) — the only size that fits a whole Mushaf page on
   // screen without scrolling, matching a printed page out of the box.
-  double _quranFontSize = 24;
+  double _quranFontSize = 26;
   QuranViewMode _quranViewMode = QuranViewMode.page;
   int? _lastReadSurah;
   int? _lastReadPage;
@@ -124,11 +124,12 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 24;
-    // Migrate users whose saved value is from the old (40/68/36) scale onto
-    // the new literal Small/Medium/Large pixel sizes, defaulting to Small.
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 26;
+    // Migrate users whose saved value is from an older scale (incl. the old
+    // 24px Small) onto the current Small/Medium/Large pixel sizes, defaulting
+    // to Small.
     if (!kQuranFontSizeSteps.contains(_quranFontSize)) {
-      _quranFontSize = 24;
+      _quranFontSize = 26;
     }
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
