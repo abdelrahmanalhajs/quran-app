@@ -214,14 +214,35 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
+  /// Crosses a surah boundary by *Mushaf page*, not by surah. [boundaryPage]
+  /// is the real page the swipe left from (the current surah's first page when
+  /// going back, its last page when going forward); the target is simply the
+  /// adjacent page. Whichever surah owns that page is opened *at* it.
+  ///
+  /// This replaces the old surah-by-surah hop, whose "skip an already-shown
+  /// shared page" rule cascaded across every single-page surah that shares a
+  /// page — so one back-swipe from An-Nas (p.604) leapt 14 surahs to p.599,
+  /// skipping pages 600-603 entirely. Paging by page can't skip a page: each
+  /// one is shown exactly once on its way past.
   Future<void> _goToAdjacentSurah(
     BuildContext context,
-    int delta, {
-    required bool skip,
-  }) async {
-    final targetNumber = widget.surah.number + delta;
-    if (targetNumber < 1 || targetNumber > 114) return;
-    final list = await context.read<QuranProvider>().repository.getSurahList();
+    int delta,
+    int boundaryPage,
+  ) async {
+    final targetPage = boundaryPage + delta;
+    if (targetPage < 1 || targetPage > 604) return;
+    final repo = context.read<QuranProvider>().repository;
+    final pageAyahs = await repo.getPageAyahs(targetPage);
+    if (pageAyahs.isEmpty || !context.mounted) return;
+    // The surah the page "belongs to" — the lowest-numbered one with an ayah
+    // on it. Opening that surah at [targetPage] still renders the whole page
+    // (boundary sharing pulls in every surah that appears on it), so the page
+    // looks identical no matter which of its surahs technically hosts it.
+    final targetNumber = pageAyahs
+        .map((a) => a.surahNumber)
+        .reduce((a, b) => a < b ? a : b);
+    final list = await repo.getSurahList();
+    if (!context.mounted) return;
     SurahSummary? target;
     for (final s in list) {
       if (s.number == targetNumber) {
@@ -229,15 +250,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         break;
       }
     }
-    if (target == null || !context.mounted) return;
+    if (target == null) return;
     final resolvedTarget = target;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => SurahDetailScreen(
           surah: resolvedTarget,
-          startAtLastPage: delta < 0,
-          skipFirstPage: delta > 0 && skip,
-          skipLastPage: delta < 0 && skip,
+          startPage: targetPage,
         ),
       ),
     );
@@ -276,13 +295,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             skipFirstPage: widget.skipFirstPage,
             skipLastPage: widget.skipLastPage,
             startPage: widget.startPage,
-            onAdjacentSurah: (delta) => _goToAdjacentSurah(
-              context,
-              delta,
-              skip: delta > 0
-                  ? bundle.isLastPageShared
-                  : bundle.isFirstPageShared,
-            ),
+            onAdjacentSurah: (delta, boundaryPage) =>
+                _goToAdjacentSurah(context, delta, boundaryPage),
           );
         }
         final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
@@ -813,7 +827,7 @@ class _MushafPageView extends StatefulWidget {
   final bool skipFirstPage;
   final bool skipLastPage;
   final int? startPage;
-  final void Function(int delta) onAdjacentSurah;
+  final void Function(int delta, int boundaryPage) onAdjacentSurah;
 
   const _MushafPageView({
     required this.ayahs,
@@ -1025,7 +1039,11 @@ class _MushafPageViewState extends State<_MushafPageView>
     // of view) edge would.
     if (fullySkip) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onAdjacentSurah(widget.startAtLastPage ? -1 : 1);
+        if (!mounted) return;
+        final boundaryPage = widget.startAtLastPage
+            ? _screenPages.first.first.page
+            : _screenPages.last.first.page;
+        widget.onAdjacentSurah(widget.startAtLastPage ? -1 : 1, boundaryPage);
       });
     }
   }
@@ -1051,10 +1069,12 @@ class _MushafPageViewState extends State<_MushafPageView>
     if (_navigating) return;
     if (index == _prevSentinelIndex) {
       _navigating = true;
-      widget.onAdjacentSurah(-1);
+      // Boundary page = this surah's first real page; the handler pages back
+      // to the one before it.
+      widget.onAdjacentSurah(-1, _screenPages.first.first.page);
     } else if (index == _nextSentinelIndex) {
       _navigating = true;
-      widget.onAdjacentSurah(1);
+      widget.onAdjacentSurah(1, _screenPages.last.first.page);
     } else {
       _persistCurrentPage(index);
     }
