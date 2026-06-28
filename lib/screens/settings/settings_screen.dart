@@ -102,6 +102,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  /// Prompts for (or confirms) the battery-optimization exemption, then gives
+  /// the user feedback either way — the OS dialog alone doesn't say what its
+  /// outcome means for notifications, and if the app is already exempt no
+  /// dialog appears at all, so without this the tap would seem to do nothing.
+  Future<void> _requestBatteryExemption() async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (await NotificationService.isBatteryExempt()) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('settings.battery_optimization_done'.tr())),
+      );
+      return;
+    }
+    final granted = await NotificationService.ensureBatteryExemption();
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          (granted
+                  ? 'settings.battery_optimization_granted'
+                  : 'settings.battery_optimization_denied')
+              .tr(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
@@ -315,6 +341,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.battery_saver_outlined),
+                title: Text('settings.battery_optimization'.tr()),
+                subtitle: Text('settings.battery_optimization_hint'.tr()),
+                trailing: TextButton(
+                  onPressed: _requestBatteryExemption,
+                  child: Text('settings.battery_optimization_action'.tr()),
+                ),
+                onTap: _requestBatteryExemption,
+              ),
             const Divider(),
             SwitchListTile(
               title: Text('settings.athan_notifications'.tr()),

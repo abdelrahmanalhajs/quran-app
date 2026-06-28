@@ -1,8 +1,13 @@
+import 'dart:io' show Platform;
+
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/hadith_repository.dart';
@@ -140,7 +145,43 @@ class NotificationService {
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-    return (androidGranted ?? true) && (iosGranted ?? true);
+    final granted = (androidGranted ?? true) && (iosGranted ?? true);
+    // Getting notification permission isn't enough on its own: under Doze /
+    // OEM battery optimization the OS will still defer or drop the scheduled
+    // alarms while the phone is idle. Once the user has agreed to receive
+    // notifications, follow up by asking for the battery exemption too — but
+    // only auto-prompt once ever, so we never nag on every toggle/launch.
+    if (granted) {
+      await ensureBatteryExemption(onlyOnce: true);
+    }
+    return granted;
+  }
+
+  static const String _kBatteryPromptShown = 'battery_exempt_prompted';
+
+  /// Whether the app is currently exempt from battery optimization (Doze).
+  static Future<bool> isBatteryExempt() async {
+    if (kIsWeb || !Platform.isAndroid) return true;
+    return Permission.ignoreBatteryOptimizations.isGranted;
+  }
+
+  /// Asks the OS to exempt the app from battery optimization so the scheduled
+  /// athan and reminders keep firing while the device is idle. Best-effort:
+  /// returns true if already/now exempt, false if the user declined or it
+  /// isn't applicable. When [onlyOnce] is set (the automatic path after
+  /// granting notifications), it shows the system dialog at most once per
+  /// install; the explicit Settings action passes false so the user can
+  /// always re-trigger it.
+  static Future<bool> ensureBatteryExemption({bool onlyOnce = false}) async {
+    if (kIsWeb || !Platform.isAndroid) return true;
+    if (await Permission.ignoreBatteryOptimizations.isGranted) return true;
+    if (onlyOnce) {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_kBatteryPromptShown) ?? false) return false;
+      await prefs.setBool(_kBatteryPromptShown, true);
+    }
+    final result = await Permission.ignoreBatteryOptimizations.request();
+    return result.isGranted;
   }
 
   static Future<void> scheduleDailyHadith({
