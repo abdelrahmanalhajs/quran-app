@@ -2489,7 +2489,15 @@ class _RenderPageScalerMulti extends RenderBox
           }
         }
       }
-      chosenWidth = tooTall ? hi : lo;
+      // Always take [hi], the bound the search keeps on the side where the
+      // scaled content is *no taller* than the page. For a too-tall (dense)
+      // page that was already the case; for a too-short (sparse) page like
+      // Al-Fatiha or Al-Baqarah's first page, the old `lo` sat on the
+      // *overflow* side, so scaling up to fill clipped the final line (e.g.
+      // Fatiha's وَلَا ٱلضَّآلِّينَ vanished off the bottom). Choosing [hi]
+      // instead leaves an imperceptible sub-line gap rather than cropping a
+      // whole ayah.
+      chosenWidth = hi;
     }
 
     final double scaleFactor = remainingH.isFinite && naturalAtAvailW > 0
