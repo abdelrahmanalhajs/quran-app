@@ -1968,7 +1968,7 @@ class _MushafPageViewState extends State<_MushafPageView>
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 3),
             child: footer,
           ),
         ],
@@ -2156,19 +2156,19 @@ class _MushafPageViewState extends State<_MushafPageView>
     // so the text sits exactly in the middle of the rectangle vertically;
     // [Alignment.center] + symmetric padding centers it horizontally.
     const style = TextStyle(
-      fontSize: 11,
+      fontSize: 9,
       color: _frameGreen,
       fontWeight: FontWeight.bold,
-      height: 1.4,
+      height: 1.3,
       leadingDistribution: TextLeadingDistribution.even,
     );
-    const gap = SizedBox(width: 4);
+    const gap = SizedBox(width: 2.5);
     return Container(
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: _frameGreen, width: 1.2),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: _frameGreen, width: 1),
       ),
       // Literal child order, left as-is rather than swapped for RTL/LTR —
       // ambient [Directionality] already mirrors a [Row]'s start/end edge

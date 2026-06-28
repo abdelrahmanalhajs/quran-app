@@ -4,7 +4,15 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- SCHEDULE_EXACT_ALARM (Android 12) needs a user grant; USE_EXACT_ALARM
+         (Android 13+) is auto-granted for apps whose core function is alarms/
+         reminders — a prayer-athan app qualifies — so the athan and reminders
+         fire to the exact minute without prompting. RECEIVE_BOOT_COMPLETED lets
+         the boot receiver below re-arm all scheduled notifications after a
+         reboot (AlarmManager alarms are otherwise cleared on restart). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
@@ -53,6 +61,30 @@
             <action android:name="android.intent.action.MEDIA_BUTTON" />
           </intent-filter>
         </receiver>
+        <!-- flutter_local_notifications (v18) no longer declares these in its
+             own manifest, so the app must. Without ScheduledNotificationReceiver
+             every zonedSchedule() notification (hadith, athan, athkar, sleep,
+             hourly zikr, jumu'ah) fires its AlarmManager broadcast into the void
+             and is never displayed; only the immediate show()-based "simulate"
+             previews work. ScheduledNotificationBootReceiver re-arms them after a
+             reboot; ActionBroadcastReceiver handles notification action buttons. -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false" />
+
         <!-- Home-screen "next prayer" countdown widget. -->
         <receiver
             android:name=".PrayerWidgetProvider"
