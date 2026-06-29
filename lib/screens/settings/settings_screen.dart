@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/athan.dart';
@@ -382,59 +381,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }).toList(),
                 ),
               ),
-            if (!kIsWeb) ...[
-              const Divider(),
-              // Collapsed by default so the six test rows don't clutter the
-              // settings list — the user expands this only when they actually
-              // want to preview a notification.
-              ExpansionTile(
-                shape: const Border(),
-                collapsedShape: const Border(),
-                tilePadding: EdgeInsets.symmetric(
-                  horizontal: responsiveHorizontalPadding(context),
-                ),
-                childrenPadding: const EdgeInsets.only(bottom: 8),
-                leading: const Icon(Icons.notifications_none),
-                title: Text(
-                  'settings.test_notifications'.tr(),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                subtitle: Text('settings.test_notifications_hint'.tr()),
-                children: [
-                  _TestNotificationTile(
-                    label: 'settings.notifications'.tr(),
-                    onSend: () => NotificationService.simulateDailyHadith(
-                      arabic: isArabic,
-                    ),
-                  ),
-                  _TestNotificationTile(
-                    label: 'settings.hourly_zikr'.tr(),
-                    onSend: () => NotificationService.simulateHourlyZikr(
-                      arabic: isArabic,
-                    ),
-                  ),
-                  _TestNotificationTile(
-                    label: 'settings.sleep_athkar_notif'.tr(),
-                    onSend: () => NotificationService.simulateSleepReminder(
-                      arabic: isArabic,
-                    ),
-                  ),
-                  _TestNotificationTile(
-                    label: 'settings.jumaa_athkar_notif'.tr(),
-                    onSend: () => NotificationService.simulateJumaaReminder(
-                      arabic: isArabic,
-                    ),
-                  ),
-                  _TestNotificationTile(
-                    label: 'settings.athkar_prayer_reminders'.tr(),
-                    onSend: () =>
-                        NotificationService.simulateAthkarPrayerReminder(
-                          arabic: isArabic,
-                        ),
-                  ),
-                ],
-              ),
-            ],
             const Divider(),
             ListTile(
               leading: const Icon(Icons.share_outlined),
@@ -447,58 +393,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// One row in the "Test Notifications" section: a label plus a Send button
-/// that requests notification permission (if not yet granted) and then fires
-/// that notification immediately so the user can preview it. Confirms with a
-/// SnackBar so a silent/heads-up-suppressed notification still gives feedback
-/// that the tap did something.
-class _TestNotificationTile extends StatelessWidget {
-  final String label;
-  final Future<void> Function() onSend;
-
-  const _TestNotificationTile({required this.label, required this.onSend});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(label),
-      trailing: FilledButton.tonalIcon(
-        icon: const Icon(Icons.notifications_active_outlined, size: 18),
-        label: Text('settings.test_send'.tr()),
-        onPressed: () async {
-          final messenger = ScaffoldMessenger.of(context);
-          final granted = await NotificationService.requestPermission();
-          // Without this feedback the button looked broken when notifications
-          // were turned off (the common case right after a fresh install,
-          // where the OS denies them by default): it would silently do
-          // nothing. Tell the user why and offer a one-tap jump to the system
-          // settings where they can enable them.
-          if (!granted) {
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text('settings.test_needs_permission'.tr()),
-                duration: const Duration(seconds: 4),
-                action: SnackBarAction(
-                  label: 'settings.open_settings'.tr(),
-                  onPressed: ph.openAppSettings,
-                ),
-              ),
-            );
-            return;
-          }
-          await onSend();
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text('settings.test_sent'.tr()),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        },
       ),
     );
   }
