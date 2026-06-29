@@ -1,0 +1,59 @@
+[
+  {
+    "ar": "الغُسْلُ يَوْمَ الْجُمُعَةِ",
+    "en": "Take a full ritual bath (ghusl) on Friday before going to the prayer.",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "التَّطَيُّبُ وَلُبْسُ أَحْسَنِ الثِّيَابِ",
+    "en": "Wear perfume (for men) and your best, cleanest clothes.",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "التَّبْكِيرُ إِلَى الْمَسْجِدِ",
+    "en": "Go to the mosque early, walking if possible, to sit close and attain the full reward.",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "الإِنْصَاتُ لِلْخُطْبَةِ وَتَرْكُ الْكَلَامِ",
+    "en": "Listen attentively to the khutbah and avoid speaking, even to advise someone to be quiet.",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "قِرَاءَةُ سُورَةِ الْكَهْفِ",
+    "en": "Recite Surah Al-Kahf on Friday — the Prophet ﷺ said: \"Whoever recites Surah Al-Kahf on Friday will have light that shines for him between the two Fridays.\"",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "تَحَرِّي سَاعَةِ الْإِجَابَةِ آخِرَ النَّهَارِ قَبْلَ الْمَغْرِبِ",
+    "en": "Seek the hour of acceptance — the last part of the day, before Maghrib — and devote it to dua.",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "تَقْلِيمُ الْأَظْفَارِ وَإِزَالَةُ مَا يَحْتَاجُ إِزَالَتَهُ مِنَ الشَّعْرِ",
+    "en": "Trim your nails and remove excess hair if needed, as part of preparing for the day.",
+    "repeat": 1,
+    "isSunnah": true
+  },
+  {
+    "ar": "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+    "en": "O Allah, send prayers and peace upon our Prophet Muhammad — the Prophet ﷺ said: \"Increase your sending of blessings upon me on Friday, for your blessings are presented to me.\"",
+    "repeat": 100
+  },
+  {
+    "ar": "اللَّهُمَّ إِنِّي أَسْأَلُكَ فِي هَذَا الْيَوْمِ الْمُبَارَكِ خَيْرَ الدُّنْيَا وَالْآخِرَةِ، وَأَنْ تَرْزُقَنِي مِنْ فَضْلِكَ الْعَظِيمِ",
+    "en": "O Allah, I ask You on this blessed day for the good of this world and the next, and that You grant me from Your great bounty.",
+    "repeat": 1
+  },
+  {
+    "ar": "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ",
+    "en": "Glory be to Allah, praise be to Allah, there is no deity but Allah, and Allah is the Greatest.",
+    "repeat": 33
+  }
+]
