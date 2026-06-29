@@ -194,7 +194,7 @@ class _HomeShellState extends State<HomeShell> {
       // glyphs render as fixed full-color art rather than picking up
       // [IconTheme]'s color — a plain Text with the emoji, sized to match
       // the other icons, rather than the custom-drawn vector used before.
-      (const Text('🙏', style: TextStyle(fontSize: 24)), 'nav.athkar'.tr()),
+      (const Text('🤲', style: TextStyle(fontSize: 24)), 'nav.athkar'.tr()),
       (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
       (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];

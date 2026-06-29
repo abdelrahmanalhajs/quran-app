@@ -5,30 +5,31 @@ import '../../state/settings_provider.dart';
 import '../home/home_shell.dart';
 
 class _Step {
-  final IconData icon;
+  // Exactly one of [icon]/[emoji] is set. Athkar (step 5) uses the 🤲 emoji
+  // — same as the Athkar tab everywhere else in the app — since Material has
+  // no built-in icon for it.
+  final IconData? icon;
+  final String? emoji;
   final String titleKey;
   final String bodyKey;
-  const _Step(this.icon, this.titleKey, this.bodyKey);
+  const _Step.icon(this.icon, this.titleKey, this.bodyKey) : emoji = null;
+  const _Step.emoji(this.emoji, this.titleKey, this.bodyKey) : icon = null;
 }
 
 const _kSteps = [
-  _Step(Icons.menu_book, 'onboarding.step1_title', 'onboarding.step1_body'),
-  _Step(
+  _Step.icon(Icons.menu_book, 'onboarding.step1_title', 'onboarding.step1_body'),
+  _Step.icon(
     Icons.swipe,
     'onboarding.step2_title',
     'onboarding.step2_body',
   ),
-  _Step(
+  _Step.icon(
     Icons.headphones,
     'onboarding.step3_title',
     'onboarding.step3_body',
   ),
-  _Step(Icons.explore, 'onboarding.step4_title', 'onboarding.step4_body'),
-  _Step(
-    Icons.favorite_outline,
-    'onboarding.step5_title',
-    'onboarding.step5_body',
-  ),
+  _Step.icon(Icons.explore, 'onboarding.step4_title', 'onboarding.step4_body'),
+  _Step.emoji('🤲', 'onboarding.step5_title', 'onboarding.step5_body'),
 ];
 
 /// Shown once, before [HomeShell], on a fresh install: page 0 asks the
@@ -236,7 +237,9 @@ class _FeatureStep extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(step.icon, size: 72, color: scheme.primary),
+                  step.emoji != null
+                      ? Text(step.emoji!, style: const TextStyle(fontSize: 72))
+                      : Icon(step.icon, size: 72, color: scheme.primary),
                   const SizedBox(height: 28),
                   Text(
                     step.titleKey.tr(),

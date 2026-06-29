@@ -1606,12 +1606,15 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// different tab here pops this screen and switches [HomeShell] to it
   /// via [HomeNavigationProvider], rather than a nested Navigator.
   Widget _buildBottomNavOverlay(BuildContext context) {
+    // Mirrors HomeShell's own nav icons (including the 🤲 emoji standing in
+    // for Athkar, which has no built-in Material icon) so switching tabs
+    // from inside the reading screen looks identical to the main nav bar.
     final destinations = [
-      (Icons.menu_book, 'nav.quran'.tr()),
-      (Icons.explore_outlined, 'nav.prayer'.tr()),
-      (Icons.favorite_outline, 'nav.athkar'.tr()),
-      (Icons.format_quote, 'nav.hadith'.tr()),
-      (Icons.settings_outlined, 'nav.settings'.tr()),
+      (const Icon(Icons.menu_book), 'nav.quran'.tr()),
+      (const Icon(Icons.explore_outlined), 'nav.prayer'.tr()),
+      (const Text('🤲', style: TextStyle(fontSize: 24)), 'nav.athkar'.tr()),
+      (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
+      (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
     return Material(
       color: Theme.of(context).colorScheme.surface,
@@ -1626,7 +1629,7 @@ class _MushafPageViewState extends State<_MushafPageView>
           },
           destinations: [
             for (final (icon, label) in destinations)
-              NavigationDestination(icon: Icon(icon), label: label),
+              NavigationDestination(icon: icon, label: label),
           ],
         ),
       ),
