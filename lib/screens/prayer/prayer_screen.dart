@@ -343,11 +343,6 @@ class _QiblaTabState extends State<_QiblaTab> {
             child: Icon(Icons.navigation, size: 100, color: color),
           ),
         ),
-        const SizedBox(height: 24),
-        Text(
-          'prayer.degrees_from_north'.tr(args: ['${qibla.round()}°']),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
         const Spacer(),
       ],
     );

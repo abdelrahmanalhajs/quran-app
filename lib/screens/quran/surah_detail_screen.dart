@@ -921,6 +921,11 @@ class _MushafPageViewState extends State<_MushafPageView>
   Timer? _holdTimer;
   Offset? _holdStart;
   VoidCallback? _holdAction;
+  // Which ayah the finger is currently down on. Remembered on touch-down but
+  // only turned into a visible highlight once the hold actually completes —
+  // see the [_holdTimer] below — so a plain tap or a page-turn swipe never
+  // tints an ayah; only a deliberate press-and-hold for the tafsir sheet does.
+  int? _holdAyahNumber;
   bool _suppressNextTap = false;
 
   /// Whether the in-progress gesture turned out to be a pinch (`true`), a
@@ -1308,7 +1313,9 @@ class _MushafPageViewState extends State<_MushafPageView>
               final action = _holdAction;
               if (action == null || !mounted) return;
               _suppressNextTap = true;
-              setState(() => _pressedAyahNumber = null);
+              // The shadow appears now, at the moment the hold completes and
+              // the tafsir/translation sheet opens — never on a bare touch.
+              setState(() => _pressedAyahNumber = _holdAyahNumber);
               action();
             });
           },
@@ -1322,11 +1329,13 @@ class _MushafPageViewState extends State<_MushafPageView>
             _holdTimer?.cancel();
             _holdAction = null;
             _holdStart = null;
+            _holdAyahNumber = null;
           },
           onPointerCancel: (_) {
             _holdTimer?.cancel();
             _holdAction = null;
             _holdStart = null;
+            _holdAyahNumber = null;
           },
           child: GestureDetector(
             // Without this, a drag/tap starting on empty space (e.g. the
@@ -1760,7 +1769,9 @@ class _MushafPageViewState extends State<_MushafPageView>
             duration: const Duration(seconds: 10),
           );
           r.onLongPressDown = (_) {
-            setState(() => _pressedAyahNumber = ayah.number);
+            // Just remember which ayah is under the finger and what to do if
+            // the hold completes — no highlight yet (see [_holdTimer]).
+            _holdAyahNumber = ayah.number;
             _holdAction = () => _showAyahSheet(
               this.context,
               ayah,
@@ -1769,11 +1780,13 @@ class _MushafPageViewState extends State<_MushafPageView>
             );
           };
           r.onLongPressCancel = () {
+            if (_holdAyahNumber == ayah.number) _holdAyahNumber = null;
             if (_pressedAyahNumber == ayah.number) {
               setState(() => _pressedAyahNumber = null);
             }
           };
           r.onLongPressUp = () {
+            if (_holdAyahNumber == ayah.number) _holdAyahNumber = null;
             if (_pressedAyahNumber == ayah.number) {
               setState(() => _pressedAyahNumber = null);
             }

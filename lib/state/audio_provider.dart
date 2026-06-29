@@ -75,18 +75,16 @@ class AudioProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Builds the right [AudioSource] for the platform. On mobile/desktop we use
-  /// `LockCachingAudioSource`, which streams while saving to disk so a once-
-  /// played recording then replays fully offline. That source relies on a
-  /// local 127.0.0.1 proxy, which doesn't exist on the web — there it simply
-  /// never starts, which is why Quran audio "did nothing" in the browser. On
-  /// web, stream the URL directly instead.
+  /// Streams a recording straight from its URL. We deliberately do *not* use
+  /// the caching proxy source any more: it ran a local 127.0.0.1 HTTP proxy
+  /// that intermittently answered the player with a 500 on the first load even
+  /// when the CDN itself returned 200 — which showed up as audio "not loading
+  /// until you restart the app". Offline playback is now handled explicitly by
+  /// [OfflineRecitations] (a downloaded surah plays from its local file in
+  /// [playSurah]), so plain direct streaming here is both simpler and far more
+  /// reliable, on every platform including web.
   AudioSource _audioSource(String url, MediaItem tag) {
-    if (kIsWeb) {
-      return AudioSource.uri(Uri.parse(url), tag: tag);
-    }
-    // ignore: experimental_member_use
-    return LockCachingAudioSource(Uri.parse(url), tag: tag);
+    return AudioSource.uri(Uri.parse(url), tag: tag);
   }
 
   Future<void> playSurah(
@@ -142,6 +140,15 @@ class AudioProvider extends ChangeNotifier {
         }
       }
       await _player.play();
+    } catch (_) {
+      // The source never loaded (a transient network/proxy hiccup on the first
+      // attempt). Clear the "current" pointers so the next tap re-runs
+      // setAudioSource from scratch instead of taking the "same surah, just
+      // play()" shortcut above on a dead source — which looked like audio
+      // "not loading until you restart the app".
+      _currentSurah = null;
+      _currentReciter = null;
+      await _player.stop();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -186,6 +193,13 @@ class AudioProvider extends ChangeNotifier {
       ];
       await _player.setAudioSource(ConcatenatingAudioSource(children: sources));
       await _player.play();
+    } catch (_) {
+      // See [playSurah]: clear state on a failed first load so a retry works
+      // without restarting the app.
+      _currentSurah = null;
+      _currentReciter = null;
+      _ayahPlaylistStart = null;
+      await _player.stop();
     } finally {
       _isLoading = false;
       notifyListeners();
