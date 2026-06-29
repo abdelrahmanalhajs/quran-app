@@ -1,12 +1,31 @@
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
+import 'package:provider/provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/hadith_repository.dart';
+import '../../state/navigation_provider.dart';
 import '../constants/athan.dart';
+
+/// Payload values used to route a notification tap to the right page — see
+/// [NotificationService._onNotificationTapped]. Distinct from the old scheme
+/// of using the athan id as the payload, which made tapping a prayer
+/// notification replay the athan instead of opening the app on the prayer
+/// page (the actual expected behavior).
+class _NotifRoute {
+  static const prayer = 'route:prayer';
+  static const hadith = 'route:hadith';
+  static const sleep = 'route:sleep';
+  static const jumaa = 'route:jumaa';
+  static const morningAthkar = 'route:morning_athkar';
+  static const eveningAthkar = 'route:evening_athkar';
+}
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
@@ -21,6 +40,17 @@ class NotificationService {
   static const int _athanIdBase = 2001;
 
   static final AudioPlayer _athanPlayer = AudioPlayer();
+
+  /// Set from main() before the app's first frame, so a notification tap can
+  /// switch tabs/sub-tabs without any screen needing to hold its own
+  /// reference to the navigator.
+  static GlobalKey<NavigatorState>? navigatorKey;
+
+  // Holds a route that arrived before [navigatorKey] had a live context —
+  // either a cold-start launch (app was terminated, see [init]) or a tap
+  // that raced the very first frame. [consumePendingRoute] applies it once
+  // HomeShell has built.
+  static String? _pendingPayload;
 
   // Exact alarms (SCHEDULE_EXACT_ALARM) are not granted by default on
   // Android 13+. Attempting an exact schedule then throws
@@ -94,15 +124,60 @@ class NotificationService {
     if (canExact == false) {
       _scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
     }
+
+    // The app may have been launched (from terminated, not just background)
+    // by tapping a notification — that doesn't fire
+    // onDidReceiveNotificationResponse, so it has to be checked explicitly.
+    // navigatorKey isn't set yet at this point in main(), so the route is
+    // stashed and applied later via [consumePendingRoute].
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp == true) {
+      _pendingPayload = launchDetails?.notificationResponse?.payload;
+    }
   }
 
   static void _onNotificationTapped(NotificationResponse response) {
-    final payload = response.payload;
-    if (payload == kAthanMakkah.id) {
-      playAthan(kAthanMakkah);
-    } else if (payload == kAthanMadina.id) {
-      playAthan(kAthanMadina);
+    _route(response.payload);
+  }
+
+  /// Switches tabs (and, for athkar, the right sub-tab) for the page a
+  /// notification's payload identifies. Tapping the prayer/athan
+  /// notification used to replay the athan instead of navigating anywhere —
+  /// this replaces that with opening the prayer page, which is what the tap
+  /// should actually do.
+  static void _route(String? payload) {
+    if (payload == null) return;
+    final context = navigatorKey?.currentContext;
+    if (context == null) {
+      _pendingPayload = payload;
+      return;
     }
+    navigatorKey?.currentState?.popUntil((route) => route.isFirst);
+    final nav = context.read<HomeNavigationProvider>();
+    switch (payload) {
+      case _NotifRoute.prayer:
+        nav.setIndex(1);
+      case _NotifRoute.hadith:
+        nav.setIndex(3);
+      case _NotifRoute.sleep:
+        nav.goToAthkarTab(3);
+      case _NotifRoute.jumaa:
+        nav.goToAthkarTab(4);
+      case _NotifRoute.morningAthkar:
+        nav.goToAthkarTab(0);
+      case _NotifRoute.eveningAthkar:
+        nav.goToAthkarTab(1);
+    }
+  }
+
+  /// Call once HomeShell has built (a post-frame callback in its initState)
+  /// so a route from a cold-start notification launch, or a tap that raced
+  /// the first frame, still gets applied.
+  static void consumePendingRoute() {
+    final payload = _pendingPayload;
+    if (payload == null) return;
+    _pendingPayload = null;
+    _route(payload);
   }
 
   /// Plays the full athan recording in-app. Used as a fallback on platforms
@@ -130,16 +205,53 @@ class NotificationService {
   static Future<void> stopAthan() => _athanPlayer.stop();
 
   static Future<bool> requestPermission() async {
-    final androidGranted = await _plugin
+    final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+        >();
+    final androidGranted = await android?.requestNotificationsPermission();
     final iosGranted = await _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    // Notification permission alone doesn't guarantee the athan/athkar
+    // notifications fire exactly on time: without the exact-alarm permission
+    // (Android 13+) the OS only delivers an "inexact" schedule, which can
+    // run several minutes late; this prompts the system settings screen so
+    // the user can grant it, then re-checks so this session's scheduling
+    // actually uses the precise mode it just got. Network connectivity
+    // plays no part in any of this — prayer times and the athan are
+    // entirely local (see PrayerRepository/this file), so once an exact
+    // alarm is scheduled it fires on time with or without internet.
+    if (android != null) {
+      final canExact = await android.canScheduleExactNotifications() ?? true;
+      if (!canExact) {
+        await android.requestExactAlarmsPermission();
+        final canExactNow =
+            await android.canScheduleExactNotifications() ?? true;
+        _scheduleMode = canExactNow
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle;
+      } else {
+        _scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      }
+
+      // Doze/App Standby can defer even an "exact" alarm by several
+      // minutes while the device is idle and the app isn't whitelisted —
+      // the other half of "azan notification arrives late". Requests the
+      // OS dialog to exempt this app; a no-op if already granted or denied
+      // before (won't re-prompt endlessly).
+      if (!kIsWeb) {
+        final batteryStatus = await ph.Permission.ignoreBatteryOptimizations
+            .status;
+        if (!batteryStatus.isGranted) {
+          await ph.Permission.ignoreBatteryOptimizations.request();
+        }
+      }
+    }
+
     return (androidGranted ?? true) && (iosGranted ?? true);
   }
 
@@ -171,6 +283,7 @@ class NotificationService {
       androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _NotifRoute.hadith,
     );
   }
 
@@ -290,7 +403,7 @@ class NotificationService {
         androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-        payload: athan.id,
+        payload: _NotifRoute.prayer,
       );
     }
   }
@@ -358,6 +471,7 @@ class NotificationService {
       androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _NotifRoute.sleep,
     );
   }
 
@@ -391,6 +505,7 @@ class NotificationService {
       androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _NotifRoute.jumaa,
     );
   }
 
@@ -445,6 +560,7 @@ class NotificationService {
         androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.morningAthkar,
       );
     }
 
@@ -472,6 +588,7 @@ class NotificationService {
         androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.eveningAthkar,
       );
     }
   }
@@ -504,6 +621,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: _NotifRoute.hadith,
     );
   }
 
@@ -543,6 +661,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: _NotifRoute.sleep,
     );
   }
 
@@ -563,6 +682,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: _NotifRoute.jumaa,
     );
   }
 
@@ -584,6 +704,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: _NotifRoute.morningAthkar,
     );
   }
 
@@ -614,7 +735,7 @@ class NotificationService {
           interruptionLevel: InterruptionLevel.timeSensitive,
         ),
       ),
-      payload: athan.id,
+      payload: _NotifRoute.prayer,
     );
     await playAthan(athan);
   }

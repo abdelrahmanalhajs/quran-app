@@ -14,4 +14,21 @@ class HomeNavigationProvider extends ChangeNotifier {
     _index = index;
     notifyListeners();
   }
+
+  // Set when a notification tap (sleep athkar / jumu'ah sunan) needs to land
+  // on a specific sub-tab inside [AthkarScreen], which owns its own
+  // TabController and isn't otherwise reachable from outside. AthkarScreen
+  // consumes and clears this in its build so it only fires once.
+  int? _athkarTabRequest;
+  int? get athkarTabRequest => _athkarTabRequest;
+
+  void goToAthkarTab(int tabIndex) {
+    _athkarTabRequest = tabIndex;
+    _index = 2;
+    notifyListeners();
+  }
+
+  void clearAthkarTabRequest() {
+    _athkarTabRequest = null;
+  }
 }

@@ -7,6 +7,7 @@ import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/surah.dart';
 import '../../state/quran_provider.dart';
+import '../../state/settings_provider.dart';
 import '../../widgets/responsive_center.dart';
 import 'surah_detail_screen.dart';
 
@@ -30,13 +31,45 @@ class _SurahListScreenState extends State<SurahListScreen> {
     });
   }
 
+  Future<void> _goToBookmark(BuildContext context) async {
+    final settings = context.read<SettingsProvider>();
+    final surahNumber = settings.bookmarkSurah;
+    final page = settings.bookmarkPage;
+    if (surahNumber == null || page == null) return;
+    final list = await context.read<QuranProvider>().repository.getSurahList();
+    SurahSummary? surah;
+    for (final s in list) {
+      if (s.number == surahNumber) {
+        surah = s;
+        break;
+      }
+    }
+    if (surah == null || !context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SurahDetailScreen(surah: surah!, startPage: page),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<QuranProvider>();
     final hPad = responsiveHorizontalPadding(context);
+    final hasBookmark = context.watch<SettingsProvider>().hasBookmark;
 
     return Scaffold(
-      appBar: AppBar(title: Text('app_name'.tr())),
+      appBar: AppBar(
+        title: Text('app_name'.tr()),
+        actions: [
+          if (hasBookmark)
+            IconButton(
+              icon: const Icon(Icons.bookmark),
+              tooltip: 'quran.go_to_bookmark'.tr(),
+              onPressed: () => _goToBookmark(context),
+            ),
+        ],
+      ),
       body: ResponsiveCenter(
         child: Column(
           children: [

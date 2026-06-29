@@ -32,6 +32,8 @@ class PrayerProvider extends ChangeNotifier {
   PrayerLoadStatus get status => _status;
   PrayerTimes? get times => _times;
   double? get qiblaDirection => _qiblaDirection;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
   String? get errorMessage => _errorMessage;
 
   Future<void> load({bool arabicAthanLabels = false}) async {

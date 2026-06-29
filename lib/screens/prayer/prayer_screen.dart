@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
@@ -232,6 +234,9 @@ class _QiblaTab extends StatefulWidget {
 
 class _QiblaTabState extends State<_QiblaTab> {
   static const double _alignmentThresholdDegrees = 8;
+  static const MethodChannel _declinationChannel = MethodChannel(
+    'qibla/declination',
+  );
   double? _heading;
   // A device without a magnetometer (common on emulators, some tablets)
   // never emits a compass event with a non-null heading. There's no direct
@@ -241,6 +246,46 @@ class _QiblaTabState extends State<_QiblaTab> {
   bool _compassUnavailable = false;
   StreamSubscription<CompassEvent>? _compassSub;
   Timer? _compassTimeoutTimer;
+
+  // flutter_compass's heading on Android is relative to MAGNETIC north (raw
+  // rotation-vector sensor), while the qibla bearing is computed from TRUE
+  // north — so without correction the needle is off by the local magnetic
+  // declination (can be 15-20°+ depending on where the user is, which is why
+  // the bug only showed up "sometimes"). iOS already reports trueHeading via
+  // CoreLocation, so this stays 0 there. Fetched once per session via
+  // MainActivity's GeomagneticField-backed channel.
+  double _declination = 0;
+  bool _declinationRequested = false;
+
+  Future<void> _maybeFetchDeclination() async {
+    if (_declinationRequested || kIsWeb || !Platform.isAndroid) return;
+    final provider = context.read<PrayerProvider>();
+    final lat = provider.latitude;
+    final lng = provider.longitude;
+    if (lat == null || lng == null) return;
+    _declinationRequested = true;
+    try {
+      final result = await _declinationChannel.invokeMethod<double>(
+        'declination',
+        {'lat': lat, 'lng': lng},
+      );
+      if (mounted && result != null) {
+        setState(() => _declination = result);
+      }
+    } catch (_) {
+      // Leave declination at 0 if the channel isn't available for any
+      // reason — better an uncorrected heading than a crash.
+    }
+  }
+
+  // Smooths out magnetometer jitter (a raw heading can jump several degrees
+  // between consecutive sensor events) with an exponential moving average,
+  // taking the shortest signed angular delta so it doesn't glitch across the
+  // 0/360 boundary.
+  double _smoothHeading(double previous, double next) {
+    final delta = (next - previous + 540) % 360 - 180;
+    return (previous + 0.15 * delta + 360) % 360;
+  }
 
   @override
   void initState() {
@@ -254,9 +299,14 @@ class _QiblaTabState extends State<_QiblaTab> {
       _compassSub = FlutterCompass.events?.listen((event) {
         if (event.heading == null) return;
         _compassTimeoutTimer?.cancel();
+        _maybeFetchDeclination();
+        final corrected = (event.heading! + _declination) % 360;
+        final next = _heading == null
+            ? corrected
+            : _smoothHeading(_heading!, corrected);
         if (mounted) {
           setState(() {
-            _heading = event.heading;
+            _heading = next;
             _compassUnavailable = false;
           });
         }
@@ -293,11 +343,6 @@ class _QiblaTabState extends State<_QiblaTab> {
                     ? 'prayer.compass_unavailable_web'.tr()
                     : 'prayer.compass_unavailable_native'.tr(),
                 textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'prayer.degrees_from_north'.tr(args: ['${qibla.round()}°']),
-                style: Theme.of(context).textTheme.titleMedium,
               ),
             ],
           ),

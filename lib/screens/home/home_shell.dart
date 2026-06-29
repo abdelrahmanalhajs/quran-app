@@ -57,6 +57,15 @@ class _HomeShellState extends State<HomeShell> {
     // list, mirroring what switching back to the Quran tab does within a
     // session (see [_onDestinationSelected]).
     WidgetsBinding.instance.addPostFrameCallback((_) => _resumeLastRead());
+    // Applies a route from a notification that launched the app from
+    // terminated (didn't fire onDidReceiveNotificationResponse) or raced
+    // this very first frame. Runs after [_resumeLastRead] so a notification
+    // tap always wins over the last-read-page resume.
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => NotificationService.consumePendingRoute(),
+      );
+    }
   }
 
   /// Pushes the last-read surah/page (persisted by
@@ -179,11 +188,13 @@ class _HomeShellState extends State<HomeShell> {
       SettingsScreen(),
     ];
     final destinations = [
-      (Icons.menu_book, 'nav.quran'.tr()),
-      (Icons.explore_outlined, 'nav.prayer'.tr()),
-      (Icons.favorite_outline, 'nav.athkar'.tr()),
-      (Icons.format_quote, 'nav.hadith'.tr()),
-      (Icons.settings_outlined, 'nav.settings'.tr()),
+      (const Icon(Icons.menu_book), 'nav.quran'.tr()),
+      (const Icon(Icons.explore_outlined), 'nav.prayer'.tr()),
+      // No built-in Material icon for the dua posture (both hands raised) —
+      // see [_RaisedHandsIcon] — rather than the generic heart used before.
+      (const _RaisedHandsIcon(), 'nav.athkar'.tr()),
+      (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
+      (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
     final body = IndexedStack(key: localeKey, index: index, children: screens);
 
@@ -201,10 +212,7 @@ class _HomeShellState extends State<HomeShell> {
               labelType: NavigationRailLabelType.all,
               destinations: [
                 for (final (icon, label) in destinations)
-                  NavigationRailDestination(
-                    icon: Icon(icon),
-                    label: Text(label),
-                  ),
+                  NavigationRailDestination(icon: icon, label: Text(label)),
               ],
             ),
             const VerticalDivider(width: 1),
@@ -221,9 +229,62 @@ class _HomeShellState extends State<HomeShell> {
         onDestinationSelected: _onDestinationSelected,
         destinations: [
           for (final (icon, label) in destinations)
-            NavigationDestination(icon: Icon(icon), label: label),
+            NavigationDestination(icon: icon, label: label),
         ],
       ),
     );
   }
+}
+
+/// A simple person silhouette with both hands raised — the dua posture —
+/// used for the Athkar tab since Material has no built-in icon for it.
+/// Drawn rather than using an icon font so it inherits [IconTheme] (size and
+/// selected/unselected color) exactly like a normal [Icon] would.
+class _RaisedHandsIcon extends StatelessWidget {
+  const _RaisedHandsIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    final iconTheme = IconTheme.of(context);
+    final size = iconTheme.size ?? 24.0;
+    final color = iconTheme.color ?? Colors.black;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _RaisedHandsPainter(color)),
+    );
+  }
+}
+
+class _RaisedHandsPainter extends CustomPainter {
+  final Color color;
+
+  _RaisedHandsPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / 24;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    Offset p(double x, double y) => Offset(x * scale, y * scale);
+
+    // Head.
+    canvas.drawCircle(p(12, 5).translate(0, 0.6 * scale), 2.4 * scale, paint);
+    // Torso.
+    canvas.drawLine(p(12, 8.2), p(12, 16.5), paint);
+    // Legs.
+    canvas.drawLine(p(12, 16.5), p(8.8, 21.5), paint);
+    canvas.drawLine(p(12, 16.5), p(15.2, 21.5), paint);
+    // Arms raised up and outward, like hands lifted in dua.
+    canvas.drawLine(p(12, 9.5), p(6, 3.2), paint);
+    canvas.drawLine(p(12, 9.5), p(18, 3.2), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RaisedHandsPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

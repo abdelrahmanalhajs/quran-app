@@ -1064,13 +1064,17 @@ class _MushafPageViewState extends State<_MushafPageView>
   }
 
   void _onPageChanged(int index) {
-    _currentIndex = index;
-    if (_zoomScale != 1.0 || _zoomOffset != Offset.zero) {
-      setState(() {
+    // Wrapped in setState (even when zoom is already at rest) so the
+    // bookmark icon in the top overlay — which reads [_currentMushafPage],
+    // derived from [_currentIndex] — stays in sync with whichever page is
+    // now on screen.
+    setState(() {
+      _currentIndex = index;
+      if (_zoomScale != 1.0 || _zoomOffset != Offset.zero) {
         _zoomScale = 1.0;
         _zoomOffset = Offset.zero;
-      });
-    }
+      }
+    });
     if (_navigating) return;
     if (index == _prevSentinelIndex) {
       _navigating = true;
@@ -1094,6 +1098,36 @@ class _MushafPageViewState extends State<_MushafPageView>
       widget.surahNumber,
       pageAyahs.first.page,
     );
+  }
+
+  /// The real Mushaf page number currently on screen — used by the
+  /// manual "stop sign" bookmark (see [_toggleBookmarkHere]), distinct
+  /// from [_persistCurrentPage]'s automatic last-read tracking.
+  int _currentMushafPage() {
+    final index = (_currentIndex - _realPagesStart).clamp(
+      0,
+      _screenPages.length - 1,
+    );
+    return _screenPages[index].first.page;
+  }
+
+  void _toggleBookmarkHere() {
+    final settings = context.read<SettingsProvider>();
+    final page = _currentMushafPage();
+    final isHere =
+        settings.bookmarkSurah == widget.surahNumber &&
+        settings.bookmarkPage == page;
+    if (isHere) {
+      settings.clearBookmark();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('quran.bookmark_removed'.tr())),
+      );
+    } else {
+      settings.setBookmark(widget.surahNumber, page);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('quran.bookmark_added'.tr())),
+      );
+    }
   }
 
   /// Swipe direction is driven explicitly here (instead of relying on
@@ -1445,6 +1479,17 @@ class _MushafPageViewState extends State<_MushafPageView>
                         ),
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      settings.bookmarkSurah == widget.surahNumber &&
+                              settings.bookmarkPage == _currentMushafPage()
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      color: _pageBg,
+                    ),
+                    tooltip: 'quran.toggle_bookmark'.tr(),
+                    onPressed: _toggleBookmarkHere,
                   ),
                   IconButton(
                     icon: const Icon(
@@ -1967,7 +2012,9 @@ class _MushafPageViewState extends State<_MushafPageView>
         hizbWord: hizbWord,
         hizbNumber: hizbNumber,
         hizbFraction: hizbFraction,
-        pageText: localizedNumber(context, lastAyah.page),
+        pageText: 'quran.page_label'.tr(
+          args: [localizedNumber(context, lastAyah.page)],
+        ),
       ),
     );
 
@@ -2193,15 +2240,24 @@ class _MushafPageViewState extends State<_MushafPageView>
 
   /// [Ayah.quarterInHizb] 1 is the Hizb's own start (no fraction mark
   /// needed — the bare Hizb number already says that); 2/3/4 are a
-  /// quarter, half and three-quarters of the way through it.
+  /// quarter, half and three-quarters of the way through it. In Arabic this
+  /// is written as a word (ربع/نصف/ثلاثة أرباع), the way it's printed on a
+  /// real Mushaf page, rather than as a "1/4"-style digit fraction.
   String? _hizbQuarterFraction(BuildContext context, int quarterInHizb) {
+    final isArabic = context.locale.languageCode == 'ar';
     switch (quarterInHizb) {
       case 2:
-        return '${localizedNumber(context, 1)}/${localizedNumber(context, 4)}';
+        return isArabic
+            ? 'quran.hizb_quarter'.tr()
+            : '${localizedNumber(context, 1)}/${localizedNumber(context, 4)}';
       case 3:
-        return '${localizedNumber(context, 1)}/${localizedNumber(context, 2)}';
+        return isArabic
+            ? 'quran.hizb_half'.tr()
+            : '${localizedNumber(context, 1)}/${localizedNumber(context, 2)}';
       case 4:
-        return '${localizedNumber(context, 3)}/${localizedNumber(context, 4)}';
+        return isArabic
+            ? 'quran.hizb_three_quarters'.tr()
+            : '${localizedNumber(context, 3)}/${localizedNumber(context, 4)}';
       default:
         return null;
     }

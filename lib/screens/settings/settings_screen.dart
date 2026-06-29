@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants/athan.dart';
 import '../../core/constants/reciters.dart';
 import '../../core/responsive.dart';
@@ -434,6 +435,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ],
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: Text('settings.share_app'.tr()),
+              onTap: () => SharePlus.instance.share(
+                ShareParams(
+                  text: 'settings.share_app_text'.tr(),
+                ),
+              ),
+            ),
           ],
         ),
       ),

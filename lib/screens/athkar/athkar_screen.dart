@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/athkar_repository.dart';
 import '../../models/thikr.dart';
+import '../../state/navigation_provider.dart';
 import '../../widgets/responsive_center.dart';
 
 class AthkarScreen extends StatefulWidget {
@@ -21,7 +23,7 @@ class _AthkarScreenState extends State<AthkarScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -32,6 +34,16 @@ class _AthkarScreenState extends State<AthkarScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Lets a notification tap (sleep athkar / jumu'ah sunan) land on the
+    // right sub-tab — see [HomeNavigationProvider.goToAthkarTab].
+    final requestedTab = context.watch<HomeNavigationProvider>().athkarTabRequest;
+    if (requestedTab != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _tabController.animateTo(requestedTab);
+        context.read<HomeNavigationProvider>().clearAthkarTabRequest();
+      });
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text('athkar.title'.tr()),
@@ -51,6 +63,7 @@ class _AthkarScreenState extends State<AthkarScreen>
             Tab(text: 'athkar.sleep'.tr()),
             Tab(text: 'athkar.jumaa'.tr()),
             Tab(text: 'athkar.general'.tr()),
+            Tab(text: 'athkar.khatm_quran'.tr()),
           ],
         ),
       ),
@@ -63,6 +76,7 @@ class _AthkarScreenState extends State<AthkarScreen>
           _AthkarList(future: _repo.getSleepAthkar()),
           _AthkarList(future: _repo.getJumaaAthkar()),
           _AthkarList(future: _repo.getGeneralDuaa(), classified: true),
+          _AthkarList(future: _repo.getKhatmQuranDuaa()),
         ],
       ),
     );
@@ -158,17 +172,11 @@ class _ThikrCard extends StatefulWidget {
 }
 
 class _ThikrCardState extends State<_ThikrCard> {
-  int _remaining = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _remaining = widget.thikr.repeat;
-  }
+  int _count = 0;
 
   @override
   Widget build(BuildContext context) {
-    final done = _remaining <= 0;
+    final done = _count >= widget.thikr.repeat;
     final isArabic = context.locale.languageCode == 'ar';
     final isSunnah = widget.thikr.isSunnah;
     return Card(
@@ -180,8 +188,8 @@ class _ThikrCardState extends State<_ThikrCard> {
         onTap: isSunnah
             ? null
             : () {
-                if (_remaining > 0) {
-                  setState(() => _remaining--);
+                if (_count < widget.thikr.repeat) {
+                  setState(() => _count++);
                 }
               },
         child: Padding(
@@ -224,7 +232,7 @@ class _ThikrCardState extends State<_ThikrCard> {
                         ? 'athkar.sunnah'.tr()
                         : (done
                               ? 'athkar.repeat'.tr()
-                              : '${'athkar.tap_to_count'.tr()} ($_remaining/${widget.thikr.repeat})'),
+                              : '${'athkar.tap_to_count'.tr()} ($_count/${widget.thikr.repeat})'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

@@ -6,7 +6,14 @@ import '../core/constants/reciters.dart';
 import '../core/services/offline_recitations.dart';
 
 class AudioProvider extends ChangeNotifier {
-  final AudioPlayer _player = AudioPlayer();
+  // Not final — see [_recreatePlayer]: a setAudioSource failure can leave
+  // the underlying native ExoPlayer/AVPlayer instance itself wedged, in
+  // which case retrying setAudioSource on the *same* player keeps failing
+  // silently no matter how many times the user taps play, and only fully
+  // closing and reopening the app (which tears down and recreates
+  // everything) ever got it playing again. Recreating just this one player
+  // on a failed load gets the same clean slate without needing a restart.
+  AudioPlayer _player = AudioPlayer();
   int? _currentSurah;
   Reciter? _currentReciter;
   bool _isLoading = false;
@@ -19,6 +26,10 @@ class AudioProvider extends ChangeNotifier {
   static const _kLastPositionMs = 'audio_last_position_ms';
 
   AudioProvider() {
+    _attachListeners();
+  }
+
+  void _attachListeners() {
     _player.playerStateStream.listen((_) => notifyListeners());
     _player.positionStream.listen((pos) {
       if (_currentSurah != null && _currentReciter != null && _player.playing) {
@@ -29,6 +40,17 @@ class AudioProvider extends ChangeNotifier {
       _currentAyahIndex = index;
       notifyListeners();
     });
+  }
+
+  /// Tears down the current player and swaps in a fresh one with its own
+  /// listeners re-attached — see the field doc on [_player] for why this is
+  /// necessary on a failed load rather than just clearing surah/reciter
+  /// state and letting the next tap retry on the same instance.
+  Future<void> _recreatePlayer() async {
+    final old = _player;
+    _player = AudioPlayer();
+    _attachListeners();
+    await old.dispose();
   }
 
   AudioPlayer get player => _player;
@@ -141,14 +163,16 @@ class AudioProvider extends ChangeNotifier {
       }
       await _player.play();
     } catch (_) {
-      // The source never loaded (a transient network/proxy hiccup on the first
-      // attempt). Clear the "current" pointers so the next tap re-runs
-      // setAudioSource from scratch instead of taking the "same surah, just
-      // play()" shortcut above on a dead source — which looked like audio
-      // "not loading until you restart the app".
+      // The source never loaded (a transient network/proxy hiccup on the
+      // first attempt, or the player itself wedged — see [_recreatePlayer]).
+      // Clear the "current" pointers so the next tap re-runs setAudioSource
+      // from scratch instead of taking the "same surah, just play()"
+      // shortcut above on a dead source, and get a fresh player so that
+      // retry isn't doomed to fail the same way again — together this is
+      // what used to require fully restarting the app.
       _currentSurah = null;
       _currentReciter = null;
-      await _player.stop();
+      await _recreatePlayer();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -194,12 +218,12 @@ class AudioProvider extends ChangeNotifier {
       await _player.setAudioSource(ConcatenatingAudioSource(children: sources));
       await _player.play();
     } catch (_) {
-      // See [playSurah]: clear state on a failed first load so a retry works
-      // without restarting the app.
+      // See [playSurah]: clear state and get a fresh player so a retry
+      // works without restarting the app.
       _currentSurah = null;
       _currentReciter = null;
       _ayahPlaylistStart = null;
-      await _player.stop();
+      await _recreatePlayer();
     } finally {
       _isLoading = false;
       notifyListeners();

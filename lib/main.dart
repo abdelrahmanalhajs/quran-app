@@ -14,6 +14,8 @@ import 'state/prayer_provider.dart';
 import 'state/quran_provider.dart';
 import 'state/settings_provider.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -41,6 +43,10 @@ Future<void> main() async {
 
   final settings = SettingsProvider();
   await settings.load();
+
+  // Lets NotificationService switch tabs/sub-tabs on a notification tap
+  // without any screen needing to hold its own navigator reference.
+  NotificationService.navigatorKey = navigatorKey;
 
   runApp(
     EasyLocalization(
@@ -86,6 +92,7 @@ class QuranApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Quran',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,
