@@ -582,9 +582,20 @@ class _OfflineRecitationsSectionState
     }
   }
 
+  void _stopDownload() {
+    setState(() => _cancel = true);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('settings.offline_stopped'.tr())));
+  }
+
   Future<void> _delete(Reciter reciter) async {
     await OfflineRecitations.instance.deleteAll(reciter);
     await _refresh(reciter);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('settings.offline_deleted'.tr())));
   }
 
   @override
@@ -619,15 +630,6 @@ class _OfflineRecitationsSectionState
           leading: const Icon(Icons.download_for_offline_outlined),
           title: Text('settings.offline_recitations'.tr()),
           subtitle: Text(subtitle),
-          onTap: _busy
-              ? null
-              : () async {
-                  final settingsProvider = context.read<SettingsProvider>();
-                  final picked = await showReciterPicker(context, reciter);
-                  if (picked != null) {
-                    await settingsProvider.setReciter(picked);
-                  }
-                },
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -672,7 +674,7 @@ class _OfflineRecitationsSectionState
             children: [
               if (_busy)
                 OutlinedButton(
-                  onPressed: () => setState(() => _cancel = true),
+                  onPressed: _stopDownload,
                   child: Text('settings.offline_cancel'.tr()),
                 )
               else ...[

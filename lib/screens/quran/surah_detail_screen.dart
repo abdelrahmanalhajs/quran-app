@@ -318,6 +318,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             itemCount: ayahs.length + (showBismillah ? 1 : 0),
             itemBuilder: (context, index) {
               if (showBismillah && index == 0) {
+                final listStepIndex = quranFontSizeStepIndex(
+                  settings.quranFontSize,
+                );
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Text(
@@ -326,10 +329,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     textDirection: TextDirection.rtl,
                     style: AppTheme.quranTextStyle(
                       context,
-                      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
-                        settings.quranFontSize,
-                      )],
-                    ).copyWith(fontWeight: FontWeight.bold),
+                      fontSize: kQuranListViewFontSizes[listStepIndex],
+                    ).copyWith(
+                      height: kQuranFontSizeLineHeight[listStepIndex],
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 );
               }
@@ -485,12 +489,15 @@ class _AyahCard extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     final audio = context.watch<AudioProvider>();
     final signsColored = settings.quranSignsColored;
+    final listStepIndex = quranFontSizeStepIndex(settings.quranFontSize);
+    // Matches [_MushafPageViewState._buildMushafPage]'s line-height override
+    // — the KFGQPC face's tall diacritic stacks need that much room in list
+    // view too, not just the page view; without it, this fell back to
+    // [AppTheme.quranTextStyle]'s generic 1.9, which was too tight for them.
     final baseStyle = AppTheme.quranTextStyle(
       context,
-      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
-        settings.quranFontSize,
-      )],
-    );
+      fontSize: kQuranListViewFontSizes[listStepIndex],
+    ).copyWith(height: kQuranFontSizeLineHeight[listStepIndex]);
     final spans = <InlineSpan>[
       if (isQuarterStart)
         TextSpan(
@@ -699,7 +706,14 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                   widget.ayah.textAr,
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
-                  style: AppTheme.quranTextStyle(context, fontSize: 24),
+                  // Same line-height override as the page/list views (see
+                  // [kQuranFontSizeLineHeight]) — the default 1.9 from
+                  // [AppTheme.quranTextStyle] is too tight for this font's
+                  // tall diacritic stacks.
+                  style: AppTheme.quranTextStyle(
+                    context,
+                    fontSize: 24,
+                  ).copyWith(height: kQuranFontSizeLineHeight.first),
                 ),
                 const SizedBox(height: 12),
                 Align(
