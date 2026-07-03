@@ -299,7 +299,7 @@ class _JuzTile extends StatelessWidget {
               ),
               title: Text(
                 surah.nameAr,
-                style: AppTheme.quranNameStyle(context, fontSize: 16),
+                style: AppTheme.quranNameStyle(context, fontSize: 18),
               ),
               subtitle: Text(surah.englishName),
               onTap: () {

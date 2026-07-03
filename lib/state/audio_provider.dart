@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/reciters.dart';
 import '../core/services/offline_recitations.dart';
+import '../data/quran_repository.dart';
 
 class AudioProvider extends ChangeNotifier {
   // Not final — see [_recreatePlayer]: a setAudioSource failure can leave
@@ -29,8 +30,20 @@ class AudioProvider extends ChangeNotifier {
     _attachListeners();
   }
 
+  // Tracks the previous emission so a completed-state auto-advance only
+  // fires once per actual completion, not on every rebuild-triggered replay
+  // of the stream's latest value.
+  ProcessingState? _lastProcessingState;
+
   void _attachListeners() {
-    _player.playerStateStream.listen((_) => notifyListeners());
+    _player.playerStateStream.listen((state) {
+      notifyListeners();
+      final justCompleted =
+          state.processingState == ProcessingState.completed &&
+          _lastProcessingState != ProcessingState.completed;
+      _lastProcessingState = state.processingState;
+      if (justCompleted) _playNextSurah();
+    });
     _player.positionStream.listen((pos) {
       if (_currentSurah != null && _currentReciter != null && _player.playing) {
         _savePosition(pos);
@@ -40,6 +53,33 @@ class AudioProvider extends ChangeNotifier {
       _currentAyahIndex = index;
       notifyListeners();
     });
+  }
+
+  /// Continues straight into the next surah once the current one finishes —
+  /// whether it was played whole ([playSurah]) or from a specific ayah
+  /// onward ([playFromAyah]), both of which set [_currentSurah]/
+  /// [_currentReciter] the same way. Silently does nothing past An-Nas
+  /// (114) or if the reciter has no recording for the next surah, rather
+  /// than throwing mid-playback.
+  Future<void> _playNextSurah() async {
+    final surah = _currentSurah;
+    final reciter = _currentReciter;
+    if (surah == null || reciter == null) return;
+    final next = surah + 1;
+    if (next > 114 || !reciter.hasSurah(next)) return;
+    String? title;
+    try {
+      final list = await QuranRepository().getSurahList();
+      for (final s in list) {
+        if (s.number == next) {
+          title = s.nameAr;
+          break;
+        }
+      }
+    } catch (_) {
+      // Falls back to playSurah's own generic title below.
+    }
+    await playSurah(next, reciter, surahTitle: title);
   }
 
   /// Tears down the current player and swaps in a fresh one with its own
