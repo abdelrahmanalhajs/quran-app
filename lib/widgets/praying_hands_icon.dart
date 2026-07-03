@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Two palms pressed together, fingers up — the 🤲/🙏 praying-hands posture
-/// used for Athkar throughout the app (main nav, the in-reader nav bar, and
-/// the onboarding walkthrough). Drawn as a plain outline rather than using
-/// the emoji glyph, which renders as fixed full-color art and can't pick up
-/// [IconTheme]'s tint (or an explicit [color]) the way the rest of this
-/// app's "_outlined" icons do.
+/// Two open cupped hands raised in dua (the 🤲 posture) — used for Athkar
+/// throughout the app (main nav, in-reader nav, onboarding). Drawn as a plain
+/// outline so it picks up [IconTheme]'s tint like the rest of the app's
+/// "_outlined" icons, instead of rendering as a fixed full-color emoji glyph.
 class PrayingHandsIcon extends StatelessWidget {
   final double? size;
   final Color? color;
@@ -27,39 +25,88 @@ class PrayingHandsIcon extends StatelessWidget {
 
 class _PrayingHandsPainter extends CustomPainter {
   final Color color;
-
   _PrayingHandsPainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scale = size.width / 24;
+    final sc = size.width / 24;
+    Offset p(double x, double y) => Offset(x * sc, y * sc);
+
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6 * scale
+      ..strokeWidth = 1.6 * sc
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    Offset p(double x, double y) => Offset(x * scale, y * scale);
 
-    // Each hand is a petal: an outer curve up to the fingertips and an
-    // inner curve back down to where the wrists meet, mirrored left/right
-    // of the center seam where the two palms touch.
-    final right = Path()
-      ..moveTo(p(12, 19).dx, p(12, 19).dy)
-      ..quadraticBezierTo(p(17, 12).dx, p(17, 12).dy, p(15, 4).dx, p(15, 4).dy)
-      ..quadraticBezierTo(p(13, 11).dx, p(13, 11).dy, p(12, 19).dx, p(12, 19).dy);
-    final left = Path()
-      ..moveTo(p(12, 19).dx, p(12, 19).dy)
-      ..quadraticBezierTo(p(7, 12).dx, p(7, 12).dy, p(9, 4).dx, p(9, 4).dy)
-      ..quadraticBezierTo(p(11, 11).dx, p(11, 11).dy, p(12, 19).dx, p(12, 19).dy);
-    canvas.drawPath(right, paint);
-    canvas.drawPath(left, paint);
+    // Traces one hand from inner wrist up through 4 finger lobes (with notch
+    // valleys between them) and down to the outer wrist flare. When mirror is
+    // true every x-coordinate is reflected across the centre line (x=12) so
+    // the same path doubles as the left hand.
+    void drawHand(bool mirror) {
+      double mx(double x) => mirror ? 24 - x : x;
+      Offset q(double x, double y) => p(mx(x), y);
 
-    // Wrist band where the hands meet.
-    canvas.drawLine(p(9.5, 19.5), p(14.5, 19.5), paint);
+      final path = Path()
+        // Inner wrist (near centre bottom)
+        ..moveTo(q(12.3, 21.5).dx, q(12.3, 21.5).dy)
+        // Up inner palm
+        ..quadraticBezierTo(
+          q(12.8, 13.0).dx, q(12.8, 13.0).dy,
+          q(14.2, 6.5).dx, q(14.2, 6.5).dy,
+        )
+        // Index fingertip (tallest)
+        ..quadraticBezierTo(
+          q(14.4, 3.8).dx, q(14.4, 3.8).dy,
+          q(15.0, 7.2).dx, q(15.0, 7.2).dy,
+        )
+        // Valley → middle finger
+        ..quadraticBezierTo(
+          q(15.4, 8.8).dx, q(15.4, 8.8).dy,
+          q(16.0, 6.0).dx, q(16.0, 6.0).dy,
+        )
+        // Middle fingertip
+        ..quadraticBezierTo(
+          q(16.2, 4.5).dx, q(16.2, 4.5).dy,
+          q(16.6, 6.0).dx, q(16.6, 6.0).dy,
+        )
+        // Valley → ring finger
+        ..quadraticBezierTo(
+          q(17.2, 8.5).dx, q(17.2, 8.5).dy,
+          q(17.8, 7.0).dx, q(17.8, 7.0).dy,
+        )
+        // Ring fingertip
+        ..quadraticBezierTo(
+          q(18.1, 5.8).dx, q(18.1, 5.8).dy,
+          q(18.4, 7.0).dx, q(18.4, 7.0).dy,
+        )
+        // Valley → pinky
+        ..quadraticBezierTo(
+          q(19.0, 9.8).dx, q(19.0, 9.8).dy,
+          q(19.6, 9.0).dx, q(19.6, 9.0).dy,
+        )
+        // Pinky fingertip
+        ..quadraticBezierTo(
+          q(19.9, 8.0).dx, q(19.9, 8.0).dy,
+          q(20.2, 9.0).dx, q(20.2, 9.0).dy,
+        )
+        // Down outer edge to wrist flare
+        ..quadraticBezierTo(
+          q(21.8, 14.0).dx, q(21.8, 14.0).dy,
+          q(22.2, 21.5).dx, q(22.2, 21.5).dy,
+        );
+
+      canvas.drawPath(path, paint);
+    }
+
+    drawHand(false); // right hand
+    drawHand(true); // left hand (mirrored)
+
+    // V-notch where the two inner wrists meet at the very centre bottom.
+    canvas.drawLine(p(11.7, 21.5), p(12.0, 23.0), paint);
+    canvas.drawLine(p(12.0, 23.0), p(12.3, 21.5), paint);
   }
 
   @override
-  bool shouldRepaint(covariant _PrayingHandsPainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(covariant _PrayingHandsPainter old) => old.color != color;
 }
