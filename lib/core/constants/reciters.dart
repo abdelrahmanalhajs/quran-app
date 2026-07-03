@@ -105,4 +105,13 @@ const List<Reciter> kReciters = [
     ayahAudioBaseUrl:
         'https://everyayah.com/data/ahmed_ibn_ali_al_ajamy_128kbps/',
   ),
+  Reciter(
+    id: 'naser_alqatami',
+    nameAr: 'ناصر القطامي',
+    nameEn: 'Naser Al-Qatami',
+    baseUrl: 'https://server6.mp3quran.net/qtm/',
+    surahCount: 114,
+    // No per-ayah audio source found for this reciter; playback always
+    // starts from the beginning of the surah.
+  ),
 ];

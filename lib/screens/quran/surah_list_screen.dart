@@ -65,7 +65,9 @@ class _SurahListScreenState extends State<SurahListScreen> {
           if (hasBookmark)
             IconButton(
               icon: const Icon(Icons.bookmark),
-              tooltip: 'quran.go_to_bookmark'.tr(),
+              tooltip: context.watch<SettingsProvider>().bookmarkAyah != null
+                  ? 'quran.go_to_ayah_bookmark'.tr()
+                  : 'quran.go_to_bookmark'.tr(),
               onPressed: () => _goToBookmark(context),
             ),
         ],

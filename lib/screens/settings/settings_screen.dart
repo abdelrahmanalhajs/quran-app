@@ -17,6 +17,7 @@ import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
+import 'user_guide_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -383,6 +384,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             const Divider(),
             ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: Text('settings.user_guide'.tr()),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const UserGuideScreen()),
+              ),
+            ),
+            ListTile(
               leading: const Icon(Icons.share_outlined),
               title: Text('settings.share_app'.tr()),
               onTap: () => SharePlus.instance.share(
@@ -623,15 +631,32 @@ class _OfflineRecitationsSectionState
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Text(
-            'settings.offline_reciter'.tr(args: [
-              context.locale.languageCode == 'ar'
-                  ? reciter.nameAr
-                  : reciter.nameEn,
-            ]),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'settings.offline_reciter'.tr(args: [
+                    context.locale.languageCode == 'ar'
+                        ? reciter.nameAr
+                        : reciter.nameEn,
+                  ]),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                 ),
+              ),
+              if (!_busy)
+                TextButton(
+                  onPressed: () async {
+                    final settingsProvider = context.read<SettingsProvider>();
+                    final picked = await showReciterPicker(context, reciter);
+                    if (picked != null) {
+                      await settingsProvider.setReciter(picked);
+                    }
+                  },
+                  child: Text('settings.offline_choose_reciter'.tr()),
+                ),
+            ],
           ),
         ),
         if (_busy)

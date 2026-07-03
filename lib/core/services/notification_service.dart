@@ -25,6 +25,7 @@ class _NotifRoute {
   static const jumaa = 'route:jumaa';
   static const morningAthkar = 'route:morning_athkar';
   static const eveningAthkar = 'route:evening_athkar';
+  static const athkar = 'route:athkar';
 }
 
 class NotificationService {
@@ -167,6 +168,8 @@ class NotificationService {
         nav.goToAthkarTab(0);
       case _NotifRoute.eveningAthkar:
         nav.goToAthkarTab(1);
+      case _NotifRoute.athkar:
+        nav.setIndex(2);
     }
   }
 
@@ -264,20 +267,32 @@ class NotificationService {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final hadith = await repo.getHadithForDay(tomorrow);
 
+    final title = arabic ? 'حديث اليوم' : 'Hadith of the Day';
+    final body =
+        '${arabic ? hadith.ar : hadith.en}\n\n'
+        '${arabic ? hadith.sourceAr : hadith.source}';
+
     await _plugin.zonedSchedule(
       _dailyHadithId,
-      arabic ? 'حديث اليوم' : 'Hadith of the Day',
-      arabic ? hadith.ar : hadith.en,
+      title,
+      body,
       _nextInstanceOf(hour, minute),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_hadith',
           'Daily Hadith',
           channelDescription: 'A new hadith every day',
           importance: Importance.high,
           priority: Priority.high,
+          // Without this, Android collapses the notification to a single
+          // truncated line — the full hadith only became visible on manual
+          // expand. BigTextStyle shows the whole text right away.
+          styleInformation: BigTextStyleInformation(
+            body,
+            contentTitle: title,
+          ),
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
       androidScheduleMode: _scheduleMode,
@@ -319,6 +334,7 @@ class NotificationService {
         androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.athkar,
       );
     }
   }
@@ -378,8 +394,8 @@ class NotificationService {
 
       await _plugin.zonedSchedule(
         _athanIdBase + i,
-        arabic ? 'حان وقت صلاة $label' : 'It is time for $label prayer',
-        arabic ? athan.nameAr : athan.nameEn,
+        arabic ? 'حان الآن موعد أذان $label' : 'It is now time for $label prayer',
+        null,
         scheduled,
         NotificationDetails(
           android: AndroidNotificationDetails(

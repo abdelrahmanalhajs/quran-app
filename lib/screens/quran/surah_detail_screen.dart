@@ -8,10 +8,12 @@ import '../../core/arabic_numbers.dart';
 import '../../core/constants/juz_boundaries.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/athkar_repository.dart';
 import '../../data/quran_repository.dart';
 import '../../data/tafsir_repository.dart';
 import '../../models/ayah.dart';
 import '../../models/surah.dart';
+import '../../models/thikr.dart';
 import '../../state/audio_provider.dart';
 import '../../state/navigation_provider.dart';
 import '../../state/quran_provider.dart';
@@ -291,6 +293,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             surahsByNumber: bundle.surahsByNumber,
             activeSurahNumber: audio.currentSurah,
             activeAyahNumber: audio.currentAbsoluteAyah,
+            bookmarkedSurahNumber: settings.bookmarkSurah,
+            bookmarkedAyahNumber: settings.bookmarkAyah,
             fontSize: settings.quranFontSize,
             startAtLastPage: widget.startAtLastPage,
             skipFirstPage: widget.skipFirstPage,
@@ -644,18 +648,47 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final isArabic = context.locale.languageCode == 'ar';
+    final settings = context.watch<SettingsProvider>();
+    final isBookmarked =
+        settings.bookmarkSurah == widget.ayah.surahNumber &&
+        settings.bookmarkAyah == widget.ayah.numberInSurah;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4, right: 4),
-            child: IconButton(
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            IconButton(
+              icon: Icon(
+                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              ),
+              tooltip: 'quran.toggle_ayah_bookmark'.tr(),
+              onPressed: () {
+                final messenger = ScaffoldMessenger.of(context);
+                if (isBookmarked) {
+                  settings.clearBookmark();
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('quran.ayah_bookmark_removed'.tr())),
+                  );
+                } else {
+                  settings.setBookmark(
+                    widget.ayah.surahNumber,
+                    widget.ayah.page,
+                    ayah: widget.ayah.numberInSurah,
+                  );
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('quran.ayah_bookmark_added'.tr())),
+                  );
+                }
+              },
+            ),
+            const Spacer(),
+            IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => Navigator.of(context).pop(),
             ),
-          ),
+            const SizedBox(width: 4),
+          ],
         ),
         Flexible(
           child: SingleChildScrollView(
@@ -823,6 +856,13 @@ class _MushafPageView extends StatefulWidget {
   final Map<int, SurahSummary> surahsByNumber;
   final int? activeSurahNumber;
   final int? activeAyahNumber;
+  // The surah/ayah of the user's manually-placed bookmark (see
+  // [SettingsProvider.bookmarkSurah]/[bookmarkAyah]), when it was placed on
+  // a specific ayah rather than just a page — highlighted distinctly from
+  // [activeAyahNumber] so the reader can spot exactly where they left off
+  // once they land back on that page.
+  final int? bookmarkedSurahNumber;
+  final int? bookmarkedAyahNumber;
   final double fontSize;
   final bool startAtLastPage;
   final bool skipFirstPage;
@@ -837,6 +877,8 @@ class _MushafPageView extends StatefulWidget {
     required this.surahsByNumber,
     required this.activeSurahNumber,
     required this.activeAyahNumber,
+    required this.bookmarkedSurahNumber,
+    required this.bookmarkedAyahNumber,
     required this.fontSize,
     required this.startAtLastPage,
     required this.skipFirstPage,
@@ -861,6 +903,7 @@ class _MushafPageViewState extends State<_MushafPageView>
   static const _pageBg = Color(0xFFFBF3E0);
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
+  static const _bookmarkGold = Color(0xFFB8860B);
 
   // Keyed by [Ayah.number] (global, unique across the whole Quran) and kept
   // alive for this whole surah-viewing session rather than recreated every
@@ -877,6 +920,15 @@ class _MushafPageViewState extends State<_MushafPageView>
   late List<List<Ayah>> _screenPages;
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
+  // Set once this screen's last Mushaf page is the Quran's very last page
+  // (604) — reserves one extra, real slot right after it for a closing
+  // "Khatm al-Quran" dua screen, so reaching the end of the whole Quran
+  // lands somewhere deliberate instead of the swipe dead-ending on a
+  // next-surah sentinel that can never resolve (see [initState]'s
+  // `reachesQuranEnd`). [_handleScaleEnd]'s `target != _currentIndex` check
+  // already stops the swipe cold once [_itemCount] is reached — this only
+  // changes what that final index actually shows.
+  int? _khatmIndex;
   bool _navigating = false;
   int _itemCount = 0;
   int _currentIndex = 0;
@@ -988,17 +1040,35 @@ class _MushafPageViewState extends State<_MushafPageView>
 
     _screenPages = _groupByMushafPage(widget.ayahs);
     final hasPrevSurah = widget.surahNumber > 1;
-    final hasNextSurah = widget.surahNumber < 114;
+    // The Quran's very last page (604) is shared by An-Nas (114) *and*
+    // Al-Falaq/Al-Ikhlas (112/113) — see [_SurahDetailScreenState._loadBundle],
+    // which folds every surah sharing a page into that page's content. Paging
+    // forward reaches this screen's last page long before `surahNumber`
+    // itself ever reaches 114 (swiping past Al-Ikhlas opens *it* at page 604,
+    // not An-Nas — see [_goToAdjacentSurah]'s "lowest surah number owns the
+    // page" rule), so checking `surahNumber < 114` alone left the swipe
+    // dead-ending on a next-surah sentinel that could never resolve (its
+    // target page, 605, doesn't exist) instead of ever reaching the khatm
+    // page below. Checking the actual last page on screen instead of the
+    // surah number is what [_khatmIndex] needs to trigger correctly no
+    // matter which of the three surahs this screen happens to be opened as.
+    final reachesQuranEnd =
+        _screenPages.isNotEmpty && _screenPages.last.first.page >= 604;
+    final hasNextSurah = widget.surahNumber < 114 && !reachesQuranEnd;
 
     _realPagesStart = hasPrevSurah ? 1 : 0;
     _prevSentinelIndex = hasPrevSurah ? 0 : null;
     _nextSentinelIndex = hasNextSurah
         ? _realPagesStart + _screenPages.length
         : null;
+    _khatmIndex = reachesQuranEnd
+        ? _realPagesStart + _screenPages.length
+        : null;
     _itemCount =
         _screenPages.length +
         (_prevSentinelIndex != null ? 1 : 0) +
-        (_nextSentinelIndex != null ? 1 : 0);
+        (_nextSentinelIndex != null ? 1 : 0) +
+        (_khatmIndex != null ? 1 : 0);
 
     // A page that's shared with the adjacent surah may already have been
     // shown in full on the screen the user is coming from (the adjacent
@@ -1085,6 +1155,8 @@ class _MushafPageViewState extends State<_MushafPageView>
     } else if (index == _nextSentinelIndex) {
       _navigating = true;
       widget.onAdjacentSurah(1, _screenPages.last.first.page);
+    } else if (index == _khatmIndex) {
+      // Not a real Ayah page — nothing to persist as "last read" here.
     } else {
       _persistCurrentPage(index);
     }
@@ -1303,6 +1375,9 @@ class _MushafPageViewState extends State<_MushafPageView>
     }
     if (index == _nextSentinelIndex) {
       return const _AdjacentSurahTransitionPage(forward: true);
+    }
+    if (index == _khatmIndex) {
+      return const _KhatmQuranPage();
     }
     final screenPageIndex = index - _realPagesStart;
     final pageAyahs = _screenPages[screenPageIndex];
@@ -1845,6 +1920,9 @@ class _MushafPageViewState extends State<_MushafPageView>
         final isActive =
             widget.activeSurahNumber == ayah.surahNumber &&
             widget.activeAyahNumber == ayah.numberInSurah;
+        final isBookmarked =
+            widget.bookmarkedSurahNumber == ayah.surahNumber &&
+            widget.bookmarkedAyahNumber == ayah.numberInSurah;
         final isPressed = _pressedAyahNumber == ayah.number;
 
         // The ayah-end marker is plain text glued directly to its own
@@ -1866,6 +1944,8 @@ class _MushafPageViewState extends State<_MushafPageView>
             ? (Paint()..color = _ink.withValues(alpha: 0.12))
             : isActive
             ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
+            : isBookmarked
+            ? (Paint()..color = _bookmarkGold.withValues(alpha: 0.22))
             : null;
         // [prevAyah] is null not just for the Quran's very first ayah, but
         // for *any* surah's first ayah when that surah is opened directly
@@ -2397,6 +2477,111 @@ class _AdjacentSurahTransitionPage extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The Quran's genuine last page — reached by swiping forward past An-Nas's
+/// final Mushaf page (see [_MushafPageViewState._khatmIndex]). A closing
+/// "Khatm al-Quran" dua screen so finishing the whole Mushaf lands somewhere
+/// deliberate rather than the swipe just silently stopping.
+class _KhatmQuranPage extends StatefulWidget {
+  const _KhatmQuranPage();
+
+  @override
+  State<_KhatmQuranPage> createState() => _KhatmQuranPageState();
+}
+
+class _KhatmQuranPageState extends State<_KhatmQuranPage> {
+  late final Future<List<Thikr>> _future = AthkarRepository()
+      .getKhatmQuranDuaa();
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
+    return Container(
+      color: _MushafPageViewState._pageBg,
+      child: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(28, 40, 28, 48),
+          child: Column(
+            children: [
+              const PrayingHandsIcon(
+                size: 48,
+                color: _MushafPageViewState._frameGreen,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'quran.khatm_title'.tr(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _MushafPageViewState._frameGreen,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'quran.khatm_subtitle'.tr(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _MushafPageViewState._ink),
+              ),
+              const SizedBox(height: 28),
+              Container(
+                height: 1,
+                width: 80,
+                color: _MushafPageViewState._frameGreen.withValues(
+                  alpha: 0.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+              FutureBuilder<List<Thikr>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (final duaa in snapshot.data!)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Text(
+                            isArabic ? duaa.ar : duaa.en,
+                            textAlign: TextAlign.center,
+                            textDirection: isArabic
+                                ? TextDirection.rtl
+                                : TextDirection.ltr,
+                            style: isArabic
+                                ? AppTheme.quranTextStyle(
+                                    context,
+                                    fontSize: 20,
+                                  ).copyWith(
+                                    color: _MushafPageViewState._ink,
+                                    height: 2.0,
+                                  )
+                                : TextStyle(
+                                    color: _MushafPageViewState._ink,
+                                    height: 1.6,
+                                    fontSize: responsiveFontSize(
+                                      context,
+                                      16,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

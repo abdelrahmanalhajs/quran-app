@@ -48,52 +48,55 @@ class _PrayingHandsPainter extends CustomPainter {
       Offset q(double x, double y) => p(mx(x), y);
 
       final path = Path()
-        // Inner wrist (near centre bottom)
-        ..moveTo(q(12.3, 21.5).dx, q(12.3, 21.5).dy)
+        // Inner wrist — kept well clear of the centre line (rather than
+        // converging toward it) so the two hands read as an open pair with
+        // a real gap between them, not a single spike/dagger silhouette
+        // where the inner edges met at a point.
+        ..moveTo(q(13.4, 21.5).dx, q(13.4, 21.5).dy)
         // Up inner palm
         ..quadraticBezierTo(
-          q(12.8, 13.0).dx, q(12.8, 13.0).dy,
-          q(14.2, 6.5).dx, q(14.2, 6.5).dy,
+          q(13.6, 13.0).dx, q(13.6, 13.0).dy,
+          q(14.6, 6.8).dx, q(14.6, 6.8).dy,
         )
         // Index fingertip (tallest)
         ..quadraticBezierTo(
-          q(14.4, 3.8).dx, q(14.4, 3.8).dy,
-          q(15.0, 7.2).dx, q(15.0, 7.2).dy,
+          q(14.8, 4.2).dx, q(14.8, 4.2).dy,
+          q(15.4, 7.2).dx, q(15.4, 7.2).dy,
         )
         // Valley → middle finger
         ..quadraticBezierTo(
-          q(15.4, 8.8).dx, q(15.4, 8.8).dy,
-          q(16.0, 6.0).dx, q(16.0, 6.0).dy,
+          q(15.7, 8.8).dx, q(15.7, 8.8).dy,
+          q(16.2, 6.2).dx, q(16.2, 6.2).dy,
         )
         // Middle fingertip
         ..quadraticBezierTo(
-          q(16.2, 4.5).dx, q(16.2, 4.5).dy,
-          q(16.6, 6.0).dx, q(16.6, 6.0).dy,
+          q(16.4, 4.8).dx, q(16.4, 4.8).dy,
+          q(16.8, 6.2).dx, q(16.8, 6.2).dy,
         )
         // Valley → ring finger
         ..quadraticBezierTo(
-          q(17.2, 8.5).dx, q(17.2, 8.5).dy,
+          q(17.3, 8.3).dx, q(17.3, 8.3).dy,
           q(17.8, 7.0).dx, q(17.8, 7.0).dy,
         )
         // Ring fingertip
         ..quadraticBezierTo(
-          q(18.1, 5.8).dx, q(18.1, 5.8).dy,
+          q(18.1, 5.9).dx, q(18.1, 5.9).dy,
           q(18.4, 7.0).dx, q(18.4, 7.0).dy,
         )
         // Valley → pinky
         ..quadraticBezierTo(
-          q(19.0, 9.8).dx, q(19.0, 9.8).dy,
-          q(19.6, 9.0).dx, q(19.6, 9.0).dy,
+          q(18.9, 9.7).dx, q(18.9, 9.7).dy,
+          q(19.5, 9.0).dx, q(19.5, 9.0).dy,
         )
         // Pinky fingertip
         ..quadraticBezierTo(
-          q(19.9, 8.0).dx, q(19.9, 8.0).dy,
-          q(20.2, 9.0).dx, q(20.2, 9.0).dy,
+          q(19.8, 8.1).dx, q(19.8, 8.1).dy,
+          q(20.1, 9.0).dx, q(20.1, 9.0).dy,
         )
         // Down outer edge to wrist flare
         ..quadraticBezierTo(
-          q(21.8, 14.0).dx, q(21.8, 14.0).dy,
-          q(22.2, 21.5).dx, q(22.2, 21.5).dy,
+          q(21.4, 13.5).dx, q(21.4, 13.5).dy,
+          q(21.6, 21.5).dx, q(21.6, 21.5).dy,
         );
 
       canvas.drawPath(path, paint);
@@ -102,9 +105,10 @@ class _PrayingHandsPainter extends CustomPainter {
     drawHand(false); // right hand
     drawHand(true); // left hand (mirrored)
 
-    // V-notch where the two inner wrists meet at the very centre bottom.
-    canvas.drawLine(p(11.7, 21.5), p(12.0, 23.0), paint);
-    canvas.drawLine(p(12.0, 23.0), p(12.3, 21.5), paint);
+    // Small V-notch marking where the two wrists nearly meet, sitting in
+    // the gap between the hands rather than closing it.
+    canvas.drawLine(p(11.0, 21.5), p(12.0, 23.0), paint);
+    canvas.drawLine(p(12.0, 23.0), p(13.0, 21.5), paint);
   }
 
   @override

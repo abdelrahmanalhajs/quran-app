@@ -73,6 +73,7 @@ class SettingsProvider extends ChangeNotifier {
   static const _kQuranSignsColored = 'quran_signs_colored';
   static const _kBookmarkSurah = 'bookmark_surah';
   static const _kBookmarkPage = 'bookmark_page';
+  static const _kBookmarkAyah = 'bookmark_ayah';
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
@@ -86,6 +87,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _quranSignsColored = false;
   int? _bookmarkSurah;
   int? _bookmarkPage;
+  int? _bookmarkAyah;
 
   ThemeMode get themeMode => _themeMode;
   Reciter get reciter => _reciter;
@@ -117,9 +119,14 @@ class SettingsProvider extends ChangeNotifier {
   /// A manually-placed "stop sign" the user drops on purpose to come back to
   /// later — distinct from [lastReadSurah]/[lastReadPage], which moves on
   /// every page turn and just resumes where reading was left off. Null until
-  /// the user places one.
+  /// the user places one. [bookmarkAyah] (the ayah's number within
+  /// [bookmarkSurah]) is optional — a plain page-level bookmark leaves it
+  /// null; bookmarking a specific ayah from its detail sheet sets it too, so
+  /// [_MushafPageViewState] can highlight that exact ayah once its page is
+  /// reached, instead of leaving the reader to spot it on their own.
   int? get bookmarkSurah => _bookmarkSurah;
   int? get bookmarkPage => _bookmarkPage;
+  int? get bookmarkAyah => _bookmarkAyah;
   bool get hasBookmark => _bookmarkSurah != null && _bookmarkPage != null;
 
   Future<void> load() async {
@@ -153,25 +160,34 @@ class SettingsProvider extends ChangeNotifier {
     _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? false;
     _bookmarkSurah = prefs.getInt(_kBookmarkSurah);
     _bookmarkPage = prefs.getInt(_kBookmarkPage);
+    _bookmarkAyah = prefs.getInt(_kBookmarkAyah);
     notifyListeners();
   }
 
-  Future<void> setBookmark(int surahNumber, int page) async {
+  Future<void> setBookmark(int surahNumber, int page, {int? ayah}) async {
     _bookmarkSurah = surahNumber;
     _bookmarkPage = page;
+    _bookmarkAyah = ayah;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_kBookmarkSurah, surahNumber);
     await prefs.setInt(_kBookmarkPage, page);
+    if (ayah != null) {
+      await prefs.setInt(_kBookmarkAyah, ayah);
+    } else {
+      await prefs.remove(_kBookmarkAyah);
+    }
   }
 
   Future<void> clearBookmark() async {
     _bookmarkSurah = null;
     _bookmarkPage = null;
+    _bookmarkAyah = null;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kBookmarkSurah);
     await prefs.remove(_kBookmarkPage);
+    await prefs.remove(_kBookmarkAyah);
   }
 
   Future<void> setQuranSignsColored(bool colored) async {

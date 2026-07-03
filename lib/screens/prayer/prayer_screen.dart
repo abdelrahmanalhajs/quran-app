@@ -238,6 +238,11 @@ class _QiblaTabState extends State<_QiblaTab> {
     'qibla/declination',
   );
   double? _heading;
+  // Android's reported accuracy is unreliable (see [CompassEvent.accuracy]
+  // docs) so this only ever makes the calibration hint more insistent, never
+  // hides it — a figure-8 calibration is harmless to suggest even when the
+  // heading is actually fine.
+  double? _accuracy;
   // A device without a magnetometer (common on emulators, some tablets)
   // never emits a compass event with a non-null heading. There's no direct
   // "sensor unavailable" API, so absence is detected by waiting a few
@@ -307,6 +312,7 @@ class _QiblaTabState extends State<_QiblaTab> {
         if (mounted) {
           setState(() {
             _heading = next;
+            _accuracy = event.accuracy;
             _compassUnavailable = false;
           });
         }
@@ -360,6 +366,7 @@ class _QiblaTabState extends State<_QiblaTab> {
     final color = aligned
         ? Colors.green
         : Theme.of(context).colorScheme.primary;
+    final lowAccuracy = _accuracy != null && _accuracy! > 15;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -386,6 +393,37 @@ class _QiblaTabState extends State<_QiblaTab> {
           child: Transform.rotate(
             angle: angle,
             child: Icon(Icons.navigation, size: 100, color: color),
+          ),
+        ),
+        const SizedBox(height: 32),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.threesixty_outlined,
+                size: 16,
+                color: lowAccuracy
+                    ? Colors.amber.shade800
+                    : Theme.of(context).colorScheme.outline,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  lowAccuracy
+                      ? 'prayer.calibration_hint_low_accuracy'.tr()
+                      : 'prayer.calibration_hint'.tr(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: lowAccuracy
+                            ? Colors.amber.shade800
+                            : Theme.of(context).colorScheme.outline,
+                      ),
+                ),
+              ),
+            ],
           ),
         ),
         const Spacer(),
