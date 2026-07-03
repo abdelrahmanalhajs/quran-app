@@ -15,15 +15,25 @@ const _kSteps = [
   _Step(Icons.menu_book, 'onboarding.step1_title', 'onboarding.step1_body'),
   _Step(Icons.swipe, 'onboarding.step2_title', 'onboarding.step2_body'),
   _Step(
-    Icons.headphones,
+    Icons.bookmark_outline,
     'onboarding.step3_title',
     'onboarding.step3_body',
   ),
-  _Step(Icons.explore, 'onboarding.step4_title', 'onboarding.step4_body'),
+  _Step(
+    Icons.headphones,
+    'onboarding.step4_title',
+    'onboarding.step4_body',
+  ),
+  _Step(Icons.explore, 'onboarding.step5_title', 'onboarding.step5_body'),
   _Step(
     Icons.favorite_outline,
-    'onboarding.step5_title',
-    'onboarding.step5_body',
+    'onboarding.step6_title',
+    'onboarding.step6_body',
+  ),
+  _Step(
+    Icons.menu_book_outlined,
+    'onboarding.step7_title',
+    'onboarding.step7_body',
   ),
 ];
 

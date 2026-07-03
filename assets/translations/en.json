@@ -158,7 +158,7 @@
     "bookmark_page_title": "Stop-sign bookmark",
     "bookmark_page_body": "Tap the bookmark icon at the top of the reading page to drop a manual stop sign on that page, then tap the bookmark icon on the surah list to jump straight back to it anytime.",
     "bookmark_ayah_title": "Save a specific ayah",
-    "bookmark_ayah_body": "From an ayah's tafsir sheet (long-press the ayah), tap the bookmark icon to save that exact ayah — it shows highlighted in gold when you return to its page.",
+    "bookmark_ayah_body": "Long-press any ayah to open its tafsir sheet, then tap the bookmark icon to save that exact ayah. Tap the bookmark icon on the Quran tab to jump straight back to it anytime — the ayah shows highlighted in gold.",
     "khatm_page_title": "Khatm al-Quran page",
     "khatm_page_body": "After the last page of Surah An-Nas, you'll find a closing Khatm al-Quran dua page — that's the true end, so there's nothing more to swipe to.",
     "section_audio": "Audio & reciters",
@@ -205,11 +205,15 @@
     "step1_body": "Read, listen and reflect on the Quran — plus prayer times, athkar and a daily hadith, all in one app.",
     "step2_title": "Read like a printed Mushaf",
     "step2_body": "Swipe between real Mushaf pages. Tap anywhere to show or hide the menu, and hold an ayah to see its translation and tafsir.",
-    "step3_title": "Listen to your favorite reciter",
-    "step3_body": "Tap the play button on any page, or pick from 7 reciters in the top bar.",
-    "step4_title": "Prayer times & Qiblah",
-    "step4_body": "Accurate prayer times for your location, plus a live compass pointing toward the Qiblah.",
-    "step5_title": "Athkar, Hadith & more",
-    "step5_body": "Morning and evening athkar, a daily hadith and helpful reminders — all customizable from Settings."
+    "step3_title": "Save your place, return to it directly",
+    "step3_body": "Hold any ayah, then tap the bookmark icon to save that exact ayah, or drop a page-level stop sign from the top bar. Tap the bookmark icon on the Quran tab to jump straight back anytime.",
+    "step4_title": "Listen to your favorite reciter",
+    "step4_body": "Tap the play button on any page, or pick from 9 reciters in the top bar, and download your favorite recitation to listen offline.",
+    "step5_title": "Prayer times & Qiblah",
+    "step5_body": "Accurate prayer times for your location, plus a live compass pointing toward the Qiblah.",
+    "step6_title": "Athkar, Hadith & more",
+    "step6_body": "Morning and evening athkar, a daily hadith and helpful reminders — all customizable from Settings.",
+    "step7_title": "A complete user guide",
+    "step7_body": "For more detail on every feature in the app, browse the User Guide from Settings anytime."
   }
 }
