@@ -18,7 +18,6 @@ import '../../state/audio_provider.dart';
 import '../../state/navigation_provider.dart';
 import '../../state/quran_provider.dart';
 import '../../state/settings_provider.dart';
-import '../../widgets/praying_hands_icon.dart';
 import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
 
@@ -1682,13 +1681,12 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// different tab here pops this screen and switches [HomeShell] to it
   /// via [HomeNavigationProvider], rather than a nested Navigator.
   Widget _buildBottomNavOverlay(BuildContext context) {
-    // Mirrors HomeShell's own nav icons (including [PrayingHandsIcon] for
-    // Athkar, which has no built-in Material icon) so switching tabs from
-    // inside the reading screen looks identical to the main nav bar.
+    // Mirrors HomeShell's own nav icons so switching tabs from inside the
+    // reading screen looks identical to the main nav bar.
     final destinations = [
       (const Icon(Icons.menu_book), 'nav.quran'.tr()),
       (const Icon(Icons.explore_outlined), 'nav.prayer'.tr()),
-      (const PrayingHandsIcon(), 'nav.athkar'.tr()),
+      (const Icon(Icons.favorite_outline), 'nav.athkar'.tr()),
       (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
       (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
@@ -2508,11 +2506,6 @@ class _KhatmQuranPageState extends State<_KhatmQuranPage> {
           padding: const EdgeInsets.fromLTRB(28, 40, 28, 48),
           child: Column(
             children: [
-              const PrayingHandsIcon(
-                size: 48,
-                color: _MushafPageViewState._frameGreen,
-              ),
-              const SizedBox(height: 16),
               Text(
                 'quran.khatm_title'.tr(),
                 textAlign: TextAlign.center,
@@ -2558,13 +2551,11 @@ class _KhatmQuranPageState extends State<_KhatmQuranPage> {
                                 ? TextDirection.rtl
                                 : TextDirection.ltr,
                             style: isArabic
-                                ? AppTheme.quranTextStyle(
+                                ? AppTheme.athkarTextStyle(
                                     context,
                                     fontSize: 20,
-                                  ).copyWith(
-                                    color: _MushafPageViewState._ink,
                                     height: 2.0,
-                                  )
+                                  ).copyWith(color: _MushafPageViewState._ink)
                                 : TextStyle(
                                     color: _MushafPageViewState._ink,
                                     height: 1.6,

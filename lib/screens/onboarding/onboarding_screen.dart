@@ -2,38 +2,29 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../state/settings_provider.dart';
-import '../../widgets/praying_hands_icon.dart';
 import '../home/home_shell.dart';
 
 class _Step {
-  // Exactly one of [icon]/[isPrayingHands] is set. Athkar (step 5) uses
-  // [PrayingHandsIcon] — same as the Athkar tab everywhere else in the app —
-  // since Material has no built-in icon for it.
-  final IconData? icon;
-  final bool isPrayingHands;
+  final IconData icon;
   final String titleKey;
   final String bodyKey;
-  const _Step.icon(this.icon, this.titleKey, this.bodyKey)
-    : isPrayingHands = false;
-  const _Step.prayingHands(this.titleKey, this.bodyKey)
-    : icon = null,
-      isPrayingHands = true;
+  const _Step(this.icon, this.titleKey, this.bodyKey);
 }
 
 const _kSteps = [
-  _Step.icon(Icons.menu_book, 'onboarding.step1_title', 'onboarding.step1_body'),
-  _Step.icon(
-    Icons.swipe,
-    'onboarding.step2_title',
-    'onboarding.step2_body',
-  ),
-  _Step.icon(
+  _Step(Icons.menu_book, 'onboarding.step1_title', 'onboarding.step1_body'),
+  _Step(Icons.swipe, 'onboarding.step2_title', 'onboarding.step2_body'),
+  _Step(
     Icons.headphones,
     'onboarding.step3_title',
     'onboarding.step3_body',
   ),
-  _Step.icon(Icons.explore, 'onboarding.step4_title', 'onboarding.step4_body'),
-  _Step.prayingHands('onboarding.step5_title', 'onboarding.step5_body'),
+  _Step(Icons.explore, 'onboarding.step4_title', 'onboarding.step4_body'),
+  _Step(
+    Icons.favorite_outline,
+    'onboarding.step5_title',
+    'onboarding.step5_body',
+  ),
 ];
 
 /// Shown once, before [HomeShell], on a fresh install: page 0 asks the
@@ -241,9 +232,7 @@ class _FeatureStep extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  step.isPrayingHands
-                      ? PrayingHandsIcon(size: 72, color: scheme.primary)
-                      : Icon(step.icon, size: 72, color: scheme.primary),
+                  Icon(step.icon, size: 72, color: scheme.primary),
                   const SizedBox(height: 28),
                   Text(
                     step.titleKey.tr(),

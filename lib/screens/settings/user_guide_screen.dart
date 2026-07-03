@@ -1,19 +1,13 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import '../../core/responsive.dart';
-import '../../widgets/praying_hands_icon.dart';
 import '../../widgets/responsive_center.dart';
 
 class _GuideItem {
-  final IconData? icon;
-  final bool isPrayingHands;
+  final IconData icon;
   final String titleKey;
   final String bodyKey;
-  const _GuideItem(this.icon, this.titleKey, this.bodyKey)
-    : isPrayingHands = false;
-  const _GuideItem.prayingHands(this.titleKey, this.bodyKey)
-    : icon = null,
-      isPrayingHands = true;
+  const _GuideItem(this.icon, this.titleKey, this.bodyKey);
 }
 
 class _GuideSection {
@@ -113,7 +107,8 @@ const _kSections = [
       'guide.athkar_daily_title',
       'guide.athkar_daily_body',
     ),
-    _GuideItem.prayingHands(
+    _GuideItem(
+      Icons.favorite_outline,
       'guide.athkar_tabs_title',
       'guide.athkar_tabs_body',
     ),
@@ -234,16 +229,11 @@ class _GuideItemTile extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: item.isPrayingHands
-                ? PrayingHandsIcon(
-                    size: 20,
-                    color: Theme.of(context).colorScheme.primary,
-                  )
-                : Icon(
-                    item.icon,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+            child: Icon(
+              item.icon,
+              size: 20,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

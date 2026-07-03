@@ -9,7 +9,6 @@ import '../../models/surah.dart';
 import '../../state/navigation_provider.dart';
 import '../../state/quran_provider.dart';
 import '../../state/settings_provider.dart';
-import '../../widgets/praying_hands_icon.dart';
 import '../athkar/athkar_screen.dart';
 import '../hadith/hadith_screen.dart';
 import '../prayer/prayer_screen.dart';
@@ -191,11 +190,7 @@ class _HomeShellState extends State<HomeShell> {
     final destinations = [
       (const Icon(Icons.menu_book), 'nav.quran'.tr()),
       (const Icon(Icons.explore_outlined), 'nav.prayer'.tr()),
-      // No built-in Material icon for praying hands, and the 🤲 emoji is a
-      // fixed full-color glyph that can't pick up [IconTheme]'s tint like
-      // the rest of these "_outlined" icons — drawn instead so it matches
-      // their monochrome, selected/unselected-aware look.
-      (const PrayingHandsIcon(), 'nav.athkar'.tr()),
+      (const Icon(Icons.favorite_outline), 'nav.athkar'.tr()),
       (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
       (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
