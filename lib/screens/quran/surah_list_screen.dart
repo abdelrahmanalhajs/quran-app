@@ -282,6 +282,9 @@ class _JuzTile extends StatelessWidget {
           surahs.map((s) => isArabic ? s.nameAr : s.englishName).join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: isArabic
+              ? AppTheme.quranNameStyle(context, fontSize: 15)
+              : null,
         ),
         children: [
           for (final surah in surahs)
