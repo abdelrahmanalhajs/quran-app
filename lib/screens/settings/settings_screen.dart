@@ -1,8 +1,6 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/athan.dart';
@@ -13,6 +11,7 @@ import '../../core/services/athkar_prayer_reminder_settings.dart';
 import '../../core/services/notification_prefs.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/offline_recitations.dart';
+import '../../state/audio_provider.dart';
 import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
@@ -35,55 +34,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
 
-  // Separate player for the in-settings athan preview, independent of the
-  // real prayer-time athan player, so previewing here never triggers the
-  // "stop athan on any tap" behavior used for actual prayer notifications.
-  final AudioPlayer _previewPlayer = AudioPlayer();
-  String? _previewingAthanId;
+  static String _previewId(AthanOption athan) => 'athan_preview_${athan.id}';
 
   @override
   void initState() {
     super.initState();
     _loadNotifPref();
-    _previewPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        setState(() => _previewingAthanId = null);
-      } else {
-        setState(() {});
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _previewPlayer.dispose();
-    super.dispose();
   }
 
   Future<void> _togglePreview(AthanOption athan) async {
-    if (_previewingAthanId == athan.id) {
-      if (_previewPlayer.playing) {
-        await _previewPlayer.pause();
-      } else {
-        await _previewPlayer.play();
-      }
-      return;
+    // Plays through the app's one shared [AudioProvider] player rather than
+    // a dedicated preview player — [JustAudioBackground] only ever supports
+    // a single live [AudioPlayer] for the whole app, so a second instance's
+    // first setAudioSource used to throw "supports only a single player
+    // instance" and silently never play again for the rest of the session;
+    // see [AudioProvider.playOneShot]'s doc comment.
+    final audio = context.read<AudioProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await audio.playOneShot(
+        assetPath: athan.assetPath,
+        id: _previewId(athan),
+        title: athan.nameEn,
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('settings.preview_athan_failed'.tr())),
+      );
     }
-    setState(() => _previewingAthanId = athan.id);
-    // Once JustAudioBackground.init() has run (see main.dart), every
-    // AudioSource loaded by any just_audio player must carry a MediaItem
-    // tag — a bare setAsset() throws (assert in debug, a null cast in
-    // release), which is why the preview produced no sound at all.
-    await _previewPlayer.setAudioSource(
-      AudioSource.asset(
-        athan.assetPath,
-        tag: MediaItem(
-          id: 'athan_preview_${athan.id}',
-          title: athan.nameEn,
-        ),
-      ),
-    );
-    await _previewPlayer.play();
   }
 
   Future<void> _loadNotifPref() async {
@@ -109,6 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final audio = context.watch<AudioProvider>();
     final isArabic = context.locale.languageCode == 'ar';
 
     return Scaffold(
@@ -363,8 +342,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: Text(isArabic ? athan.nameAr : athan.nameEn),
                       trailing: IconButton(
                         icon: Icon(
-                          _previewingAthanId == athan.id &&
-                                  _previewPlayer.playing
+                          audio.isOneShotPlaying(_previewId(athan))
                               ? Icons.pause_circle_outline
                               : Icons.play_circle_outline,
                         ),

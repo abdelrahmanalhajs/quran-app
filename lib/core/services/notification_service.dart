@@ -3,13 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/hadith_repository.dart';
+import '../../state/audio_provider.dart';
 import '../../state/navigation_provider.dart';
 import '../constants/athan.dart';
 
@@ -40,12 +39,16 @@ class NotificationService {
   // Prayer athan ids: 2001 (fajr) .. 2005 (isha), one per entry in kPrayerNotificationNames.
   static const int _athanIdBase = 2001;
 
-  static final AudioPlayer _athanPlayer = AudioPlayer();
-
   /// Set from main() before the app's first frame, so a notification tap can
   /// switch tabs/sub-tabs without any screen needing to hold its own
   /// reference to the navigator.
   static GlobalKey<NavigatorState>? navigatorKey;
+
+  /// Set from main() alongside [navigatorKey] — [playAthan] plays through
+  /// this same shared player rather than one of its own, since
+  /// [JustAudioBackground] only ever supports a single live [AudioPlayer]
+  /// for the whole app; see [AudioProvider.playOneShot]'s doc comment.
+  static AudioProvider? audioProvider;
 
   // Holds a route that arrived before [navigatorKey] had a live context —
   // either a cold-start launch (app was terminated, see [init]) or a tap
@@ -183,29 +186,33 @@ class NotificationService {
     _route(payload);
   }
 
+  static String _athanOneShotId(AthanOption athan) => 'athan_${athan.id}';
+
   /// Plays the full athan recording in-app. Used as a fallback on platforms
   /// (iOS) where the notification's own alert sound can't carry the full
-  /// multi-minute recording, and as a manual replay action everywhere.
+  /// multi-minute recording, and as a manual replay action everywhere. Plays
+  /// through the shared [audioProvider] rather than a player of its own —
+  /// see [AudioProvider.playOneShot]'s doc comment for why.
   static Future<void> playAthan(AthanOption athan) async {
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());
-    // A MediaItem tag is mandatory once JustAudioBackground is initialized
-    // (see main.dart) — a bare setAsset() throws and the athan never plays.
-    await _athanPlayer.setAudioSource(
-      AudioSource.asset(
-        athan.assetPath,
-        tag: MediaItem(id: 'athan_${athan.id}', title: athan.nameEn),
-      ),
+    await audioProvider?.playOneShot(
+      assetPath: athan.assetPath,
+      id: _athanOneShotId(athan),
+      title: athan.nameEn,
     );
-    await _athanPlayer.play();
   }
 
-  static bool get isAthanPlaying => _athanPlayer.playing;
+  static bool get isAthanPlaying =>
+      audioProvider != null &&
+      kAthanOptions.any(
+        (a) => audioProvider!.isOneShotPlaying(_athanOneShotId(a)),
+      );
 
   /// Stops the in-app athan playback. Called whenever the user interacts
   /// with any button while the real prayer-time athan is sounding, so it
   /// doubles as a "dismiss" action without needing a dedicated stop button.
-  static Future<void> stopAthan() => _athanPlayer.stop();
+  static Future<void> stopAthan() async => audioProvider?.stop();
 
   static Future<bool> requestPermission() async {
     final android = _plugin

@@ -22,6 +22,15 @@ class AudioProvider extends ChangeNotifier {
   int?
   _ayahPlaylistStart; // 1-based ayah number the current playlist started at
 
+  // Identifies a short, non-Quran clip played through this same player (an
+  // athan preview or a notification's full athan replay — see [playOneShot]).
+  // Not just a nice-to-have: [JustAudioBackground] hard-codes support for
+  // exactly one live [AudioPlayer] for the whole app (its `init()` throws
+  // "supports only a single player instance" for a second one), so every
+  // sound the app plays *has* to share this one player rather than each
+  // feature owning its own — see [playOneShot]'s doc comment.
+  String? _oneShotId;
+
   static const _kLastSurah = 'audio_last_surah';
   static const _kLastReciter = 'audio_last_reciter';
   static const _kLastPositionMs = 'audio_last_position_ms';
@@ -103,12 +112,15 @@ class AudioProvider extends ChangeNotifier {
       (_ayahPlaylistStart != null && _currentAyahIndex != null)
       ? _ayahPlaylistStart! + _currentAyahIndex!
       : null;
+  String? get currentOneShotId => _oneShotId;
 
   bool isCurrentlyPlaying(int surahNumber, Reciter reciter) {
     return _currentSurah == surahNumber &&
         _currentReciter?.id == reciter.id &&
         _player.playing;
   }
+
+  bool isOneShotPlaying(String id) => _oneShotId == id && _player.playing;
 
   DateTime? _lastSaveTime;
   void _savePosition(Duration pos) {
@@ -179,6 +191,7 @@ class AudioProvider extends ChangeNotifier {
     _currentReciter = reciter;
     _currentAyahIndex = null;
     _ayahPlaylistStart = null;
+    _oneShotId = null;
     notifyListeners();
     try {
       final tag = MediaItem(
@@ -241,6 +254,7 @@ class AudioProvider extends ChangeNotifier {
     _currentReciter = reciter;
     _currentAyahIndex = 0;
     _ayahPlaylistStart = ayahNumberInSurah;
+    _oneShotId = null;
     notifyListeners();
     try {
       final title = surahTitle ?? 'Surah $surahNumber';
@@ -270,12 +284,61 @@ class AudioProvider extends ChangeNotifier {
     }
   }
 
+  /// Plays a short local clip — an athan preview (Settings) or a
+  /// notification's full athan replay (see [NotificationService.playAthan])
+  /// — through this same shared player rather than a separate [AudioPlayer]
+  /// of the clip's own. [JustAudioBackground] only ever supports one live
+  /// player for the whole app; a second instance's very first
+  /// `setAudioSource` throws "supports only a single player instance" and
+  /// that feature's audio silently never plays again for the rest of the
+  /// session — which is exactly what made the athan preview (and, whichever
+  /// of the two claimed the single slot first, Quran playback too) stop
+  /// working. Interrupts whatever else was playing, same as tapping a
+  /// different surah would.
+  Future<void> playOneShot({
+    required String assetPath,
+    required String id,
+    required String title,
+  }) async {
+    if (_oneShotId == id) {
+      if (_player.playing) {
+        await _player.pause();
+      } else {
+        if (_player.processingState == ProcessingState.completed) {
+          await _player.seek(Duration.zero);
+        }
+        await _player.play();
+      }
+      return;
+    }
+
+    _oneShotId = id;
+    _currentSurah = null;
+    _currentReciter = null;
+    _currentAyahIndex = null;
+    _ayahPlaylistStart = null;
+    notifyListeners();
+    try {
+      await _player.setAudioSource(
+        AudioSource.asset(assetPath, tag: MediaItem(id: id, title: title)),
+      );
+      await _player.play();
+    } catch (_) {
+      _oneShotId = null;
+      await _recreatePlayer();
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> stop() async {
     await _player.stop();
     _currentSurah = null;
     _currentReciter = null;
     _currentAyahIndex = null;
     _ayahPlaylistStart = null;
+    _oneShotId = null;
     notifyListeners();
   }
 

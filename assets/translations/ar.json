@@ -137,6 +137,7 @@
     "athan_notifications": "إشعارات الأذان",
     "athan_notifications_hint": "تلقَّ إشعارًا بصوت الأذان عند دخول كل وقت من أوقات الصلاة الخمس",
     "preview_athan": "استماع",
+    "preview_athan_failed": "تعذّر تشغيل الأذان، حاول مرة أخرى",
     "user_guide": "دليل الاستخدام"
   },
   "guide": {

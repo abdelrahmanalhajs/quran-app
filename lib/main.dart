@@ -44,9 +44,18 @@ Future<void> main() async {
   final settings = SettingsProvider();
   await settings.load();
 
+  // Constructed up front (rather than via the MultiProvider's lazy
+  // `create:`) so it can also be handed to [NotificationService] below —
+  // both need the exact same instance, since [JustAudioBackground] only
+  // ever supports one live [AudioPlayer] for the whole app; see
+  // [AudioProvider.playOneShot]'s doc comment.
+  final audioProvider = AudioProvider();
+
   // Lets NotificationService switch tabs/sub-tabs on a notification tap
-  // without any screen needing to hold its own navigator reference.
+  // without any screen needing to hold its own navigator reference, and
+  // play the full athan through the app's one shared audio player.
   NotificationService.navigatorKey = navigatorKey;
+  NotificationService.audioProvider = audioProvider;
 
   runApp(
     EasyLocalization(
@@ -58,7 +67,7 @@ Future<void> main() async {
         providers: [
           ChangeNotifierProvider.value(value: settings),
           ChangeNotifierProvider(create: (_) => QuranProvider()),
-          ChangeNotifierProvider(create: (_) => AudioProvider()),
+          ChangeNotifierProvider.value(value: audioProvider),
           ChangeNotifierProvider(create: (_) => PrayerProvider()),
           ChangeNotifierProvider(create: (_) => HomeNavigationProvider()),
         ],
