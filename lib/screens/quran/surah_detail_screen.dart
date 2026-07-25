@@ -1730,22 +1730,24 @@ class _MushafPageViewState extends State<_MushafPageView>
       (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
       (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
+    // No SafeArea wrapper here: [NavigationBar] already adds the system's
+    // bottom inset itself, exactly as it does inside HomeShell's Scaffold.
+    // Wrapping it padded that inset a second time, which is what made this
+    // bar taller — a band of empty surface colour under the labels — than
+    // the identical bar on every other tab.
     return Material(
       color: Theme.of(context).colorScheme.surface,
-      child: SafeArea(
-        top: false,
-        child: NavigationBar(
-          selectedIndex: 0,
-          onDestinationSelected: (i) {
-            if (i == 0) return;
-            context.read<HomeNavigationProvider>().setIndex(i);
-            Navigator.of(context).popUntil((r) => r.isFirst);
-          },
-          destinations: [
-            for (final (icon, label) in destinations)
-              NavigationDestination(icon: icon, label: label),
-          ],
-        ),
+      child: NavigationBar(
+        selectedIndex: 0,
+        onDestinationSelected: (i) {
+          if (i == 0) return;
+          context.read<HomeNavigationProvider>().setIndex(i);
+          Navigator.of(context).popUntil((r) => r.isFirst);
+        },
+        destinations: [
+          for (final (icon, label) in destinations)
+            NavigationDestination(icon: icon, label: label),
+        ],
       ),
     );
   }
