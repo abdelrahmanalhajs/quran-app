@@ -45,6 +45,14 @@ android {
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
             }
+            // AGP skips v1 (JAR) signing by default once minSdk >= 24, since
+            // Android itself doesn't need it — but Huawei AppGallery Connect's
+            // package validator rejects APKs without a v1 signature present
+            // ("Error code 991: Invalid package"), so it's forced on here
+            // alongside v2/v3 for that store's sake.
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 

@@ -1,0 +1,55 @@
+# Builds the iOS app on GitHub's macOS runners — this machine has no Xcode,
+# so this workflow is the project's only automated way to prove the iOS app
+# (including the PrayerWidget WidgetKit extension) still compiles with every
+# change to the shared Dart code.
+#
+# The artifact it produces is UNSIGNED: good for verifying the build and for
+# inspecting Runner.app, but not directly uploadable to App Store Connect.
+# Producing a signed, store-uploadable .ipa additionally requires an Apple
+# Developer account's distribution certificate + provisioning profile added
+# as repo secrets (then a signing step here) — or simply running
+# `flutter build ipa` in Xcode on any Mac.
+
+name: iOS build
+
+on:
+  push:
+    branches: [main, "fix/**", "feat/**"]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: dart analyze
+
+      - name: Build iOS (release, unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Zip Runner.app
+        run: |
+          cd build/ios/iphoneos
+          zip -qry Runner.app.zip Runner.app
+          ls -la
+
+      - name: Upload unsigned app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-runner-app-unsigned
+          path: build/ios/iphoneos/Runner.app.zip
+          retention-days: 14

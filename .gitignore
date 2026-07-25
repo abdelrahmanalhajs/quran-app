@@ -48,3 +48,6 @@ app.*.map.json
 /android/key.properties
 /android/*.jks
 /android/*.keystore
+
+# HarmonyOS port toolchain (SDK, Flutter-ohos fork, build caches) - large, machine-local
+.harmonyos-toolchain/
