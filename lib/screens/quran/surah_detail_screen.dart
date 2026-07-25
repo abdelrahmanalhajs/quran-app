@@ -592,13 +592,27 @@ class _AyahCard extends StatelessWidget {
                     );
                     return;
                   }
-                  await context.read<AudioProvider>().playFromAyah(
-                    surahNumber: ayah.surahNumber,
-                    ayahNumberInSurah: ayah.numberInSurah,
-                    totalAyahsInSurah: totalAyahs,
-                    reciter: reciter,
-                    surahTitle: surahNameAr,
-                  );
+                  final messenger = ScaffoldMessenger.of(context);
+                  final startedAtAyah = await context
+                      .read<AudioProvider>()
+                      .playFromAyah(
+                        surahNumber: ayah.surahNumber,
+                        ayahNumberInSurah: ayah.numberInSurah,
+                        totalAyahsInSurah: totalAyahs,
+                        reciter: reciter,
+                        surahTitle: surahNameAr,
+                      );
+                  if (!startedAtAyah) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'quran.ayah_playback_unavailable'.tr(
+                            args: [reciter.nameAr],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
             ],
@@ -724,13 +738,25 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                     onPressed: () async {
                       final audio = context.read<AudioProvider>();
                       final reciter = context.read<SettingsProvider>().reciter;
-                      await audio.playFromAyah(
+                      final messenger = ScaffoldMessenger.of(context);
+                      final startedAtAyah = await audio.playFromAyah(
                         surahNumber: widget.ayah.surahNumber,
                         ayahNumberInSurah: widget.ayah.numberInSurah,
                         totalAyahsInSurah: widget.totalAyahs,
                         reciter: reciter,
                         surahTitle: widget.surahNameAr,
                       );
+                      if (!startedAtAyah) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'quran.ayah_playback_unavailable'.tr(
+                                args: [reciter.nameAr],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),

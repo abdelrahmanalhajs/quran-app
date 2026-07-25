@@ -111,7 +111,6 @@ const List<Reciter> kReciters = [
     nameEn: 'Naser Al-Qatami',
     baseUrl: 'https://server6.mp3quran.net/qtm/',
     surahCount: 114,
-    // No per-ayah audio source found for this reciter; playback always
-    // starts from the beginning of the surah.
+    ayahAudioBaseUrl: 'https://everyayah.com/data/Nasser_Alqatami_128kbps/',
   ),
 ];

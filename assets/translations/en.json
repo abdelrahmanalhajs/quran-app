@@ -20,6 +20,7 @@
     "no_results": "No surahs found",
     "play_surah": "Play surah",
     "play_from_here": "Play from this ayah",
+    "ayah_playback_unavailable": "{} has no per-ayah recordings, so the surah started from the beginning. Pick another reciter to start from a specific ayah.",
     "view_page": "Switch to Quran page view",
     "view_list": "Switch to list view",
     "toggle_bookmark": "Mark/unmark this page",

@@ -235,9 +235,13 @@ class AudioProvider extends ChangeNotifier {
   /// Plays [surahNumber] starting from [ayahNumberInSurah] (1-based) through
   /// to the end of the surah, using per-ayah audio files chained as a
   /// playlist so playback continues seamlessly into the following ayahs.
-  /// Falls back to playing the whole surah from the start if [reciter] has
-  /// no per-ayah audio source.
-  Future<void> playFromAyah({
+  ///
+  /// Returns false — after falling back to playing the whole surah from the
+  /// start — when [reciter] publishes no per-ayah recordings and so can't
+  /// start mid-surah at all. Callers are expected to tell the user why they
+  /// got the whole surah instead of the ayah they asked for; silently doing
+  /// something different looks exactly like the feature being broken.
+  Future<bool> playFromAyah({
     required int surahNumber,
     required int ayahNumberInSurah,
     required int totalAyahsInSurah,
@@ -246,7 +250,7 @@ class AudioProvider extends ChangeNotifier {
   }) async {
     if (!reciter.supportsAyahPlayback) {
       await playSurah(surahNumber, reciter, surahTitle: surahTitle);
-      return;
+      return false;
     }
 
     _isLoading = true;
@@ -258,8 +262,15 @@ class AudioProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final title = surahTitle ?? 'Surah $surahNumber';
+      // Guards against a caller that couldn't resolve the surah's real ayah
+      // count passing a total below the starting ayah: that would build an
+      // empty playlist, which loads "successfully" and then sits silent
+      // before auto-advancing to the next surah.
+      final lastAyah = totalAyahsInSurah < ayahNumberInSurah
+          ? ayahNumberInSurah
+          : totalAyahsInSurah;
       final sources = [
-        for (var ayah = ayahNumberInSurah; ayah <= totalAyahsInSurah; ayah++)
+        for (var ayah = ayahNumberInSurah; ayah <= lastAyah; ayah++)
           _audioSource(
             reciter.audioUrlForAyah(surahNumber, ayah)!,
             MediaItem(
@@ -282,6 +293,7 @@ class AudioProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+    return true;
   }
 
   /// Plays a short local clip — an athan preview (Settings) or a
