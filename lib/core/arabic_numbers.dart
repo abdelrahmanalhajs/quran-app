@@ -61,22 +61,17 @@ String normalizeArabicSearch(String input) {
       .trim();
 }
 
-/// An ayah number wrapped in ornate brackets (U+FD3E/U+FD3F), e.g. ﴿٢﴾.
+/// [text] followed by its ayah number, exactly as the Mushaf page stores
+/// them — the ayah's letters, then a bare Arabic-Indic digit, nothing else.
 ///
-/// The page needs no such thing: the KFGQPC font draws its own rosette
-/// around bare digits, which is why the Mushaf shows the number inside an
-/// ornament with no extra character. A clipboard carries characters, not the
-/// font, so the marker has to survive in whatever font the text is pasted
-/// into — and that rules out the obvious candidate. U+06DD (۝), the
-/// dedicated end-of-ayah sign, is *specified* to enclose the digits that
-/// follow it, but only Quranic fonts implement that shaping: the system
-/// fonts behind WhatsApp, Notes and the like draw the rosette and leave the
-/// number sitting outside it. These brackets are shaped as an enclosure by
-/// virtually every Arabic font, so the number stays inside one wherever the
-/// text lands.
-String ayahNumberMarker(int numberInSurah) =>
-    '\uFD3E${arabicIndicNumber(numberInSurah)}\uFD3F';
-
-/// [text] followed by its bracketed ayah number, for copying out of the app.
+/// The rosette around the number on the page is not a character: the KFGQPC
+/// font draws it around that plain digit, which is why the page needs no
+/// end-of-ayah sign of its own. Copying these same characters therefore
+/// reproduces the page wherever a Quranic font renders them, and adding
+/// anything extra would only misrepresent it — U+06DD (۝) makes that font
+/// paint a *second*, empty rosette, and ornate brackets swap the rosette for
+/// a different ornament entirely. What a plain UI font does with the digit is
+/// its own business; no choice of characters can give it a rosette it has no
+/// glyph for.
 String ayahWithEndMarker(String text, int numberInSurah) =>
-    '$text ${ayahNumberMarker(numberInSurah)}';
+    '$text${arabicIndicNumber(numberInSurah)}';

@@ -5,13 +5,16 @@ void main() {
   group('copied ayah text', () {
     test('carries the end-of-ayah rosette, not a bare digit', () {
       final copied = ayahWithEndMarker('ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ', 2);
-      // The number has to end up *inside* an ornament in ordinary system
-      // fonts; U+06DD leaves it outside one, which was the reported bug.
-      expect(copied.endsWith('\uFD3E٢\uFD3F'), isTrue);
+      // Exactly the page's own characters: the ayah's letters then a bare
+      // Arabic-Indic digit, which the Mushaf font draws inside its rosette.
+      // Anything extra (\u06DD, brackets) is not what the page contains.
+      expect(copied.endsWith('٢'), isTrue);
+      expect(copied.contains('\u06DD'), isFalse);
+      expect(copied.contains('\uFD3E'), isFalse);
     });
 
     test('uses Arabic-Indic digits for multi-digit ayah numbers', () {
-      expect(ayahWithEndMarker('نص', 255), endsWith('\uFD3E٢٥٥\uFD3F'));
+      expect(ayahWithEndMarker('نص', 255), endsWith('٢٥٥'));
     });
 
     test('leaves the ayah text itself untouched', () {
