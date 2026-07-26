@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Paths the FileProvider below may hand out to other apps. The ayah image
-     written for the clipboard lands in the app's cache directory. -->
-<paths>
-    <cache-path name="cache" path="." />
-    <files-path name="files" path="." />
-</paths>

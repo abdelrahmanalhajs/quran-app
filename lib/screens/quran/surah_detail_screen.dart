@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
-import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 import '../../core/arabic_numbers.dart';
 import '../../core/constants/juz_boundaries.dart';
@@ -1121,70 +1118,6 @@ class _MushafPageViewState extends State<_MushafPageView>
     return ayahs.map((a) => ayahWithEndMarker(a.textAr, a.numberInSurah)).join(' ');
   }
 
-  /// Paints the selected ayahs into a PNG that reproduces the page itself —
-  /// same Mushaf font, same cream background, same green ayah numbers.
-  ///
-  /// Copying as an image rather than only as text is deliberate: on the page
-  /// each ayah number sits inside the font's own rosette, but a clipboard
-  /// carries characters, not the font, so the number's appearance is decided
-  /// by whatever app it's pasted into — most system fonts leave it outside
-  /// the rosette, or draw no rosette at all. A picture is the only form that
-  /// looks the same everywhere it lands.
-  Future<Uint8List?> _renderSelectionImage(BuildContext context) async {
-    final ayahs = _selectedAyahData.values.toList()
-      ..sort((a, b) => a.number.compareTo(b.number));
-    if (ayahs.isEmpty) return null;
-
-    const scale = 3.0; // render at 3x so the paste stays sharp when zoomed
-    const maxWidth = 720.0;
-    const padding = 28.0;
-    final baseStyle = AppTheme.quranTextStyle(
-      context,
-      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
-        context.read<SettingsProvider>().quranFontSize,
-      )],
-    ).copyWith(color: _ink, height: kQuranFontSizeLineHeight.first);
-
-    final spans = <TextSpan>[];
-    for (var i = 0; i < ayahs.length; i++) {
-      final a = ayahs[i];
-      spans.add(TextSpan(text: a.textAr, style: baseStyle));
-      spans.add(
-        TextSpan(
-          // Bare digits, exactly as the page does it: the Mushaf font draws
-          // its own ornament around them, and adding U+06DD here would paint
-          // a second, empty rosette beside it.
-          text: arabicIndicNumber(a.numberInSurah),
-          style: baseStyle.copyWith(color: _frameGreen),
-        ),
-      );
-      if (i != ayahs.length - 1) spans.add(TextSpan(text: ' ', style: baseStyle));
-    }
-
-    final painter = TextPainter(
-      text: TextSpan(children: spans),
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.center,
-    )..layout(maxWidth: maxWidth - padding * 2);
-
-    final width = maxWidth;
-    final height = painter.height + padding * 2;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    canvas.scale(scale);
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, width, height),
-      Paint()..color = _pageBg,
-    );
-    painter.paint(canvas, const Offset(padding, padding));
-    final image = await recorder.endRecording().toImage(
-      (width * scale).round(),
-      (height * scale).round(),
-    );
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    return bytes?.buffer.asUint8List();
-  }
-
   /// Whether the in-progress gesture turned out to be a pinch (`true`), a
   /// page-turn drag (`false`), or hasn't received enough info yet to tell
   /// (`null` — only a single pointer has been seen so far). Decided once a
@@ -1770,19 +1703,9 @@ class _MushafPageViewState extends State<_MushafPageView>
                     ? null
                     : () async {
                         final messenger = ScaffoldMessenger.of(context);
-                        // Text goes on the clipboard first so plain-text
-                        // targets (a search box, a message field that won't
-                        // take images) still get something useful, then the
-                        // picture — which is what reproduces the page's own
-                        // look wherever images can be pasted.
-                        final pngFuture = _renderSelectionImage(context);
                         await Clipboard.setData(
                           ClipboardData(text: _selectionCopyText()),
                         );
-                        final png = await pngFuture;
-                        if (png != null) {
-                          await Pasteboard.writeImage(png);
-                        }
                         if (!mounted) return;
                         messenger.showSnackBar(
                           SnackBar(

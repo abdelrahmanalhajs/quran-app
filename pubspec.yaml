@@ -31,10 +31,6 @@ dependencies:
   intl: any
   home_widget: ^0.9.0
   share_plus: ^11.0.0
-  # Clipboard images: the plain-text clipboard can't carry the Mushaf's
-  # look, since how an ayah number renders depends on the pasting app's
-  # font (see ayahWithEndMarker's doc).
-  pasteboard: ^0.5.0
 
 dev_dependencies:
   flutter_test:
