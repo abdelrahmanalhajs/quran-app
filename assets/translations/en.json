@@ -46,7 +46,15 @@
     "previous_surah": "Previous surah",
     "choose_reciter": "Choose reciter",
     "choose_reciter_hint": "Here you can choose the reciter",
-    "reciter_unavailable": "This reciter has no recording for this surah"
+    "reciter_unavailable": "This reciter has no recording for this surah",
+    "copy_ayah": "Copy ayah",
+    "ayah_copied": "Ayah copied",
+    "select_ayahs": "Select ayahs to copy",
+    "cancel_selection": "Cancel selection",
+    "select_ayahs_hint": "Tap consecutive ayahs to select them",
+    "ayahs_selected": "{} ayahs selected",
+    "copy": "Copy",
+    "ayahs_copied": "Copied {} ayahs"
   },
   "prayer": {
     "title": "Prayer Times & Qiblah",

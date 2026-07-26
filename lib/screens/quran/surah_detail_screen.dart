@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import '../../core/arabic_numbers.dart';
 import '../../core/constants/juz_boundaries.dart';
@@ -665,6 +666,12 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   bool _loadingTafsir = false;
   String? _tafsirError;
 
+  /// The whole ayah exactly as the Mushaf page renders it — its text plus
+  /// its ayah-end number, nothing else — never a fragment, and matching what
+  /// selecting the same ayah on the page copies.
+  String _copyText() =>
+      ayahWithEndMarker(widget.ayah.textAr, widget.ayah.numberInSurah);
+
   @override
   Widget build(BuildContext context) {
     final isArabic = context.locale.languageCode == 'ar';
@@ -672,6 +679,8 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
     final isBookmarked =
         settings.bookmarkSurah == widget.ayah.surahNumber &&
         settings.bookmarkAyah == widget.ayah.numberInSurah;
+    // Everything the sheet shows, in reading order, so pasting elsewhere
+    // reproduces what the reader sees rather than a bare fragment.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -700,6 +709,19 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                     SnackBar(content: Text('quran.ayah_bookmark_added'.tr())),
                   );
                 }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.copy_outlined),
+              tooltip: 'quran.copy_ayah'.tr(),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                await Clipboard.setData(
+                  ClipboardData(text: _copyText()),
+                );
+                messenger.showSnackBar(
+                  SnackBar(content: Text('quran.ayah_copied'.tr())),
+                );
               },
             ),
             const Spacer(),
@@ -954,6 +976,9 @@ class _MushafPageViewState extends State<_MushafPageView>
   // [_pressedAyahNumber]'s own setState now triggers on every press-down, so
   // the long-press would never get the chance to actually fire.
   final Map<int, LongPressGestureRecognizer> _recognizersByAyah = {};
+  // Only used while [_selectMode] is on: taps then pick whole ayahs instead
+  // of toggling the chrome.
+  final Map<int, TapGestureRecognizer> _selectRecognizersByAyah = {};
   late final PageController _pageController;
   late int _realPagesStart;
   late List<List<Ayah>> _screenPages;
@@ -1020,6 +1045,79 @@ class _MushafPageViewState extends State<_MushafPageView>
   int? _holdAyahNumber;
   bool _suppressNextTap = false;
 
+  /// Ayah-picking mode for copying. Selection is deliberately whole-ayah
+  /// only — you tap ayahs rather than dragging through glyphs — because a
+  /// free text selection over a Mushaf page can land mid-word or mid-ayah
+  /// and produce a quotation that isn't a complete verse. Holds the *global*
+  /// ayah numbers so a selection can span surahs across a page boundary.
+  bool _selectMode = false;
+  final Set<int> _selectedAyahs = <int>{};
+  // Kept alongside the selection so the copied text can be assembled in
+  // recitation order with each ayah's surah name and number, without having
+  // to look the ayahs up again.
+  final Map<int, Ayah> _selectedAyahData = <int, Ayah>{};
+
+  void _toggleSelectMode() {
+    setState(() {
+      _selectMode = !_selectMode;
+      if (_selectMode) {
+        // Keep the chrome up on the way in: tapping an ayah now picks it
+        // instead of toggling the chrome, so a user who entered this mode
+        // could otherwise be left with no visible way back out.
+        _chromeVisible = true;
+      } else {
+        _selectedAyahs.clear();
+        _selectedAyahData.clear();
+      }
+    });
+  }
+
+  /// Selection can only ever be one unbroken run of ayahs, so a copied
+  /// passage always reads continuously — you can't stitch together verses
+  /// that aren't actually consecutive in the Mushaf. A tap therefore either
+  /// extends the run by one at either end, trims it from either end, or —
+  /// when it lands somewhere disconnected — starts a fresh run there rather
+  /// than leaving a gap.
+  void _toggleAyahSelection(Ayah ayah) {
+    setState(() {
+      if (_selectedAyahs.isEmpty) {
+        _selectedAyahs.add(ayah.number);
+        _selectedAyahData[ayah.number] = ayah;
+        return;
+      }
+      final first = _selectedAyahs.reduce((a, b) => a < b ? a : b);
+      final last = _selectedAyahs.reduce((a, b) => a > b ? a : b);
+
+      // Trimming an end (tapping the run's own first/last ayah again).
+      if (ayah.number == last || ayah.number == first) {
+        _selectedAyahs.remove(ayah.number);
+        _selectedAyahData.remove(ayah.number);
+        return;
+      }
+      // Extending by one at either end keeps the run unbroken.
+      if (ayah.number == last + 1 || ayah.number == first - 1) {
+        _selectedAyahs.add(ayah.number);
+        _selectedAyahData[ayah.number] = ayah;
+        return;
+      }
+      // Anywhere else would leave a hole — begin again from here.
+      _selectedAyahs
+        ..clear()
+        ..add(ayah.number);
+      _selectedAyahData
+        ..clear()
+        ..[ayah.number] = ayah;
+    });
+  }
+
+  /// The selected run exactly as the page reads: each ayah's text followed
+  /// by its end-of-ayah marker, separated by a single space.
+  String _selectionCopyText() {
+    final ayahs = _selectedAyahData.values.toList()
+      ..sort((a, b) => a.number.compareTo(b.number));
+    return ayahs.map((a) => ayahWithEndMarker(a.textAr, a.numberInSurah)).join(' ');
+  }
+
   /// Whether the in-progress gesture turned out to be a pinch (`true`), a
   /// page-turn drag (`false`), or hasn't received enough info yet to tell
   /// (`null` — only a single pointer has been seen so far). Decided once a
@@ -1046,6 +1144,10 @@ class _MushafPageViewState extends State<_MushafPageView>
   List<SurahSummary> _allSurahs = [];
 
   void _disposeRecognizers() {
+    for (final r in _selectRecognizersByAyah.values) {
+      r.dispose();
+    }
+    _selectRecognizersByAyah.clear();
     for (final r in _recognizersByAyah.values) {
       r.dispose();
     }
@@ -1062,6 +1164,10 @@ class _MushafPageViewState extends State<_MushafPageView>
       _suppressNextTap = false;
       return;
     }
+    // While picking ayahs, a tap that misses the text shouldn't hide the
+    // chrome and strand the selection bar; taps that land on an ayah are
+    // handled by that ayah's own recogniser.
+    if (_selectMode) return;
     _toggleChrome();
   }
 
@@ -1536,12 +1642,90 @@ class _MushafPageViewState extends State<_MushafPageView>
             left: 0,
             right: 0,
             child: _ChromeOverlay(
-              visible: _chromeVisible,
+              // While picking ayahs the copy bar takes the bottom slot, so
+              // the tab bar doesn't cover it or compete for the same taps.
+              visible: _chromeVisible && !_selectMode,
               fromTop: false,
               child: _buildBottomNavOverlay(context),
             ),
           ),
+          if (_selectMode)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildSelectionBar(context),
+            ),
         ],
+      ),
+    );
+  }
+
+  /// Bottom bar shown while picking ayahs to copy: how many are selected,
+  /// and the actions for the selection.
+  Widget _buildSelectionBar(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
+    final count = _selectedAyahs.length;
+    return Material(
+      color: _frameGreen,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close, color: _pageBg),
+                tooltip: 'quran.cancel_selection'.tr(),
+                onPressed: _toggleSelectMode,
+              ),
+              Expanded(
+                child: Text(
+                  count == 0
+                      ? 'quran.select_ayahs_hint'.tr()
+                      : 'quran.ayahs_selected'.tr(
+                          args: [
+                            isArabic
+                                ? arabicIndicNumber(count)
+                                : count.toString(),
+                          ],
+                        ),
+                  style: const TextStyle(color: _pageBg),
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.copy, color: _pageBg, size: 18),
+                label: Text(
+                  'quran.copy'.tr(),
+                  style: const TextStyle(color: _pageBg),
+                ),
+                onPressed: count == 0
+                    ? null
+                    : () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        await Clipboard.setData(
+                          ClipboardData(text: _selectionCopyText()),
+                        );
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'quran.ayahs_copied'.tr(
+                                args: [
+                                  isArabic
+                                      ? arabicIndicNumber(count)
+                                      : count.toString(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                        _toggleSelectMode();
+                      },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1594,6 +1778,16 @@ class _MushafPageViewState extends State<_MushafPageView>
                         ),
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _selectMode
+                          ? Icons.select_all
+                          : Icons.content_copy_outlined,
+                      color: _pageBg,
+                    ),
+                    tooltip: 'quran.select_ayahs'.tr(),
+                    onPressed: _toggleSelectMode,
                   ),
                   IconButton(
                     icon: Icon(
@@ -1930,6 +2124,13 @@ class _MushafPageViewState extends State<_MushafPageView>
                   ayahHasSajdaTriggerWord(ayah.textAr) &&
                   !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
+        final selectRecognizer = _selectRecognizersByAyah.putIfAbsent(
+          ayah.number,
+          () => TapGestureRecognizer()
+            ..onTap = () {
+              if (_selectMode) _toggleAyahSelection(ayah);
+            },
+        );
         final recognizer = _recognizersByAyah.putIfAbsent(ayah.number, () {
           // Fires the instant the finger lands on this ayah, so it's a
           // reliable way to know which ayah is being held (the actual
@@ -1988,7 +2189,10 @@ class _MushafPageViewState extends State<_MushafPageView>
         // green "currently playing" tint below — that color already means
         // something else, so reusing it here would read as the recitation
         // having jumped to this ayah rather than as a simple press response.
-        final highlight = isPressed
+        final isSelected = _selectedAyahs.contains(ayah.number);
+        final highlight = isSelected
+            ? (Paint()..color = _frameGreen.withValues(alpha: 0.30))
+            : isPressed
             ? (Paint()..color = _ink.withValues(alpha: 0.12))
             : isActive
             ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
@@ -2020,7 +2224,7 @@ class _MushafPageViewState extends State<_MushafPageView>
               // Carry the same long-press recognizer as the rest of the ayah
               // so holding on the leading quarter mark opens the sheet too,
               // rather than being a dead spot.
-              recognizer: recognizer,
+              recognizer: _selectMode ? selectRecognizer : recognizer,
             ),
           );
         }
@@ -2028,7 +2232,7 @@ class _MushafPageViewState extends State<_MushafPageView>
           _ayahTextSpans(
             text: ayah.textAr,
             style: baseStyle.copyWith(background: highlight),
-            recognizer: recognizer,
+            recognizer: _selectMode ? selectRecognizer : recognizer,
             overlineSajdaWord: overlineSajdaWord,
           ),
         );
@@ -2055,7 +2259,7 @@ class _MushafPageViewState extends State<_MushafPageView>
                 fontWeight: FontWeight.bold,
                 background: highlight,
               ),
-              recognizer: recognizer,
+              recognizer: _selectMode ? selectRecognizer : recognizer,
             ),
           );
         }
@@ -2072,7 +2276,7 @@ class _MushafPageViewState extends State<_MushafPageView>
               color: _frameGreen,
               background: highlight,
             ),
-            recognizer: recognizer,
+            recognizer: _selectMode ? selectRecognizer : recognizer,
           ),
         );
         spans.add(const TextSpan(text: ' '));

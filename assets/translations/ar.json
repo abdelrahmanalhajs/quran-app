@@ -46,7 +46,15 @@
     "previous_surah": "السورة السابقة",
     "choose_reciter": "اختر القارئ",
     "choose_reciter_hint": "من هنا يمكن اختيار القارئ",
-    "reciter_unavailable": "لا تتوفر تسجيلات لهذا القارئ لهذه السورة"
+    "reciter_unavailable": "لا تتوفر تسجيلات لهذا القارئ لهذه السورة",
+    "copy_ayah": "نسخ الآية",
+    "ayah_copied": "تم نسخ الآية",
+    "select_ayahs": "تحديد آيات للنسخ",
+    "cancel_selection": "إلغاء التحديد",
+    "select_ayahs_hint": "اضغط على الآيات المتتالية لتحديدها",
+    "ayahs_selected": "{} آية محددة",
+    "copy": "نسخ",
+    "ayahs_copied": "تم نسخ {} آية"
   },
   "prayer": {
     "title": "مواقيت الصلاة والقبلة",

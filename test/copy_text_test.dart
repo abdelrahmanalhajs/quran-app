@@ -1,0 +1,22 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:quran_app/core/arabic_numbers.dart';
+
+void main() {
+  group('copied ayah text', () {
+    test('carries the end-of-ayah rosette, not a bare digit', () {
+      final copied = ayahWithEndMarker('ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ', 2);
+      // The number must sit *inside* the ornament when pasted elsewhere;
+      // a bare "٢" (or a rosette with the digit outside it) is the bug.
+      expect(copied.endsWith('\uFD3E٢\uFD3F'), isTrue);
+    });
+
+    test('uses Arabic-Indic digits for multi-digit ayah numbers', () {
+      expect(ayahWithEndMarker('نص', 255), endsWith('\uFD3E٢٥٥\uFD3F'));
+    });
+
+    test('leaves the ayah text itself untouched', () {
+      const text = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ';
+      expect(ayahWithEndMarker(text, 1), startsWith(text));
+    });
+  });
+}

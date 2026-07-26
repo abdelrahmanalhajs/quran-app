@@ -60,3 +60,21 @@ String normalizeArabicSearch(String input) {
       .replaceAll(_arabicAlefVariants, 'ا')
       .trim();
 }
+
+/// Ornate brackets (U+FD3E/U+FD3F) around an ayah's number, e.g. ﴿٢﴾.
+///
+/// The Mushaf page itself needs none of this: the KFGQPC font draws its own
+/// rosette around bare Arabic-Indic digits. Copied text is rendered by
+/// *other* apps' fonts, and there the bare digit reads as a stray "٢" with
+/// nothing marking it as an ayah number. U+06DD (۝), the dedicated
+/// end-of-ayah sign, is meant to enclose the digits that follow it but most
+/// fonts draw an empty rosette and leave the number sitting outside it, so
+/// these ornate brackets — which virtually every Arabic font renders as a
+/// decorative frame around whatever they wrap — are what actually reproduces
+/// the page's look elsewhere.
+String ayahEndMarker(int numberInSurah) =>
+    '\uFD3E${arabicIndicNumber(numberInSurah)}\uFD3F';
+
+/// [text] followed by its end-of-ayah marker, for copying out of the app.
+String ayahWithEndMarker(String text, int numberInSurah) =>
+    '$text ${ayahEndMarker(numberInSurah)}';

@@ -418,7 +418,14 @@ class NotificationService {
             ),
             audioAttributesUsage: AudioAttributesUsage.alarm,
           ),
-          iOS: const DarwinNotificationDetails(
+          iOS: DarwinNotificationDetails(
+            // Without this the athan never sounded on iOS: the notification
+            // fired with the system's default alert tone instead. iOS can't
+            // use the Flutter-asset MP3 the in-app player uses — it needs a
+            // CAF/AIFF/WAV in the app bundle, under 30s — so each athan
+            // ships a trimmed bundle copy alongside it (see
+            // [AthanOption.iosNotificationSound]).
+            sound: athan.iosNotificationSound,
             interruptionLevel: InterruptionLevel.timeSensitive,
           ),
         ),
