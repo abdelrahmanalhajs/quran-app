@@ -31,10 +31,13 @@ const hadithNotificationSetting = BoolNotificationSetting(
 );
 const hourlyZikrNotificationSetting = BoolNotificationSetting(
   'hourly_zikr_notifications_enabled',
+  defaultValue: true,
 );
 const sleepAthkarNotificationSetting = BoolNotificationSetting(
   'sleep_athkar_notifications_enabled',
+  defaultValue: true,
 );
 const jumaaAthkarNotificationSetting = BoolNotificationSetting(
   'jumaa_athkar_notifications_enabled',
+  defaultValue: true,
 );

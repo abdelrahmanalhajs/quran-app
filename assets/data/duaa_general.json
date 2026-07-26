@@ -28,17 +28,24 @@
     "repeat": 1
   },
   {
-    "categoryAr": "دعاء دخول المنزل والخروج منه",
-    "categoryEn": "Entering & Leaving Home",
-    "ar": "بِسْمِ اللَّهِ وَلَجْنَا، وَبِسْمِ اللَّهِ خَرَجْنَا، وَعَلَى رَبِّنَا تَوَكَّلْنَا (عِنْدَ الدُّخُولِ)",
-    "en": "In the name of Allah we enter, and in the name of Allah we leave, and upon our Lord we depend. (Upon entering)",
+    "categoryAr": "دعاء دخول المنزل",
+    "categoryEn": "Entering Home",
+    "ar": "بِسْمِ اللَّهِ وَلَجْنَا، وَبِسْمِ اللَّهِ خَرَجْنَا، وَعَلَى رَبِّنَا تَوَكَّلْنَا",
+    "en": "In the name of Allah we enter, and in the name of Allah we leave, and upon our Lord we depend.",
     "repeat": 1
   },
   {
-    "categoryAr": "دعاء دخول المنزل والخروج منه",
-    "categoryEn": "Entering & Leaving Home",
-    "ar": "بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ (عِنْدَ الْخُرُوجِ)",
-    "en": "In the name of Allah, I place my trust in Allah, and there is no power nor might except with Allah. (Upon leaving)",
+    "categoryAr": "دعاء الخروج من المنزل",
+    "categoryEn": "Leaving Home",
+    "ar": "بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+    "en": "In the name of Allah, I place my trust in Allah, and there is no power nor might except with Allah.",
+    "repeat": 1
+  },
+  {
+    "categoryAr": "دعاء الحاجة",
+    "categoryEn": "Duaa for a Need (Hajah)",
+    "ar": "لَا إِلَهَ إِلَّا اللَّهُ الْحَلِيمُ الْكَرِيمُ، سُبْحَانَ اللَّهِ رَبِّ السَّمَاوَاتِ السَّبْعِ وَرَبِّ الْأَرْضِ، الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ، أَسْأَلُكَ مِنْ خَيْرِ مَا تَسْأَلُكَ بِهِ عِبَادُكَ الصَّالِحُونَ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا يَسْتَعِيذُ مِنْهُ عِبَادُكَ الصَّالِحُونَ. اللَّهُمَّ إِنِّي أَسْأَلُكَ تَمَامَ النِّعْمَةِ، وَدَوَامَ الْعَافِيَةِ، وَالْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ، وَحُسْنَ الْعَاقِبَةِ فِي جَمِيعِ الْأُمُورِ، وَالنَّجَاةَ مِنَ النَّارِ، وَالْفَوْزَ بِالْجَنَّةِ. اللَّهُمَّ إِنِّي أَسْأَلُكَ كَذَا وَكَذَا (وَيَذْكُرُ حَاجَتَهُ)",
+    "en": "There is no deity except Allah, the Forbearing, the Generous. Glory be to Allah, Lord of the seven heavens and Lord of the earth, praise be to Allah, Lord of the worlds. I ask You for the goodness which Your righteous servants ask of You, and I seek refuge in You from the evil from which Your righteous servants seek refuge. O Allah, I ask You for the completion of blessing, the continuation of well-being, pardon and well-being in my religion and my worldly life, a good end to all my affairs, salvation from the Fire, and success in attaining Paradise. O Allah, I ask You for [the worshipper then mentions their need].",
     "repeat": 1
   },
   {

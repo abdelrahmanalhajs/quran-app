@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/offline_recitations.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -12,6 +13,8 @@ import 'state/navigation_provider.dart';
 import 'state/prayer_provider.dart';
 import 'state/quran_provider.dart';
 import 'state/settings_provider.dart';
+
+final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +27,35 @@ Future<void> main() async {
       androidNotificationChannelId: 'com.abdelrahmanalhajs.quranapp.audio',
       androidNotificationChannelName: 'Quran audio playback',
       androidNotificationOngoing: true,
+      // just_audio_background defaults this to 'mipmap/ic_launcher', which
+      // doesn't exist here — the app's launcher resource is `launcher_icon`
+      // (see flutter_launcher_icons in pubspec / AndroidManifest). With the
+      // default, the media notification posted as soon as any audio plays
+      // throws "Invalid notification (no valid small icon)" and crashes the
+      // app — which is what happened the moment the athan/Quran audio
+      // actually reached playback.
+      androidNotificationIcon: 'mipmap/launcher_icon',
     );
+    // Resolve the offline-recitations storage path up front so the audio
+    // player can synchronously prefer a downloaded surah on every play.
+    await OfflineRecitations.instance.warmUp();
   }
 
   final settings = SettingsProvider();
   await settings.load();
+
+  // Constructed up front (rather than via the MultiProvider's lazy
+  // `create:`) so it can also be handed to [NotificationService] below —
+  // both need the exact same instance, since [JustAudioBackground] only
+  // ever supports one live [AudioPlayer] for the whole app; see
+  // [AudioProvider.playOneShot]'s doc comment.
+  final audioProvider = AudioProvider();
+
+  // Lets NotificationService switch tabs/sub-tabs on a notification tap
+  // without any screen needing to hold its own navigator reference, and
+  // play the full athan through the app's one shared audio player.
+  NotificationService.navigatorKey = navigatorKey;
+  NotificationService.audioProvider = audioProvider;
 
   runApp(
     EasyLocalization(
@@ -40,7 +67,7 @@ Future<void> main() async {
         providers: [
           ChangeNotifierProvider.value(value: settings),
           ChangeNotifierProvider(create: (_) => QuranProvider()),
-          ChangeNotifierProvider(create: (_) => AudioProvider()),
+          ChangeNotifierProvider.value(value: audioProvider),
           ChangeNotifierProvider(create: (_) => PrayerProvider()),
           ChangeNotifierProvider(create: (_) => HomeNavigationProvider()),
         ],
@@ -50,6 +77,23 @@ Future<void> main() async {
   );
 }
 
+/// Android's default [MaterialScrollBehavior] wraps every scrollable in a
+/// stretch-on-overscroll indicator that visually expands the page when you
+/// scroll past its top/bottom edge — disabled app-wide here since it reads
+/// as a glitch on a Mushaf page rather than a deliberate effect.
+class _NoOverscrollBehavior extends MaterialScrollBehavior {
+  const _NoOverscrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
+  }
+}
+
 class QuranApp extends StatelessWidget {
   const QuranApp({super.key});
 
@@ -57,6 +101,7 @@ class QuranApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Quran',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,
@@ -65,6 +110,7 @@ class QuranApp extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
+      scrollBehavior: const _NoOverscrollBehavior(),
       home: settings.onboardingDone
           ? const HomeShell()
           : const OnboardingScreen(),

@@ -57,6 +57,15 @@ class _HomeShellState extends State<HomeShell> {
     // list, mirroring what switching back to the Quran tab does within a
     // session (see [_onDestinationSelected]).
     WidgetsBinding.instance.addPostFrameCallback((_) => _resumeLastRead());
+    // Applies a route from a notification that launched the app from
+    // terminated (didn't fire onDidReceiveNotificationResponse) or raced
+    // this very first frame. Runs after [_resumeLastRead] so a notification
+    // tap always wins over the last-read-page resume.
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => NotificationService.consumePendingRoute(),
+      );
+    }
   }
 
   /// Pushes the last-read surah/page (persisted by
@@ -158,20 +167,32 @@ class _HomeShellState extends State<HomeShell> {
     // instead of relying on each individual screen happening to depend on
     // locale itself.
     final index = context.watch<HomeNavigationProvider>().index;
+    // Watching SettingsProvider makes HomeShell itself rebuild on a theme
+    // change; building the tab screens as non-const instances below then
+    // rebuilds each kept-alive tab *in place* under the new theme. Together
+    // they make a light<->dark switch repaint hadith/athkar/the Quran list
+    // instantly with the new colors, while preserving each tab's state (no
+    // remount, no reload, no flash) — the IndexedStack otherwise leaves an
+    // offstage tab painted in whichever brightness it was first built under.
+    context.watch<SettingsProvider>();
     final localeKey = ValueKey(context.locale.languageCode);
+    // Deliberately not const: see the SettingsProvider watch above — these
+    // must be fresh instances on each HomeShell rebuild so the kept-alive
+    // tabs rebuild in place (and pick up theme changes) instead of being
+    // skipped as identical const widgets.
     final screens = [
-      const SurahListScreen(),
-      const PrayerScreen(),
-      const AthkarScreen(),
-      const HadithScreen(),
-      const SettingsScreen(),
+      SurahListScreen(),
+      PrayerScreen(),
+      AthkarScreen(),
+      HadithScreen(),
+      SettingsScreen(),
     ];
     final destinations = [
-      (Icons.menu_book, 'nav.quran'.tr()),
-      (Icons.explore_outlined, 'nav.prayer'.tr()),
-      (Icons.favorite_outline, 'nav.athkar'.tr()),
-      (Icons.format_quote, 'nav.hadith'.tr()),
-      (Icons.settings_outlined, 'nav.settings'.tr()),
+      (const Icon(Icons.menu_book), 'nav.quran'.tr()),
+      (const Icon(Icons.explore_outlined), 'nav.prayer'.tr()),
+      (const Icon(Icons.favorite_outline), 'nav.athkar'.tr()),
+      (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
+      (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
     final body = IndexedStack(key: localeKey, index: index, children: screens);
 
@@ -189,10 +210,7 @@ class _HomeShellState extends State<HomeShell> {
               labelType: NavigationRailLabelType.all,
               destinations: [
                 for (final (icon, label) in destinations)
-                  NavigationRailDestination(
-                    icon: Icon(icon),
-                    label: Text(label),
-                  ),
+                  NavigationRailDestination(icon: icon, label: Text(label)),
               ],
             ),
             const VerticalDivider(width: 1),
@@ -209,9 +227,10 @@ class _HomeShellState extends State<HomeShell> {
         onDestinationSelected: _onDestinationSelected,
         destinations: [
           for (final (icon, label) in destinations)
-            NavigationDestination(icon: Icon(icon), label: label),
+            NavigationDestination(icon: icon, label: label),
         ],
       ),
     );
   }
 }
+

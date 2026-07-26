@@ -19,41 +19,33 @@ enum QuranViewMode { page, list }
 /// a given page), the raw values here can't make Medium look bigger than
 /// Small on their own — see [kQuranFontSizeLineHeight] for what actually
 /// does.
-const List<double> kQuranFontSizeSteps = [40, 68, 36];
+/// Small / Medium / Large, in logical pixels. Only Small auto-fits each
+/// Mushaf page to the screen (no scrolling — see [kQuranFontSizeFitsPage]);
+/// Medium and Large render at their literal 30 / 36 px and the page scrolls.
+const List<double> kQuranFontSizeSteps = [28, 30, 36];
 
-/// Parallel to [kQuranFontSizeSteps]: whether that step auto-fits the page
-/// without scrolling. Kept separate from the raw font-size values so
-/// Small/Medium's values can be tuned independently without being mistaken
-/// for Large (which would flip which ones scroll if inferred from a `>=`
-/// comparison).
-const List<bool> kQuranFontSizeFitsPage = [true, true, false];
+/// Parallel to [kQuranFontSizeSteps]: only Small auto-fits the page without
+/// scrolling; Medium and Large render at their literal size and scroll.
+const List<bool> kQuranFontSizeFitsPage = [true, false, false];
 
 /// Parallel to [kQuranFontSizeSteps]: the line-height multiplier for that
-/// step. This — not the font-size value — is what makes Medium look bigger
-/// than Small: a tighter line height means less of the page's fixed height
-/// budget goes to the gap between lines once the page is scaled to fill the
-/// frame exactly, leaving more of it for the letters themselves. Medium was
-/// tightened further (1.7 -> 1.5) to read as noticeably bigger now that it's
-/// regular weight rather than bold (see [kQuranFontSizeWeight]).
-const List<double> kQuranFontSizeLineHeight = [2.1, 1.5, 1.9];
+/// step. Deliberately generous — the KFGQPC face stacks tall marks (the
+/// superscript alef, the small-high ligatures, shadda+vowel) well above the
+/// letters, so the lines need enough gap that those marks never reach into
+/// the descenders of the line above.
+const List<double> kQuranFontSizeLineHeight = [2.6, 2.6, 2.6];
 
 /// Parallel to [kQuranFontSizeSteps]: the body-text weight for that step.
-/// All 3 steps render at regular weight — Medium previously used bold to
-/// read as clearly bigger than Small, but its tighter [kQuranFontSizeLineHeight]
-/// already does that on its own now, so bold was dropped in favor of a
-/// plain, less heavy-looking step.
+/// All regular — the Mushaf face is never bold.
 const List<FontWeight> kQuranFontSizeWeight = [
   FontWeight.normal,
   FontWeight.normal,
   FontWeight.normal,
 ];
 
-/// Parallel to [kQuranFontSizeSteps]: the literal font size to render at in
-/// the separate (non-Mushaf) list view, where each ayah is its own card and
-/// there's no auto-fit scaler to normalize away the raw step values — using
-/// [kQuranFontSizeSteps] directly there made Medium (68) render far bigger
-/// than Large (36), and Large smaller than Small (40).
-const List<double> kQuranListViewFontSizes = [25, 33, 35];
+/// Parallel to [kQuranFontSizeSteps]: the font size in the separate list
+/// view. The same literal Small/Medium/Large pixel sizes as the page.
+const List<double> kQuranListViewFontSizes = [28, 30, 36];
 
 /// Index into [kQuranFontSizeSteps]/[kQuranFontSizeFitsPage] for the step
 /// nearest to [fontSize].
@@ -79,15 +71,22 @@ class SettingsProvider extends ChangeNotifier {
   static const _kLastReadPage = 'last_read_page';
   static const _kOnboardingDone = 'onboarding_done';
   static const _kQuranSignsColored = 'quran_signs_colored';
+  static const _kBookmarkSurah = 'bookmark_surah';
+  static const _kBookmarkPage = 'bookmark_page';
+  static const _kBookmarkAyah = 'bookmark_ayah';
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  double _quranFontSize = 40;
+  // Default to Small (28).
+  double _quranFontSize = 28;
   QuranViewMode _quranViewMode = QuranViewMode.page;
   int? _lastReadSurah;
   int? _lastReadPage;
   bool _onboardingDone = false;
-  bool _quranSignsColored = true;
+  bool _quranSignsColored = false;
+  int? _bookmarkSurah;
+  int? _bookmarkPage;
+  int? _bookmarkAyah;
 
   ThemeMode get themeMode => _themeMode;
   Reciter get reciter => _reciter;
@@ -116,6 +115,19 @@ class SettingsProvider extends ChangeNotifier {
   int? get lastReadSurah => _lastReadSurah;
   int? get lastReadPage => _lastReadPage;
 
+  /// A manually-placed "stop sign" the user drops on purpose to come back to
+  /// later — distinct from [lastReadSurah]/[lastReadPage], which moves on
+  /// every page turn and just resumes where reading was left off. Null until
+  /// the user places one. [bookmarkAyah] (the ayah's number within
+  /// [bookmarkSurah]) is optional — a plain page-level bookmark leaves it
+  /// null; bookmarking a specific ayah from its detail sheet sets it too, so
+  /// [_MushafPageViewState] can highlight that exact ayah once its page is
+  /// reached, instead of leaving the reader to spot it on their own.
+  int? get bookmarkSurah => _bookmarkSurah;
+  int? get bookmarkPage => _bookmarkPage;
+  int? get bookmarkAyah => _bookmarkAyah;
+  bool get hasBookmark => _bookmarkSurah != null && _bookmarkPage != null;
+
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final themeStr = prefs.getString(_kThemeMode);
@@ -130,7 +142,13 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 40;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 28;
+    // Migrate users whose saved value is from an older scale (incl. the old
+    // 24px and 26px Small) onto the current Small/Medium/Large pixel sizes,
+    // defaulting to Small.
+    if (!kQuranFontSizeSteps.contains(_quranFontSize)) {
+      _quranFontSize = 28;
+    }
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'
         ? QuranViewMode.list
@@ -138,8 +156,37 @@ class SettingsProvider extends ChangeNotifier {
     _lastReadSurah = prefs.getInt(_kLastReadSurah);
     _lastReadPage = prefs.getInt(_kLastReadPage);
     _onboardingDone = prefs.getBool(_kOnboardingDone) ?? false;
-    _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? true;
+    _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? false;
+    _bookmarkSurah = prefs.getInt(_kBookmarkSurah);
+    _bookmarkPage = prefs.getInt(_kBookmarkPage);
+    _bookmarkAyah = prefs.getInt(_kBookmarkAyah);
     notifyListeners();
+  }
+
+  Future<void> setBookmark(int surahNumber, int page, {int? ayah}) async {
+    _bookmarkSurah = surahNumber;
+    _bookmarkPage = page;
+    _bookmarkAyah = ayah;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_kBookmarkSurah, surahNumber);
+    await prefs.setInt(_kBookmarkPage, page);
+    if (ayah != null) {
+      await prefs.setInt(_kBookmarkAyah, ayah);
+    } else {
+      await prefs.remove(_kBookmarkAyah);
+    }
+  }
+
+  Future<void> clearBookmark() async {
+    _bookmarkSurah = null;
+    _bookmarkPage = null;
+    _bookmarkAyah = null;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kBookmarkSurah);
+    await prefs.remove(_kBookmarkPage);
+    await prefs.remove(_kBookmarkAyah);
   }
 
   Future<void> setQuranSignsColored(bool colored) async {

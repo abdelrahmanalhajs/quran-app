@@ -49,6 +49,17 @@ subprojects {
             }
         }
     }
+    // Some plugins (e.g. home_widget) hardcode Java 1.8 in their *own* build
+    // script, which runs after the withPlugin callback above and overrides it
+    // back — leaving Java at 1.8 while Kotlin is forced to 17 below, the exact
+    // mismatch Gradle rejects. Re-assert 17 in afterEvaluate, once the
+    // plugin's own script has run, so it has the final word.
+    afterEvaluate {
+        extensions.findByType<com.android.build.gradle.BaseExtension>()?.apply {
+            compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+            compileOptions.targetCompatibility = JavaVersion.VERSION_17
+        }
+    }
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }

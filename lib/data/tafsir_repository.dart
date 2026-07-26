@@ -1,43 +1,70 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../core/constants/api_constants.dart';
-import '../core/services/file_cache.dart';
+import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/services.dart' show rootBundle;
 
+/// One tafsir edition loaded from a bundled asset. Many ayahs share a single
+/// tafsir entry (the commentary is written per *range* of ayahs, not per
+/// ayah), so to avoid duplicating long passages thousands of times the asset
+/// stores each range's text once under its anchor ayah ([_anchors]) plus a
+/// compact `verse_key -> anchor_key` map ([_refs]) for every ayah that falls
+/// inside a range. Looking up any ayah resolves through [_refs] to its
+/// anchor's text.
+class _TafsirEdition {
+  final Map<String, String> anchors;
+  final Map<String, String> refs;
+
+  _TafsirEdition(this.anchors, this.refs);
+
+  // Static (not a factory) so it can be handed to [compute] to run on a
+  // background isolate — parsing ~2 MB of JSON into these maps would
+  // otherwise drop frames the first time a tafsir sheet is opened.
+  static _TafsirEdition parse(String source) {
+    final json = jsonDecode(source) as Map<String, dynamic>;
+    return _TafsirEdition(
+      (json['a'] as Map<String, dynamic>).cast<String, String>(),
+      (json['r'] as Map<String, dynamic>).cast<String, String>(),
+    );
+  }
+
+  String textFor(String verseKey) {
+    final anchorKey = refs[verseKey] ?? verseKey;
+    return anchors[anchorKey] ?? '';
+  }
+}
+
+/// Serves tafsir from bundled assets so it works fully offline and opens
+/// instantly: Al-Muyassar (Arabic) and Ibn Kathir (English), each covering
+/// all 6236 ayahs. Loaded lazily once and cached on static fields shared
+/// across instances.
 class TafsirRepository {
+  static _TafsirEdition? _ar;
+  static _TafsirEdition? _en;
+  static Future<void>? _loadingAr;
+  static Future<void>? _loadingEn;
+
+  static Future<void> _ensure(bool arabic) {
+    if (arabic) {
+      if (_ar != null) return Future.value();
+      return _loadingAr ??= rootBundle
+          .loadString('assets/data/tafsir_ar.json')
+          .then((s) => compute(_TafsirEdition.parse, s))
+          .then((edition) => _ar = edition);
+    } else {
+      if (_en != null) return Future.value();
+      return _loadingEn ??= rootBundle
+          .loadString('assets/data/tafsir_en.json')
+          .then((s) => compute(_TafsirEdition.parse, s))
+          .then((edition) => _en = edition);
+    }
+  }
+
   Future<String> getTafsir({
     required int surahNumber,
     required int ayahNumberInSurah,
     required bool arabic,
   }) async {
-    final resourceId = arabic
-        ? ApiConstants.tafsirMuyassarAr
-        : ApiConstants.tafsirIbnKathirEn;
+    await _ensure(arabic);
     final verseKey = '$surahNumber:$ayahNumberInSurah';
-    final cacheKey = 'tafsir_${resourceId}_$verseKey';
-
-    final cached = await FileCache.read(cacheKey);
-    if (cached != null) {
-      return cached['text'] as String;
-    }
-
-    final uri = Uri.parse(
-      '${ApiConstants.tafsirBase}/tafsirs/$resourceId/by_ayah/$verseKey',
-    );
-    final res = await http.get(uri);
-    if (res.statusCode != 200) {
-      throw Exception('Failed to load tafsir');
-    }
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
-    final text = (body['tafsir']?['text'] as String?) ?? '';
-    final clean = _stripHtml(text);
-    await FileCache.write(cacheKey, {'text': clean});
-    return clean;
-  }
-
-  String _stripHtml(String input) {
-    return input
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    return (arabic ? _ar! : _en!).textFor(verseKey);
   }
 }

@@ -60,3 +60,18 @@ String normalizeArabicSearch(String input) {
       .replaceAll(_arabicAlefVariants, 'ا')
       .trim();
 }
+
+/// [text] followed by its ayah number in Arabic-Indic digits in plain
+/// parentheses, e.g. "\u0628\u0633\u0645 ... (\u0661)", for copying out of the app.
+///
+/// Deliberately plain "()" rather than the ornate pair U+FD3E/U+FD3F: those
+/// carry wide decorative padding, which leaves the digit looking adrift
+/// inside them. Nor U+06DD, the dedicated end-of-ayah sign, which only fonts
+/// built for Quranic text shape as an enclosure — in ordinary fonts it draws
+/// an empty rosette with the number stranded beside it. Plain parentheses sit
+/// tight to the number and render the same way in every font.
+///
+/// The parentheses mirror automatically in right-to-left text, so "(" is
+/// drawn on the right-hand side as Arabic typography expects.
+String ayahWithEndMarker(String text, int numberInSurah) =>
+    '$text (${arabicIndicNumber(numberInSurah)})';

@@ -21,6 +21,9 @@ class AthkarRepository {
   Future<List<Thikr>> getGeneralDuaa() =>
       _load('assets/data/duaa_general.json');
 
+  Future<List<Thikr>> getKhatmQuranDuaa() =>
+      _load('assets/data/duaa_khatm_quran.json');
+
   Future<List<Thikr>> _load(String path) async {
     final raw = await rootBundle.loadString(path);
     final list = jsonDecode(raw) as List;

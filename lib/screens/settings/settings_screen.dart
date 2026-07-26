@@ -1,17 +1,22 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants/athan.dart';
+import '../../core/constants/reciters.dart';
 import '../../core/responsive.dart';
 import '../../core/services/athan_settings.dart';
 import '../../core/services/athkar_prayer_reminder_settings.dart';
 import '../../core/services/notification_prefs.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/offline_recitations.dart';
+import '../../state/audio_provider.dart';
 import '../../state/prayer_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
+import 'user_guide_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -29,43 +34,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
 
-  // Separate player for the in-settings athan preview, independent of the
-  // real prayer-time athan player, so previewing here never triggers the
-  // "stop athan on any tap" behavior used for actual prayer notifications.
-  final AudioPlayer _previewPlayer = AudioPlayer();
-  String? _previewingAthanId;
+  static String _previewId(AthanOption athan) => 'athan_preview_${athan.id}';
 
   @override
   void initState() {
     super.initState();
     _loadNotifPref();
-    _previewPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        setState(() => _previewingAthanId = null);
-      } else {
-        setState(() {});
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _previewPlayer.dispose();
-    super.dispose();
   }
 
   Future<void> _togglePreview(AthanOption athan) async {
-    if (_previewingAthanId == athan.id) {
-      if (_previewPlayer.playing) {
-        await _previewPlayer.pause();
-      } else {
-        await _previewPlayer.play();
-      }
-      return;
+    // Plays through the app's one shared [AudioProvider] player rather than
+    // a dedicated preview player — [JustAudioBackground] only ever supports
+    // a single live [AudioPlayer] for the whole app, so a second instance's
+    // first setAudioSource used to throw "supports only a single player
+    // instance" and silently never play again for the rest of the session;
+    // see [AudioProvider.playOneShot]'s doc comment.
+    final audio = context.read<AudioProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await audio.playOneShot(
+        assetPath: athan.assetPath,
+        id: _previewId(athan),
+        title: athan.nameEn,
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('settings.preview_athan_failed'.tr())),
+      );
     }
-    setState(() => _previewingAthanId = athan.id);
-    await _previewPlayer.setAsset(athan.assetPath);
-    await _previewPlayer.play();
   }
 
   Future<void> _loadNotifPref() async {
@@ -91,6 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final audio = context.watch<AudioProvider>();
     final isArabic = context.locale.languageCode == 'ar';
 
     return Scaffold(
@@ -123,24 +120,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
-                  SegmentedButton<ThemeMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: ThemeMode.system,
-                        label: Text('settings.theme_system'.tr()),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<ThemeMode>(
+                      // Drop the selected-state check mark: in Material 3 it's
+                      // inserted *before* the label on the chosen segment,
+                      // stealing width and truncating longer words (e.g.
+                      // "System") so the selected option couldn't show its
+                      // full word while the others could. Without it every
+                      // segment keeps the same width and shows its full label,
+                      // selected or not, in both English and Arabic.
+                      showSelectedIcon: false,
+                      style: SegmentedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 12,
+                        ),
                       ),
-                      ButtonSegment(
-                        value: ThemeMode.light,
-                        label: Text('settings.theme_light'.tr()),
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.dark,
-                        label: Text('settings.theme_dark'.tr()),
-                      ),
-                    ],
-                    selected: {settings.themeMode},
-                    onSelectionChanged: (selection) =>
-                        settings.setThemeMode(selection.first),
+                      segments: [
+                        ButtonSegment(
+                          value: ThemeMode.system,
+                          label: Text(
+                            'settings.theme_system'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                          ),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.light,
+                          label: Text(
+                            'settings.theme_light'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                          ),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.dark,
+                          label: Text(
+                            'settings.theme_dark'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                          ),
+                        ),
+                      ],
+                      selected: {settings.themeMode},
+                      onSelectionChanged: (selection) =>
+                          settings.setThemeMode(selection.first),
+                    ),
                   ),
                 ],
               ),
@@ -173,12 +202,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            SwitchListTile(
-              title: Text('settings.quran_signs_colored'.tr()),
-              subtitle: Text('settings.quran_signs_colored_hint'.tr()),
-              value: settings.quranSignsColored,
-              onChanged: (value) => settings.setQuranSignsColored(value),
-            ),
+            if (!kIsWeb) ...[
+              const Divider(),
+              const _OfflineRecitationsSection(),
+            ],
             const Divider(),
             SwitchListTile(
               title: Text('settings.notifications'.tr()),
@@ -315,8 +342,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: Text(isArabic ? athan.nameAr : athan.nameEn),
                       trailing: IconButton(
                         icon: Icon(
-                          _previewingAthanId == athan.id &&
-                                  _previewPlayer.playing
+                          audio.isOneShotPlaying(_previewId(athan))
                               ? Icons.pause_circle_outline
                               : Icons.play_circle_outline,
                         ),
@@ -334,6 +360,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }).toList(),
                 ),
               ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: Text('settings.user_guide'.tr()),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const UserGuideScreen()),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: Text('settings.share_app'.tr()),
+              onTap: () => SharePlus.instance.share(
+                ShareParams(
+                  text: 'settings.share_app_text'.tr(),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -455,6 +498,179 @@ class LanguageToggle extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text('عربي'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings section to download the selected reciter's whole-Quran audio for
+/// fully offline playback (see [OfflineRecitations]). Self-contained state so
+/// the long-running download and its progress don't live in the big settings
+/// State above.
+class _OfflineRecitationsSection extends StatefulWidget {
+  const _OfflineRecitationsSection();
+
+  @override
+  State<_OfflineRecitationsSection> createState() =>
+      _OfflineRecitationsSectionState();
+}
+
+class _OfflineRecitationsSectionState
+    extends State<_OfflineRecitationsSection> {
+  String? _reciterId;
+  int _downloaded = 0;
+  int _total = 114;
+  bool _busy = false;
+  bool _cancel = false;
+  int _progress = 0;
+
+  Future<void> _refresh(Reciter reciter) async {
+    final n = await OfflineRecitations.instance.downloadedCount(reciter);
+    if (mounted) {
+      setState(() {
+        _downloaded = n;
+        _total = reciter.surahCount;
+      });
+    }
+  }
+
+  Future<void> _download(Reciter reciter) async {
+    setState(() {
+      _busy = true;
+      _cancel = false;
+      _progress = _downloaded;
+    });
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await OfflineRecitations.instance.downloadAll(
+        reciter,
+        isCancelled: () => _cancel,
+        onProgress: (done, total) {
+          if (mounted) setState(() => _progress = done);
+        },
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('settings.offline_failed'.tr())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+      await _refresh(reciter);
+    }
+  }
+
+  void _stopDownload() {
+    setState(() => _cancel = true);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('settings.offline_stopped'.tr())));
+  }
+
+  Future<void> _delete(Reciter reciter) async {
+    await OfflineRecitations.instance.deleteAll(reciter);
+    await _refresh(reciter);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('settings.offline_deleted'.tr())));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reciter = context.watch<SettingsProvider>().reciter;
+    if (reciter.id != _reciterId && !_busy) {
+      _reciterId = reciter.id;
+      _total = reciter.surahCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _refresh(reciter);
+      });
+    }
+    final complete = _downloaded >= _total && _total > 0;
+
+    final String subtitle;
+    if (_busy) {
+      subtitle = 'settings.offline_downloading'.tr(
+        args: ['$_progress', '$_total'],
+      );
+    } else if (complete) {
+      subtitle = 'settings.offline_available'.tr(args: ['$_total', '$_total']);
+    } else if (_downloaded > 0) {
+      subtitle = 'settings.offline_partial'.tr(args: ['$_downloaded', '$_total']);
+    } else {
+      subtitle = 'settings.offline_recitations_hint'.tr();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.download_for_offline_outlined),
+          title: Text('settings.offline_recitations'.tr()),
+          subtitle: Text(subtitle),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'settings.offline_reciter'.tr(args: [
+                    context.locale.languageCode == 'ar'
+                        ? reciter.nameAr
+                        : reciter.nameEn,
+                  ]),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                ),
+              ),
+              if (!_busy)
+                TextButton(
+                  onPressed: () async {
+                    final settingsProvider = context.read<SettingsProvider>();
+                    final picked = await showReciterPicker(context, reciter);
+                    if (picked != null) {
+                      await settingsProvider.setReciter(picked);
+                    }
+                  },
+                  child: Text('settings.offline_choose_reciter'.tr()),
+                ),
+            ],
+          ),
+        ),
+        if (_busy)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: LinearProgressIndicator(
+              value: _total > 0 ? _progress / _total : null,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              if (_busy)
+                OutlinedButton(
+                  onPressed: _stopDownload,
+                  child: Text('settings.offline_cancel'.tr()),
+                )
+              else ...[
+                FilledButton.icon(
+                  onPressed: complete ? null : () => _download(reciter),
+                  icon: const Icon(Icons.download, size: 18),
+                  label: Text('settings.offline_download'.tr()),
+                ),
+                if (_downloaded > 0) ...[
+                  const SizedBox(width: 12),
+                  TextButton(
+                    onPressed: () => _delete(reciter),
+                    child: Text('settings.offline_delete'.tr()),
+                  ),
+                ],
+              ],
+            ],
+          ),
         ),
       ],
     );

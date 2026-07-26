@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../core/services/athan_settings.dart';
 import '../core/services/athkar_prayer_reminder_settings.dart';
 import '../core/services/notification_service.dart';
+import '../core/services/prayer_widget.dart';
 import '../data/prayer_repository.dart';
 import '../models/prayer_times.dart';
 
@@ -31,6 +32,8 @@ class PrayerProvider extends ChangeNotifier {
   PrayerLoadStatus get status => _status;
   PrayerTimes? get times => _times;
   double? get qiblaDirection => _qiblaDirection;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
   String? get errorMessage => _errorMessage;
 
   Future<void> load({bool arabicAthanLabels = false}) async {
@@ -44,13 +47,18 @@ class PrayerProvider extends ChangeNotifier {
       _status = PrayerLoadStatus.loadingData;
       notifyListeners();
 
-      final results = await Future.wait([
-        _repo.getPrayerTimes(_latitude!, _longitude!),
-        _repo.getQiblaDirection(_latitude!, _longitude!),
-      ]);
-      _times = results[0] as PrayerTimes;
-      _qiblaDirection = results[1] as double;
+      // Prayer times and qibla are computed locally (see PrayerRepository),
+      // so this no longer depends on a network call that can fail.
+      _times = _repo.getPrayerTimes(_latitude!, _longitude!);
+      _qiblaDirection = _repo.getQiblaDirection(_latitude!, _longitude!);
       _status = PrayerLoadStatus.loaded;
+
+      if (!kIsWeb) {
+        await PrayerWidget.update(
+          times: _times!.obligatoryPrayers,
+          arabic: arabicAthanLabels,
+        );
+      }
 
       if (!kIsWeb && await AthanSettings.isEnabled()) {
         final athan = await AthanSettings.getReciter();

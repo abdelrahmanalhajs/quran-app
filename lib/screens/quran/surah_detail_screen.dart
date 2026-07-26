@@ -1,16 +1,20 @@
+import 'dart:async';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import '../../core/arabic_numbers.dart';
 import '../../core/constants/juz_boundaries.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/athkar_repository.dart';
 import '../../data/quran_repository.dart';
 import '../../data/tafsir_repository.dart';
 import '../../models/ayah.dart';
 import '../../models/surah.dart';
+import '../../models/thikr.dart';
 import '../../state/audio_provider.dart';
 import '../../state/navigation_provider.dart';
 import '../../state/quran_provider.dart';
@@ -62,7 +66,14 @@ List<InlineSpan> _ayahTextSpans({
     if (i > 0) {
       spans.add(TextSpan(text: ' ', style: style, recognizer: recognizer));
     }
-    final isSajdaWord = i == sajdaWordIndex;
+    // The KFGQPC Mushaf text already marks most sajda trigger words with the
+    // authentic Madinah overline as a font glyph — U+06E4 (SMALL HIGH MADDA),
+    // the long bar above the word. Drawing our own TextDecoration.overline on
+    // top of those produced a doubled line (see 96:19 وَٱسۡجُدۡۤ). So only draw
+    // our overline for the few sajda words the text doesn't already mark, and
+    // otherwise leave the single font bar to stand on its own.
+    final fontAlreadyOverlines = words[i].contains('ۤ');
+    final isSajdaWord = i == sajdaWordIndex && !fontAlreadyOverlines;
     spans.add(
       TextSpan(
         text: words[i],
@@ -206,14 +217,35 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
+  /// Crosses a surah boundary by *Mushaf page*, not by surah. [boundaryPage]
+  /// is the real page the swipe left from (the current surah's first page when
+  /// going back, its last page when going forward); the target is simply the
+  /// adjacent page. Whichever surah owns that page is opened *at* it.
+  ///
+  /// This replaces the old surah-by-surah hop, whose "skip an already-shown
+  /// shared page" rule cascaded across every single-page surah that shares a
+  /// page — so one back-swipe from An-Nas (p.604) leapt 14 surahs to p.599,
+  /// skipping pages 600-603 entirely. Paging by page can't skip a page: each
+  /// one is shown exactly once on its way past.
   Future<void> _goToAdjacentSurah(
     BuildContext context,
-    int delta, {
-    required bool skip,
-  }) async {
-    final targetNumber = widget.surah.number + delta;
-    if (targetNumber < 1 || targetNumber > 114) return;
-    final list = await context.read<QuranProvider>().repository.getSurahList();
+    int delta,
+    int boundaryPage,
+  ) async {
+    final targetPage = boundaryPage + delta;
+    if (targetPage < 1 || targetPage > 604) return;
+    final repo = context.read<QuranProvider>().repository;
+    final pageAyahs = await repo.getPageAyahs(targetPage);
+    if (pageAyahs.isEmpty || !context.mounted) return;
+    // The surah the page "belongs to" — the lowest-numbered one with an ayah
+    // on it. Opening that surah at [targetPage] still renders the whole page
+    // (boundary sharing pulls in every surah that appears on it), so the page
+    // looks identical no matter which of its surahs technically hosts it.
+    final targetNumber = pageAyahs
+        .map((a) => a.surahNumber)
+        .reduce((a, b) => a < b ? a : b);
+    final list = await repo.getSurahList();
+    if (!context.mounted) return;
     SurahSummary? target;
     for (final s in list) {
       if (s.number == targetNumber) {
@@ -221,15 +253,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         break;
       }
     }
-    if (target == null || !context.mounted) return;
+    if (target == null) return;
     final resolvedTarget = target;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => SurahDetailScreen(
           surah: resolvedTarget,
-          startAtLastPage: delta < 0,
-          skipFirstPage: delta > 0 && skip,
-          skipLastPage: delta < 0 && skip,
+          startPage: targetPage,
         ),
       ),
     );
@@ -263,18 +293,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             surahsByNumber: bundle.surahsByNumber,
             activeSurahNumber: audio.currentSurah,
             activeAyahNumber: audio.currentAbsoluteAyah,
+            bookmarkedSurahNumber: settings.bookmarkSurah,
+            bookmarkedAyahNumber: settings.bookmarkAyah,
             fontSize: settings.quranFontSize,
             startAtLastPage: widget.startAtLastPage,
             skipFirstPage: widget.skipFirstPage,
             skipLastPage: widget.skipLastPage,
             startPage: widget.startPage,
-            onAdjacentSurah: (delta) => _goToAdjacentSurah(
-              context,
-              delta,
-              skip: delta > 0
-                  ? bundle.isLastPageShared
-                  : bundle.isFirstPageShared,
-            ),
+            onAdjacentSurah: (delta, boundaryPage) =>
+                _goToAdjacentSurah(context, delta, boundaryPage),
           );
         }
         final activeAyah = playingThis ? audio.currentAbsoluteAyah : null;
@@ -292,6 +319,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             itemCount: ayahs.length + (showBismillah ? 1 : 0),
             itemBuilder: (context, index) {
               if (showBismillah && index == 0) {
+                final listStepIndex = quranFontSizeStepIndex(
+                  settings.quranFontSize,
+                );
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Text(
@@ -300,10 +330,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     textDirection: TextDirection.rtl,
                     style: AppTheme.quranTextStyle(
                       context,
-                      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
-                        settings.quranFontSize,
-                      )],
-                    ).copyWith(fontWeight: FontWeight.bold),
+                      fontSize: kQuranListViewFontSizes[listStepIndex],
+                    ).copyWith(
+                      height: kQuranFontSizeLineHeight[listStepIndex],
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 );
               }
@@ -459,12 +490,15 @@ class _AyahCard extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     final audio = context.watch<AudioProvider>();
     final signsColored = settings.quranSignsColored;
+    final listStepIndex = quranFontSizeStepIndex(settings.quranFontSize);
+    // Matches [_MushafPageViewState._buildMushafPage]'s line-height override
+    // — the KFGQPC face's tall diacritic stacks need that much room in list
+    // view too, not just the page view; without it, this fell back to
+    // [AppTheme.quranTextStyle]'s generic 1.9, which was too tight for them.
     final baseStyle = AppTheme.quranTextStyle(
       context,
-      fontSize: kQuranListViewFontSizes[quranFontSizeStepIndex(
-        settings.quranFontSize,
-      )],
-    );
+      fontSize: kQuranListViewFontSizes[listStepIndex],
+    ).copyWith(height: kQuranFontSizeLineHeight[listStepIndex]);
     final spans = <InlineSpan>[
       if (isQuarterStart)
         TextSpan(
@@ -491,10 +525,13 @@ class _AyahCard extends StatelessWidget {
           ),
         ),
     ];
-    // Same [ColorFilter] approach as the Mushaf page view (see
-    // [SettingsProvider.quranSignsColored]): flattens the quarter-Hizb,
-    // sajda and obligatory-sajda-overline colors down to the body ink
-    // color when signs are set to render uncolored.
+    // Unlike the Mushaf page (always printed on a fixed cream background),
+    // the list view sits on the themed surface, so its text must follow the
+    // theme — white on dark, black on light. When signs are set to render
+    // uncolored, flatten the quarter-Hizb / sajda / overline colors down to
+    // that same themed body color (not the fixed Mushaf ink, which left the
+    // text near-black and invisible on a dark background).
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     final ayahText = Text.rich(
       TextSpan(children: spans),
       textAlign: TextAlign.right,
@@ -531,7 +568,7 @@ class _AyahCard extends StatelessWidget {
                     ? ayahText
                     : ColorFiltered(
                         colorFilter: ColorFilter.mode(
-                          _MushafPageViewState._ink,
+                          onSurface,
                           BlendMode.srcIn,
                         ),
                         child: ayahText,
@@ -556,13 +593,27 @@ class _AyahCard extends StatelessWidget {
                     );
                     return;
                   }
-                  await context.read<AudioProvider>().playFromAyah(
-                    surahNumber: ayah.surahNumber,
-                    ayahNumberInSurah: ayah.numberInSurah,
-                    totalAyahsInSurah: totalAyahs,
-                    reciter: reciter,
-                    surahTitle: surahNameAr,
-                  );
+                  final messenger = ScaffoldMessenger.of(context);
+                  final startedAtAyah = await context
+                      .read<AudioProvider>()
+                      .playFromAyah(
+                        surahNumber: ayah.surahNumber,
+                        ayahNumberInSurah: ayah.numberInSurah,
+                        totalAyahsInSurah: totalAyahs,
+                        reciter: reciter,
+                        surahTitle: surahNameAr,
+                      );
+                  if (!startedAtAyah) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'quran.ayah_playback_unavailable'.tr(
+                            args: [reciter.nameAr],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
             ],
@@ -615,21 +666,71 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
   bool _loadingTafsir = false;
   String? _tafsirError;
 
+  /// The whole ayah exactly as the Mushaf page renders it — its text plus
+  /// its ayah-end number, nothing else — never a fragment, and matching what
+  /// selecting the same ayah on the page copies.
+  String _copyText() =>
+      ayahWithEndMarker(widget.ayah.textAr, widget.ayah.numberInSurah);
+
   @override
   Widget build(BuildContext context) {
     final isArabic = context.locale.languageCode == 'ar';
+    final settings = context.watch<SettingsProvider>();
+    final isBookmarked =
+        settings.bookmarkSurah == widget.ayah.surahNumber &&
+        settings.bookmarkAyah == widget.ayah.numberInSurah;
+    // Everything the sheet shows, in reading order, so pasting elsewhere
+    // reproduces what the reader sees rather than a bare fragment.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4, right: 4),
-            child: IconButton(
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            IconButton(
+              icon: Icon(
+                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              ),
+              tooltip: 'quran.toggle_ayah_bookmark'.tr(),
+              onPressed: () {
+                final messenger = ScaffoldMessenger.of(context);
+                if (isBookmarked) {
+                  settings.clearBookmark();
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('quran.ayah_bookmark_removed'.tr())),
+                  );
+                } else {
+                  settings.setBookmark(
+                    widget.ayah.surahNumber,
+                    widget.ayah.page,
+                    ayah: widget.ayah.numberInSurah,
+                  );
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('quran.ayah_bookmark_added'.tr())),
+                  );
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.copy_outlined),
+              tooltip: 'quran.copy_ayah'.tr(),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                await Clipboard.setData(
+                  ClipboardData(text: _copyText()),
+                );
+                messenger.showSnackBar(
+                  SnackBar(content: Text('quran.ayah_copied'.tr())),
+                );
+              },
+            ),
+            const Spacer(),
+            IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => Navigator.of(context).pop(),
             ),
-          ),
+            const SizedBox(width: 4),
+          ],
         ),
         Flexible(
           child: SingleChildScrollView(
@@ -641,7 +742,14 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                   widget.ayah.textAr,
                   textAlign: TextAlign.right,
                   textDirection: TextDirection.rtl,
-                  style: AppTheme.quranTextStyle(context, fontSize: 24),
+                  // Same line-height override as the page/list views (see
+                  // [kQuranFontSizeLineHeight]) — the default 1.9 from
+                  // [AppTheme.quranTextStyle] is too tight for this font's
+                  // tall diacritic stacks.
+                  style: AppTheme.quranTextStyle(
+                    context,
+                    fontSize: 24,
+                  ).copyWith(height: kQuranFontSizeLineHeight.first),
                 ),
                 const SizedBox(height: 12),
                 Align(
@@ -652,13 +760,25 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                     onPressed: () async {
                       final audio = context.read<AudioProvider>();
                       final reciter = context.read<SettingsProvider>().reciter;
-                      await audio.playFromAyah(
+                      final messenger = ScaffoldMessenger.of(context);
+                      final startedAtAyah = await audio.playFromAyah(
                         surahNumber: widget.ayah.surahNumber,
                         ayahNumberInSurah: widget.ayah.numberInSurah,
                         totalAyahsInSurah: widget.totalAyahs,
                         reciter: reciter,
                         surahTitle: widget.surahNameAr,
                       );
+                      if (!startedAtAyah) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'quran.ayah_playback_unavailable'.tr(
+                                args: [reciter.nameAr],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),
@@ -797,12 +917,19 @@ class _MushafPageView extends StatefulWidget {
   final Map<int, SurahSummary> surahsByNumber;
   final int? activeSurahNumber;
   final int? activeAyahNumber;
+  // The surah/ayah of the user's manually-placed bookmark (see
+  // [SettingsProvider.bookmarkSurah]/[bookmarkAyah]), when it was placed on
+  // a specific ayah rather than just a page — highlighted distinctly from
+  // [activeAyahNumber] so the reader can spot exactly where they left off
+  // once they land back on that page.
+  final int? bookmarkedSurahNumber;
+  final int? bookmarkedAyahNumber;
   final double fontSize;
   final bool startAtLastPage;
   final bool skipFirstPage;
   final bool skipLastPage;
   final int? startPage;
-  final void Function(int delta) onAdjacentSurah;
+  final void Function(int delta, int boundaryPage) onAdjacentSurah;
 
   const _MushafPageView({
     required this.ayahs,
@@ -811,6 +938,8 @@ class _MushafPageView extends StatefulWidget {
     required this.surahsByNumber,
     required this.activeSurahNumber,
     required this.activeAyahNumber,
+    required this.bookmarkedSurahNumber,
+    required this.bookmarkedAyahNumber,
     required this.fontSize,
     required this.startAtLastPage,
     required this.skipFirstPage,
@@ -823,10 +952,19 @@ class _MushafPageView extends StatefulWidget {
   State<_MushafPageView> createState() => _MushafPageViewState();
 }
 
-class _MushafPageViewState extends State<_MushafPageView> {
+class _MushafPageViewState extends State<_MushafPageView>
+    // Plural [TickerProviderStateMixin], not the Single- variant: every page
+    // turn spins up its own short-lived AnimationController (see
+    // [_startPageTurn]), and the single-ticker mixin only ever hands out one
+    // ticker for the State's whole life — so the first swipe worked but every
+    // turn after it silently failed to animate (and thus never committed the
+    // page change), which looked like swiping back/forward "stops working"
+    // after one page.
+    with TickerProviderStateMixin {
   static const _pageBg = Color(0xFFFBF3E0);
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
+  static const _bookmarkGold = Color(0xFFB8860B);
 
   // Keyed by [Ayah.number] (global, unique across the whole Quran) and kept
   // alive for this whole surah-viewing session rather than recreated every
@@ -838,14 +976,36 @@ class _MushafPageViewState extends State<_MushafPageView> {
   // [_pressedAyahNumber]'s own setState now triggers on every press-down, so
   // the long-press would never get the chance to actually fire.
   final Map<int, LongPressGestureRecognizer> _recognizersByAyah = {};
+  // Only used while [_selectMode] is on: taps then pick whole ayahs instead
+  // of toggling the chrome.
+  final Map<int, TapGestureRecognizer> _selectRecognizersByAyah = {};
   late final PageController _pageController;
   late int _realPagesStart;
   late List<List<Ayah>> _screenPages;
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
+  // Set once this screen's last Mushaf page is the Quran's very last page
+  // (604) — reserves one extra, real slot right after it for a closing
+  // "Khatm al-Quran" dua screen, so reaching the end of the whole Quran
+  // lands somewhere deliberate instead of the swipe dead-ending on a
+  // next-surah sentinel that can never resolve (see [initState]'s
+  // `reachesQuranEnd`). [_handleScaleEnd]'s `target != _currentIndex` check
+  // already stops the swipe cold once [_itemCount] is reached — this only
+  // changes what that final index actually shows.
+  int? _khatmIndex;
   bool _navigating = false;
   int _itemCount = 0;
   int _currentIndex = 0;
+
+  /// Drives the manual page-turn slide (see [_startPageTurn]) — built
+  /// entirely ourselves, independent of [PageView]'s own `reverse`/ambient
+  /// [Directionality]-driven transition, so its on-screen slide direction
+  /// always matches the swipe by construction rather than depending on how
+  /// [PageView] happens to resolve `AxisDirection` for RTL-and-reversed.
+  AnimationController? _turnController;
+  int? _turnFromIndex;
+  int? _turnToIndex;
+  bool _turnSlideLeft = false;
 
   /// Manual pinch-zoom for the current page, on top of Small/Medium's own
   /// auto-fit scale (see [kQuranFontSizeFitsPage]) — Large already renders
@@ -862,6 +1022,102 @@ class _MushafPageViewState extends State<_MushafPageView> {
   /// reads as an immediate response to touch rather than a delayed one.
   int? _pressedAyahNumber;
 
+  /// The tafsir/translation hold is driven by a plain [Listener] + timer
+  /// (below) rather than the gesture arena: a [LongPressGestureRecognizer]
+  /// has a fixed ~18px pre-accept slop, so a long hold was silently cancelled
+  /// by ordinary finger drift — which is why the sheet failed to open on so
+  /// many ayahs. The per-ayah recognizers are kept only to identify which
+  /// ayah is under the finger (their `onLongPressDown` fires the instant the
+  /// finger lands and captures [_holdAction]); this timer, with a far more
+  /// forgiving 60px tolerance, is what actually opens the sheet once the hold
+  /// completes. ~0.6s is a responsive but deliberate hold — long enough not
+  /// to fire on a tap (which toggles the chrome), short enough that it
+  /// triggers before the user lifts.
+  static const Duration _holdDuration = Duration(milliseconds: 500);
+  static const double _holdMoveTolerance = 60;
+  Timer? _holdTimer;
+  Offset? _holdStart;
+  VoidCallback? _holdAction;
+  // Which ayah the finger is currently down on. Remembered on touch-down but
+  // only turned into a visible highlight once the hold actually completes —
+  // see the [_holdTimer] below — so a plain tap or a page-turn swipe never
+  // tints an ayah; only a deliberate press-and-hold for the tafsir sheet does.
+  int? _holdAyahNumber;
+  bool _suppressNextTap = false;
+
+  /// Ayah-picking mode for copying. Selection is deliberately whole-ayah
+  /// only — you tap ayahs rather than dragging through glyphs — because a
+  /// free text selection over a Mushaf page can land mid-word or mid-ayah
+  /// and produce a quotation that isn't a complete verse. Holds the *global*
+  /// ayah numbers so a selection can span surahs across a page boundary.
+  bool _selectMode = false;
+  final Set<int> _selectedAyahs = <int>{};
+  // Kept alongside the selection so the copied text can be assembled in
+  // recitation order with each ayah's surah name and number, without having
+  // to look the ayahs up again.
+  final Map<int, Ayah> _selectedAyahData = <int, Ayah>{};
+
+  void _toggleSelectMode() {
+    setState(() {
+      _selectMode = !_selectMode;
+      if (_selectMode) {
+        // Keep the chrome up on the way in: tapping an ayah now picks it
+        // instead of toggling the chrome, so a user who entered this mode
+        // could otherwise be left with no visible way back out.
+        _chromeVisible = true;
+      } else {
+        _selectedAyahs.clear();
+        _selectedAyahData.clear();
+      }
+    });
+  }
+
+  /// Selection can only ever be one unbroken run of ayahs, so a copied
+  /// passage always reads continuously — you can't stitch together verses
+  /// that aren't actually consecutive in the Mushaf. A tap therefore either
+  /// extends the run by one at either end, trims it from either end, or —
+  /// when it lands somewhere disconnected — starts a fresh run there rather
+  /// than leaving a gap.
+  void _toggleAyahSelection(Ayah ayah) {
+    setState(() {
+      if (_selectedAyahs.isEmpty) {
+        _selectedAyahs.add(ayah.number);
+        _selectedAyahData[ayah.number] = ayah;
+        return;
+      }
+      final first = _selectedAyahs.reduce((a, b) => a < b ? a : b);
+      final last = _selectedAyahs.reduce((a, b) => a > b ? a : b);
+
+      // Trimming an end (tapping the run's own first/last ayah again).
+      if (ayah.number == last || ayah.number == first) {
+        _selectedAyahs.remove(ayah.number);
+        _selectedAyahData.remove(ayah.number);
+        return;
+      }
+      // Extending by one at either end keeps the run unbroken.
+      if (ayah.number == last + 1 || ayah.number == first - 1) {
+        _selectedAyahs.add(ayah.number);
+        _selectedAyahData[ayah.number] = ayah;
+        return;
+      }
+      // Anywhere else would leave a hole — begin again from here.
+      _selectedAyahs
+        ..clear()
+        ..add(ayah.number);
+      _selectedAyahData
+        ..clear()
+        ..[ayah.number] = ayah;
+    });
+  }
+
+  /// The selected run exactly as the page reads: each ayah's text followed
+  /// by its end-of-ayah marker, separated by a single space.
+  String _selectionCopyText() {
+    final ayahs = _selectedAyahData.values.toList()
+      ..sort((a, b) => a.number.compareTo(b.number));
+    return ayahs.map((a) => ayahWithEndMarker(a.textAr, a.numberInSurah)).join(' ');
+  }
+
   /// Whether the in-progress gesture turned out to be a pinch (`true`), a
   /// page-turn drag (`false`), or hasn't received enough info yet to tell
   /// (`null` — only a single pointer has been seen so far). Decided once a
@@ -870,6 +1126,14 @@ class _MushafPageViewState extends State<_MushafPageView> {
   bool? _gestureIsZoom;
   double _gestureBaseScale = 1.0;
   Offset _gestureBaseOffset = Offset.zero;
+
+  /// Horizontal distance the (single-finger, non-zoom) gesture has travelled
+  /// so far, accumulated in [_handleScaleUpdate]. Used so a deliberate but
+  /// *slow* swipe — one whose release velocity is under the flick threshold —
+  /// still turns the page once it has dragged far enough, instead of being
+  /// silently dropped (which felt like the swipe "didn't take", especially
+  /// turning back a page).
+  double _gesturePanDx = 0;
 
   /// Whether the tap-to-reveal back/reciter/view-toggle/search bar (top)
   /// and embedded app-tab bar (bottom) are showing. Off by default so the
@@ -880,6 +1144,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
   List<SurahSummary> _allSurahs = [];
 
   void _disposeRecognizers() {
+    for (final r in _selectRecognizersByAyah.values) {
+      r.dispose();
+    }
+    _selectRecognizersByAyah.clear();
     for (final r in _recognizersByAyah.values) {
       r.dispose();
     }
@@ -887,6 +1155,21 @@ class _MushafPageViewState extends State<_MushafPageView> {
   }
 
   void _toggleChrome() => setState(() => _chromeVisible = !_chromeVisible);
+
+  /// The page's tap handler. When a 2-second hold has just opened an ayah's
+  /// sheet, the finger lift still arrives here as a tap — swallow that one so
+  /// the chrome doesn't toggle underneath the sheet.
+  void _handleTap() {
+    if (_suppressNextTap) {
+      _suppressNextTap = false;
+      return;
+    }
+    // While picking ayahs, a tap that misses the text shouldn't hide the
+    // chrome and strand the selection bar; taps that land on an ayah are
+    // handled by that ayah's own recogniser.
+    if (_selectMode) return;
+    _toggleChrome();
+  }
 
   @override
   void initState() {
@@ -902,17 +1185,35 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
     _screenPages = _groupByMushafPage(widget.ayahs);
     final hasPrevSurah = widget.surahNumber > 1;
-    final hasNextSurah = widget.surahNumber < 114;
+    // The Quran's very last page (604) is shared by An-Nas (114) *and*
+    // Al-Falaq/Al-Ikhlas (112/113) — see [_SurahDetailScreenState._loadBundle],
+    // which folds every surah sharing a page into that page's content. Paging
+    // forward reaches this screen's last page long before `surahNumber`
+    // itself ever reaches 114 (swiping past Al-Ikhlas opens *it* at page 604,
+    // not An-Nas — see [_goToAdjacentSurah]'s "lowest surah number owns the
+    // page" rule), so checking `surahNumber < 114` alone left the swipe
+    // dead-ending on a next-surah sentinel that could never resolve (its
+    // target page, 605, doesn't exist) instead of ever reaching the khatm
+    // page below. Checking the actual last page on screen instead of the
+    // surah number is what [_khatmIndex] needs to trigger correctly no
+    // matter which of the three surahs this screen happens to be opened as.
+    final reachesQuranEnd =
+        _screenPages.isNotEmpty && _screenPages.last.first.page >= 604;
+    final hasNextSurah = widget.surahNumber < 114 && !reachesQuranEnd;
 
     _realPagesStart = hasPrevSurah ? 1 : 0;
     _prevSentinelIndex = hasPrevSurah ? 0 : null;
     _nextSentinelIndex = hasNextSurah
         ? _realPagesStart + _screenPages.length
         : null;
+    _khatmIndex = reachesQuranEnd
+        ? _realPagesStart + _screenPages.length
+        : null;
     _itemCount =
         _screenPages.length +
         (_prevSentinelIndex != null ? 1 : 0) +
-        (_nextSentinelIndex != null ? 1 : 0);
+        (_nextSentinelIndex != null ? 1 : 0) +
+        (_khatmIndex != null ? 1 : 0);
 
     // A page that's shared with the adjacent surah may already have been
     // shown in full on the screen the user is coming from (the adjacent
@@ -959,34 +1260,48 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // of view) edge would.
     if (fullySkip) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onAdjacentSurah(widget.startAtLastPage ? -1 : 1);
+        if (!mounted) return;
+        final boundaryPage = widget.startAtLastPage
+            ? _screenPages.first.first.page
+            : _screenPages.last.first.page;
+        widget.onAdjacentSurah(widget.startAtLastPage ? -1 : 1, boundaryPage);
       });
     }
   }
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _disposeRecognizers();
     _pageController.dispose();
     _searchController.dispose();
+    _turnController?.dispose();
     super.dispose();
   }
 
   void _onPageChanged(int index) {
-    _currentIndex = index;
-    if (_zoomScale != 1.0 || _zoomOffset != Offset.zero) {
-      setState(() {
+    // Wrapped in setState (even when zoom is already at rest) so the
+    // bookmark icon in the top overlay — which reads [_currentMushafPage],
+    // derived from [_currentIndex] — stays in sync with whichever page is
+    // now on screen.
+    setState(() {
+      _currentIndex = index;
+      if (_zoomScale != 1.0 || _zoomOffset != Offset.zero) {
         _zoomScale = 1.0;
         _zoomOffset = Offset.zero;
-      });
-    }
+      }
+    });
     if (_navigating) return;
     if (index == _prevSentinelIndex) {
       _navigating = true;
-      widget.onAdjacentSurah(-1);
+      // Boundary page = this surah's first real page; the handler pages back
+      // to the one before it.
+      widget.onAdjacentSurah(-1, _screenPages.first.first.page);
     } else if (index == _nextSentinelIndex) {
       _navigating = true;
-      widget.onAdjacentSurah(1);
+      widget.onAdjacentSurah(1, _screenPages.last.first.page);
+    } else if (index == _khatmIndex) {
+      // Not a real Ayah page — nothing to persist as "last read" here.
     } else {
       _persistCurrentPage(index);
     }
@@ -1003,6 +1318,36 @@ class _MushafPageViewState extends State<_MushafPageView> {
     );
   }
 
+  /// The real Mushaf page number currently on screen — used by the
+  /// manual "stop sign" bookmark (see [_toggleBookmarkHere]), distinct
+  /// from [_persistCurrentPage]'s automatic last-read tracking.
+  int _currentMushafPage() {
+    final index = (_currentIndex - _realPagesStart).clamp(
+      0,
+      _screenPages.length - 1,
+    );
+    return _screenPages[index].first.page;
+  }
+
+  void _toggleBookmarkHere() {
+    final settings = context.read<SettingsProvider>();
+    final page = _currentMushafPage();
+    final isHere =
+        settings.bookmarkSurah == widget.surahNumber &&
+        settings.bookmarkPage == page;
+    if (isHere) {
+      settings.clearBookmark();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('quran.bookmark_removed'.tr())),
+      );
+    } else {
+      settings.setBookmark(widget.surahNumber, page);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('quran.bookmark_added'.tr())),
+      );
+    }
+  }
+
   /// Swipe direction is driven explicitly here (instead of relying on
   /// [PageView]'s own gesture handling, whose direction depends on a
   /// fiddly interaction between `reverse` and ambient [Directionality])
@@ -1013,19 +1358,19 @@ class _MushafPageViewState extends State<_MushafPageView> {
   /// [GestureDetector] responds to every pointer kind.
   ///
   /// Deliberately *not* driving [PageController.position] live as the
-  /// finger moves: this view's ambient [Directionality] is RTL (the whole
+  /// finger moves, and *not* using [PageController.animateToPage] for the
+  /// turn either: this view's ambient [Directionality] is RTL (the whole
   /// app's locale is Arabic) and [PageView.reverse] is `true`, and that
-  /// specific combination makes increasing scroll `pixels` paint in the
-  /// *opposite* screen direction from increasing index — a fixed property
-  /// of how [PageView] resolves `AxisDirection` for RTL-and-reversed, not
-  /// something fixable by flipping a sign on our own delta (the existing,
-  /// already-correct "swipe right -> next page" outcome below depends on
-  /// that exact same pixels/index relationship, so flipping it to fix the
-  /// live visual would just break the outcome instead). Tried it — the page
-  /// visibly slid opposite the finger. Deciding the target purely on
-  /// release and letting [PageController.animateToPage] run its own
-  /// (already-correct) transition avoids the mismatch entirely, at the cost
-  /// of the page not following the finger mid-drag.
+  /// specific combination makes [PageView]'s own scroll/animate direction
+  /// resolve inconsistently with the swipe — the page landed on is correct
+  /// either way, but the visual slide can end up going the opposite screen
+  /// direction from the finger. Rather than fight `AxisDirection`
+  /// resolution, [_startPageTurn] plays a slide we build and position
+  /// ourselves (see [_buildTurnOverlay]), so its direction is set directly
+  /// from the swipe's velocity sign and can never depend on `reverse`/
+  /// `Directionality` semantics. The target index (which page it lands on)
+  /// is still decided exactly as before; only how that change is animated
+  /// is now ours to control.
   ///
   /// A single [GestureDetector.onScale*] trio (rather than separate drag and
   /// scale recognizers competing for the same pointer) handles both page
@@ -1038,6 +1383,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
     _gestureIsZoom = null;
     _gestureBaseScale = _zoomScale;
     _gestureBaseOffset = _zoomOffset;
+    _gesturePanDx = 0;
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails details) {
@@ -1058,23 +1404,131 @@ class _MushafPageViewState extends State<_MushafPageView> {
         _zoomScale = (_gestureBaseScale * details.scale).clamp(1.0, 2.5);
         _zoomOffset = _gestureBaseOffset + details.focalPointDelta / _zoomScale;
       });
+    } else {
+      _gesturePanDx += details.focalPointDelta.dx;
     }
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
-    if (_gestureIsZoom != true) {
+    if (_gestureIsZoom != true && _turnController == null) {
       final velocity = details.velocity.pixelsPerSecond.dx;
-      if (velocity.abs() >= 150) {
-        final target = (velocity > 0 ? _currentIndex + 1 : _currentIndex - 1)
+      // A page turns either on a quick flick (velocity) OR on a slow but
+      // deliberate drag past a fraction of the screen width (distance). The
+      // distance fallback is what makes a calm, low-velocity swipe — common
+      // when paging *back* — register instead of being dropped. When the flick
+      // is too weak to read a direction from, fall back to the drag's own
+      // sign so forward/back still resolve correctly.
+      final width = MediaQuery.sizeOf(context).width;
+      final flicked = velocity.abs() >= 150;
+      final dragged = _gesturePanDx.abs() >= width * 0.22;
+      if (flicked || dragged) {
+        final goNext = flicked ? velocity > 0 : _gesturePanDx > 0;
+        final target = (goNext ? _currentIndex + 1 : _currentIndex - 1)
             .clamp(0, _itemCount - 1);
-        _pageController.animateToPage(
-          target,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-        );
+        if (target != _currentIndex) {
+          _startPageTurn(target, slideLeft: !goNext);
+        }
       }
     }
     _gestureIsZoom = null;
+    _gesturePanDx = 0;
+  }
+
+  /// Plays the page-turn slide and only swaps [_pageController] to [target]
+  /// once it finishes — see the doc comment above [_handleScaleStart] for
+  /// why this is driven manually instead of [PageController.animateToPage].
+  /// [slideLeft] is taken directly from the swipe's velocity sign, so the
+  /// whole transition (outgoing page leaving, incoming page entering) moves
+  /// in that exact screen direction, matching the finger by construction.
+  void _startPageTurn(int target, {required bool slideLeft}) {
+    final controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    setState(() {
+      _turnController = controller;
+      _turnFromIndex = _currentIndex;
+      _turnToIndex = target;
+      _turnSlideLeft = slideLeft;
+    });
+    controller.forward(from: 0).whenComplete(() {
+      controller.dispose();
+      if (!mounted || !identical(_turnController, controller)) return;
+      _pageController.jumpToPage(target);
+      setState(() {
+        _turnController = null;
+        _turnFromIndex = null;
+        _turnToIndex = null;
+      });
+    });
+  }
+
+  Widget _buildStaticPage(BuildContext context, int index) {
+    return SafeArea(
+      bottom: false,
+      child: ResponsiveCenter(maxWidth: 900, child: _buildPageForIndex(context, index)),
+    );
+  }
+
+  Widget _buildTurnOverlay(BuildContext context) {
+    final controller = _turnController;
+    final fromIndex = _turnFromIndex;
+    final toIndex = _turnToIndex;
+    // Positioned even when idle: a bare (non-Positioned) SizedBox.shrink()
+    // here would become the outer Stack's only non-Positioned child (every
+    // other child is Positioned), which makes the Stack size itself to that
+    // 0x0 child instead of filling the screen — collapsing the whole page
+    // to nothing.
+    if (controller == null || fromIndex == null || toIndex == null) {
+      return const Positioned.fill(child: SizedBox.shrink());
+    }
+    final width = MediaQuery.sizeOf(context).width;
+    final sign = _turnSlideLeft ? -1.0 : 1.0;
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: ColoredBox(
+          color: _pageBg,
+          child: AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              final dx = sign * width * controller.value;
+              return Stack(
+                children: [
+                  Transform.translate(
+                    offset: Offset(dx, 0),
+                    child: _buildStaticPage(context, fromIndex),
+                  ),
+                  Transform.translate(
+                    offset: Offset(dx - sign * width, 0),
+                    child: _buildStaticPage(context, toIndex),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Shared by the real [PageView]'s `itemBuilder` and [_buildStaticPage]
+  /// (the manual page-turn overlay), so both render identical content for
+  /// a given page index.
+  Widget _buildPageForIndex(BuildContext context, int index) {
+    if (index == _prevSentinelIndex) {
+      return const _AdjacentSurahTransitionPage(forward: false);
+    }
+    if (index == _nextSentinelIndex) {
+      return const _AdjacentSurahTransitionPage(forward: true);
+    }
+    if (index == _khatmIndex) {
+      return const _KhatmQuranPage();
+    }
+    final screenPageIndex = index - _realPagesStart;
+    final pageAyahs = _screenPages[screenPageIndex];
+    final page = _buildMushafPage(context, pageAyahs, screenPageIndex);
+    final stepIndex = quranFontSizeStepIndex(widget.fontSize);
+    return kQuranFontSizeFitsPage[stepIndex] ? _applyZoom(page) : page;
   }
 
   Widget _applyZoom(Widget child) {
@@ -1102,42 +1556,66 @@ class _MushafPageViewState extends State<_MushafPageView> {
       bottom: false,
       child: ResponsiveCenter(
         maxWidth: 900,
-        child: GestureDetector(
-          // Without this, a drag/tap starting on empty space (e.g. the
-          // letterboxed margins FittedBox leaves around a shrunk page)
-          // wouldn't be hit-tested at all, since the default
-          // `deferToChild` behavior only recognizes gestures where a
-          // child actually paints.
-          behavior: HitTestBehavior.opaque,
-          onScaleStart: _handleScaleStart,
-          onScaleUpdate: _handleScaleUpdate,
-          onScaleEnd: _handleScaleEnd,
-          // A quick tap anywhere on the page (including directly on an
-          // ayah's own text, see [_buildMushafPage]'s recognizers) toggles
-          // the chrome overlay; only a *held* tap on an ayah opens its
-          // translation/tafsir sheet, since a plain LongPressGestureRecognizer
-          // on the ayah text simply loses the gesture arena to this tap
-          // recognizer on anything shorter than the long-press threshold.
-          onTap: _toggleChrome,
-          child: PageView.builder(
-            controller: _pageController,
-            reverse: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _itemCount,
-            onPageChanged: _onPageChanged,
-            itemBuilder: (context, index) {
-              if (index == _prevSentinelIndex) {
-                return const _AdjacentSurahTransitionPage(forward: false);
-              }
-              if (index == _nextSentinelIndex) {
-                return const _AdjacentSurahTransitionPage(forward: true);
-              }
-              final screenPageIndex = index - _realPagesStart;
-              final pageAyahs = _screenPages[screenPageIndex];
-              final page = _buildMushafPage(context, pageAyahs, screenPageIndex);
-              final stepIndex = quranFontSizeStepIndex(widget.fontSize);
-              return kQuranFontSizeFitsPage[stepIndex] ? _applyZoom(page) : page;
-            },
+        // A passive [Listener] (it never claims the gesture, so scale/tap/
+        // page-turn are untouched) drives the tafsir hold: start a 2-second
+        // timer on touch-down, cancel it if the finger drifts past 60px or
+        // lifts early, and open the held ayah's sheet when it completes.
+        child: Listener(
+          onPointerDown: (event) {
+            _holdStart = event.position;
+            _holdTimer?.cancel();
+            _holdTimer = Timer(_holdDuration, () {
+              final action = _holdAction;
+              if (action == null || !mounted) return;
+              _suppressNextTap = true;
+              // The shadow appears now, at the moment the hold completes and
+              // the tafsir/translation sheet opens — never on a bare touch.
+              setState(() => _pressedAyahNumber = _holdAyahNumber);
+              action();
+            });
+          },
+          onPointerMove: (event) {
+            if (_holdStart != null &&
+                (event.position - _holdStart!).distance > _holdMoveTolerance) {
+              _holdTimer?.cancel();
+            }
+          },
+          onPointerUp: (_) {
+            _holdTimer?.cancel();
+            _holdAction = null;
+            _holdStart = null;
+            _holdAyahNumber = null;
+          },
+          onPointerCancel: (_) {
+            _holdTimer?.cancel();
+            _holdAction = null;
+            _holdStart = null;
+            _holdAyahNumber = null;
+          },
+          child: GestureDetector(
+            // Without this, a drag/tap starting on empty space (e.g. the
+            // letterboxed margins FittedBox leaves around a shrunk page)
+            // wouldn't be hit-tested at all, since the default
+            // `deferToChild` behavior only recognizes gestures where a
+            // child actually paints.
+            behavior: HitTestBehavior.opaque,
+            onScaleStart: _handleScaleStart,
+            onScaleUpdate: _handleScaleUpdate,
+            onScaleEnd: _handleScaleEnd,
+            // A quick tap anywhere on the page toggles the chrome overlay;
+            // a held tap (see the page [Listener] above) opens the ayah's
+            // sheet instead. [_handleTap] swallows the up-tap that would
+            // otherwise follow a completed hold so the chrome doesn't toggle
+            // underneath the sheet that just opened.
+            onTap: _handleTap,
+            child: PageView.builder(
+              controller: _pageController,
+              reverse: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _itemCount,
+              onPageChanged: _onPageChanged,
+              itemBuilder: _buildPageForIndex,
+            ),
           ),
         ),
       ),
@@ -1148,6 +1626,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
       child: Stack(
         children: [
           Positioned.fill(child: pageContent),
+          _buildTurnOverlay(context),
           Positioned(
             top: 0,
             left: 0,
@@ -1163,12 +1642,90 @@ class _MushafPageViewState extends State<_MushafPageView> {
             left: 0,
             right: 0,
             child: _ChromeOverlay(
-              visible: _chromeVisible,
+              // While picking ayahs the copy bar takes the bottom slot, so
+              // the tab bar doesn't cover it or compete for the same taps.
+              visible: _chromeVisible && !_selectMode,
               fromTop: false,
               child: _buildBottomNavOverlay(context),
             ),
           ),
+          if (_selectMode)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildSelectionBar(context),
+            ),
         ],
+      ),
+    );
+  }
+
+  /// Bottom bar shown while picking ayahs to copy: how many are selected,
+  /// and the actions for the selection.
+  Widget _buildSelectionBar(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
+    final count = _selectedAyahs.length;
+    return Material(
+      color: _frameGreen,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close, color: _pageBg),
+                tooltip: 'quran.cancel_selection'.tr(),
+                onPressed: _toggleSelectMode,
+              ),
+              Expanded(
+                child: Text(
+                  count == 0
+                      ? 'quran.select_ayahs_hint'.tr()
+                      : 'quran.ayahs_selected'.tr(
+                          args: [
+                            isArabic
+                                ? arabicIndicNumber(count)
+                                : count.toString(),
+                          ],
+                        ),
+                  style: const TextStyle(color: _pageBg),
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.copy, color: _pageBg, size: 18),
+                label: Text(
+                  'quran.copy'.tr(),
+                  style: const TextStyle(color: _pageBg),
+                ),
+                onPressed: count == 0
+                    ? null
+                    : () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        await Clipboard.setData(
+                          ClipboardData(text: _selectionCopyText()),
+                        );
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'quran.ayahs_copied'.tr(
+                                args: [
+                                  isArabic
+                                      ? arabicIndicNumber(count)
+                                      : count.toString(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                        _toggleSelectMode();
+                      },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1221,6 +1778,27 @@ class _MushafPageViewState extends State<_MushafPageView> {
                         ),
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _selectMode
+                          ? Icons.select_all
+                          : Icons.content_copy_outlined,
+                      color: _pageBg,
+                    ),
+                    tooltip: 'quran.select_ayahs'.tr(),
+                    onPressed: _toggleSelectMode,
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      settings.bookmarkSurah == widget.surahNumber &&
+                              settings.bookmarkPage == _currentMushafPage()
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      color: _pageBg,
+                    ),
+                    tooltip: 'quran.toggle_bookmark'.tr(),
+                    onPressed: _toggleBookmarkHere,
                   ),
                   IconButton(
                     icon: const Icon(
@@ -1337,17 +1915,29 @@ class _MushafPageViewState extends State<_MushafPageView> {
   /// different tab here pops this screen and switches [HomeShell] to it
   /// via [HomeNavigationProvider], rather than a nested Navigator.
   Widget _buildBottomNavOverlay(BuildContext context) {
+    // Mirrors HomeShell's own nav icons so switching tabs from inside the
+    // reading screen looks identical to the main nav bar.
     final destinations = [
-      (Icons.menu_book, 'nav.quran'.tr()),
-      (Icons.explore_outlined, 'nav.prayer'.tr()),
-      (Icons.favorite_outline, 'nav.athkar'.tr()),
-      (Icons.format_quote, 'nav.hadith'.tr()),
-      (Icons.settings_outlined, 'nav.settings'.tr()),
+      (const Icon(Icons.menu_book), 'nav.quran'.tr()),
+      (const Icon(Icons.explore_outlined), 'nav.prayer'.tr()),
+      (const Icon(Icons.favorite_outline), 'nav.athkar'.tr()),
+      (const Icon(Icons.format_quote), 'nav.hadith'.tr()),
+      (const Icon(Icons.settings_outlined), 'nav.settings'.tr()),
     ];
+    // [NavigationBar] wraps itself in a SafeArea for *every* edge (see its
+    // build method). On the other tabs it is the Scaffold's
+    // bottomNavigationBar, so the top inset is already spoken for by the
+    // body and that SafeArea contributes nothing at the top. Here the bar
+    // lives in a Stack over a full-screen page where the status-bar inset
+    // is still unconsumed, so it was padding a status bar's worth of empty
+    // surface *above* the icons — the tall white band over the Mushaf page.
+    // Dropping just the top inset for this subtree leaves the bar identical
+    // to the one on every other tab.
     return Material(
       color: Theme.of(context).colorScheme.surface,
-      child: SafeArea(
-        top: false,
+      child: MediaQuery.removePadding(
+        context: context,
+        removeTop: true,
         child: NavigationBar(
           selectedIndex: 0,
           onDestinationSelected: (i) {
@@ -1357,7 +1947,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
           },
           destinations: [
             for (final (icon, label) in destinations)
-              NavigationDestination(icon: Icon(icon), label: label),
+              NavigationDestination(icon: icon, label: label),
           ],
         ),
       ),
@@ -1507,7 +2097,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
               'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
               textAlign: TextAlign.center,
               textDirection: TextDirection.rtl,
-              style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+              style: baseStyle,
             ),
           );
         }
@@ -1534,32 +2124,54 @@ class _MushafPageViewState extends State<_MushafPageView> {
                   ayahHasSajdaTriggerWord(ayah.textAr) &&
                   !ayahHasSajdaTriggerWord(nextAyah.textAr));
         final surahInfo = widget.surahsByNumber[ayah.surahNumber];
+        final selectRecognizer = _selectRecognizersByAyah.putIfAbsent(
+          ayah.number,
+          () => TapGestureRecognizer()
+            ..onTap = () {
+              if (_selectMode) _toggleAyahSelection(ayah);
+            },
+        );
         final recognizer = _recognizersByAyah.putIfAbsent(ayah.number, () {
-          final r = LongPressGestureRecognizer();
+          // Fires the instant the finger lands on this ayah, so it's a
+          // reliable way to know which ayah is being held (the actual
+          // 2-second timing + drift tolerance live in the page [Listener],
+          // not here — see [_holdAction]). A long deadline keeps this
+          // recognizer from ever claiming the gesture arena, so taps and
+          // page-turn swipes keep working normally.
+          final r = LongPressGestureRecognizer(
+            duration: const Duration(seconds: 10),
+          );
           r.onLongPressDown = (_) {
-            setState(() => _pressedAyahNumber = ayah.number);
+            // Just remember which ayah is under the finger and what to do if
+            // the hold completes — no highlight yet (see [_holdTimer]).
+            _holdAyahNumber = ayah.number;
+            _holdAction = () => _showAyahSheet(
+              this.context,
+              ayah,
+              surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
+              surahInfo?.nameAr ?? '',
+            );
           };
           r.onLongPressCancel = () {
+            if (_holdAyahNumber == ayah.number) _holdAyahNumber = null;
             if (_pressedAyahNumber == ayah.number) {
               setState(() => _pressedAyahNumber = null);
             }
           };
           r.onLongPressUp = () {
+            if (_holdAyahNumber == ayah.number) _holdAyahNumber = null;
             if (_pressedAyahNumber == ayah.number) {
               setState(() => _pressedAyahNumber = null);
             }
           };
-          r.onLongPress = () => _showAyahSheet(
-            context,
-            ayah,
-            surahInfo?.numberOfAyahs ?? ayah.numberInSurah,
-            surahInfo?.nameAr ?? '',
-          );
           return r;
         });
         final isActive =
             widget.activeSurahNumber == ayah.surahNumber &&
             widget.activeAyahNumber == ayah.numberInSurah;
+        final isBookmarked =
+            widget.bookmarkedSurahNumber == ayah.surahNumber &&
+            widget.bookmarkedAyahNumber == ayah.numberInSurah;
         final isPressed = _pressedAyahNumber == ayah.number;
 
         // The ayah-end marker is plain text glued directly to its own
@@ -1577,10 +2189,15 @@ class _MushafPageViewState extends State<_MushafPageView> {
         // green "currently playing" tint below — that color already means
         // something else, so reusing it here would read as the recitation
         // having jumped to this ayah rather than as a simple press response.
-        final highlight = isPressed
+        final isSelected = _selectedAyahs.contains(ayah.number);
+        final highlight = isSelected
+            ? (Paint()..color = _frameGreen.withValues(alpha: 0.30))
+            : isPressed
             ? (Paint()..color = _ink.withValues(alpha: 0.12))
             : isActive
             ? (Paint()..color = _frameGreen.withValues(alpha: 0.18))
+            : isBookmarked
+            ? (Paint()..color = _bookmarkGold.withValues(alpha: 0.22))
             : null;
         // [prevAyah] is null not just for the Quran's very first ayah, but
         // for *any* surah's first ayah when that surah is opened directly
@@ -1604,6 +2221,10 @@ class _MushafPageViewState extends State<_MushafPageView> {
                 color: _frameGreen,
                 fontWeight: FontWeight.bold,
               ),
+              // Carry the same long-press recognizer as the rest of the ayah
+              // so holding on the leading quarter mark opens the sheet too,
+              // rather than being a dead spot.
+              recognizer: _selectMode ? selectRecognizer : recognizer,
             ),
           );
         }
@@ -1611,7 +2232,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
           _ayahTextSpans(
             text: ayah.textAr,
             style: baseStyle.copyWith(background: highlight),
-            recognizer: recognizer,
+            recognizer: _selectMode ? selectRecognizer : recognizer,
             overlineSajdaWord: overlineSajdaWord,
           ),
         );
@@ -1638,19 +2259,24 @@ class _MushafPageViewState extends State<_MushafPageView> {
                 fontWeight: FontWeight.bold,
                 background: highlight,
               ),
-              recognizer: recognizer,
+              recognizer: _selectMode ? selectRecognizer : recognizer,
             ),
           );
         }
         spans.add(
           TextSpan(
-            text: '۝${arabicIndicNumber(ayah.numberInSurah)}',
+            // The KFGQPC Mushaf font draws the Arabic-Indic ayah digits
+            // *inside* its own end-of-ayah ornament, so just the number is
+            // needed — prefixing the U+06DD (۝) sign would add a second,
+            // empty rosette beside it. Regular weight (synthetic bold breaks
+            // the ornament shaping).
+            text: arabicIndicNumber(ayah.numberInSurah),
             style: baseStyle.copyWith(
+              fontWeight: FontWeight.normal,
               color: _frameGreen,
-              fontWeight: FontWeight.bold,
               background: highlight,
             ),
-            recognizer: recognizer,
+            recognizer: _selectMode ? selectRecognizer : recognizer,
           ),
         );
         spans.add(const TextSpan(text: ' '));
@@ -1722,7 +2348,9 @@ class _MushafPageViewState extends State<_MushafPageView> {
         hizbWord: hizbWord,
         hizbNumber: hizbNumber,
         hizbFraction: hizbFraction,
-        pageText: localizedNumber(context, lastAyah.page),
+        pageText: 'quran.page_label'.tr(
+          args: [localizedNumber(context, lastAyah.page)],
+        ),
       ),
     );
 
@@ -1792,7 +2420,7 @@ class _MushafPageViewState extends State<_MushafPageView> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 3),
             child: footer,
           ),
         ],
@@ -1948,15 +2576,24 @@ class _MushafPageViewState extends State<_MushafPageView> {
 
   /// [Ayah.quarterInHizb] 1 is the Hizb's own start (no fraction mark
   /// needed — the bare Hizb number already says that); 2/3/4 are a
-  /// quarter, half and three-quarters of the way through it.
+  /// quarter, half and three-quarters of the way through it. In Arabic this
+  /// is written as a word (ربع/نصف/ثلاثة أرباع), the way it's printed on a
+  /// real Mushaf page, rather than as a "1/4"-style digit fraction.
   String? _hizbQuarterFraction(BuildContext context, int quarterInHizb) {
+    final isArabic = context.locale.languageCode == 'ar';
     switch (quarterInHizb) {
       case 2:
-        return '${localizedNumber(context, 1)}/${localizedNumber(context, 4)}';
+        return isArabic
+            ? 'quran.hizb_quarter'.tr()
+            : '${localizedNumber(context, 1)}/${localizedNumber(context, 4)}';
       case 3:
-        return '${localizedNumber(context, 1)}/${localizedNumber(context, 2)}';
+        return isArabic
+            ? 'quran.hizb_half'.tr()
+            : '${localizedNumber(context, 1)}/${localizedNumber(context, 2)}';
       case 4:
-        return '${localizedNumber(context, 3)}/${localizedNumber(context, 4)}';
+        return isArabic
+            ? 'quran.hizb_three_quarters'.tr()
+            : '${localizedNumber(context, 3)}/${localizedNumber(context, 4)}';
       default:
         return null;
     }
@@ -1974,18 +2611,25 @@ class _MushafPageViewState extends State<_MushafPageView> {
     // Uthmani diacritics, which threw off vertical centering for this
     // badge's plain digits/short word and didn't add anything, since none
     // of that content needs Quranic glyph support.
+    //
+    // [TextLeadingDistribution.even] splits the line's leading equally above
+    // and below the glyphs (rather than the default, which puts more above),
+    // so the text sits exactly in the middle of the rectangle vertically;
+    // [Alignment.center] + symmetric padding centers it horizontally.
     const style = TextStyle(
-      fontSize: 11,
+      fontSize: 9,
       color: _frameGreen,
       fontWeight: FontWeight.bold,
-      height: 1,
+      height: 1.3,
+      leadingDistribution: TextLeadingDistribution.even,
     );
-    const gap = SizedBox(width: 4);
+    const gap = SizedBox(width: 2.5);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: _frameGreen, width: 1.2),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: _frameGreen, width: 1),
       ),
       // Literal child order, left as-is rather than swapped for RTL/LTR —
       // ambient [Directionality] already mirrors a [Row]'s start/end edge
@@ -2085,6 +2729,104 @@ class _AdjacentSurahTransitionPage extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The Quran's genuine last page — reached by swiping forward past An-Nas's
+/// final Mushaf page (see [_MushafPageViewState._khatmIndex]). A closing
+/// "Khatm al-Quran" dua screen so finishing the whole Mushaf lands somewhere
+/// deliberate rather than the swipe just silently stopping.
+class _KhatmQuranPage extends StatefulWidget {
+  const _KhatmQuranPage();
+
+  @override
+  State<_KhatmQuranPage> createState() => _KhatmQuranPageState();
+}
+
+class _KhatmQuranPageState extends State<_KhatmQuranPage> {
+  late final Future<List<Thikr>> _future = AthkarRepository()
+      .getKhatmQuranDuaa();
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
+    return Container(
+      color: _MushafPageViewState._pageBg,
+      child: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(28, 40, 28, 48),
+          child: Column(
+            children: [
+              Text(
+                'quran.khatm_title'.tr(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _MushafPageViewState._frameGreen,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'quran.khatm_subtitle'.tr(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _MushafPageViewState._ink),
+              ),
+              const SizedBox(height: 28),
+              Container(
+                height: 1,
+                width: 80,
+                color: _MushafPageViewState._frameGreen.withValues(
+                  alpha: 0.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+              FutureBuilder<List<Thikr>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (final duaa in snapshot.data!)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Text(
+                            isArabic ? duaa.ar : duaa.en,
+                            textAlign: TextAlign.center,
+                            textDirection: isArabic
+                                ? TextDirection.rtl
+                                : TextDirection.ltr,
+                            style: isArabic
+                                ? AppTheme.athkarTextStyle(
+                                    context,
+                                    fontSize: 20,
+                                    height: 2.0,
+                                  ).copyWith(color: _MushafPageViewState._ink)
+                                : TextStyle(
+                                    color: _MushafPageViewState._ink,
+                                    height: 1.6,
+                                    fontSize: responsiveFontSize(
+                                      context,
+                                      16,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2226,7 +2968,17 @@ class _RenderPageScalerMulti extends RenderBox
   double _scaledNaturalHeightAt(List<RenderBox> scaledChildren, double width) {
     var total = 0.0;
     for (final child in scaledChildren) {
-      total += child.getDryLayout(BoxConstraints.tightFor(width: width)).height;
+      // Real layout, not getDryLayout: the dry estimate for these justified,
+      // diacritic-heavy paragraphs can come out a hair shorter than the height
+      // they actually render at, and that small mismatch is what left a strip
+      // of blank page under the last ayah at the fit-to-page size. Measuring
+      // the same way we finally lay them out makes the chosen scale fill the
+      // page exactly, so the last ayah's marker sits flush at the bottom. The
+      // children get laid out for real once more below at [chosenWidth]; an
+      // extra measure pass here is cheap since it only runs when the page
+      // (re)builds, never per frame.
+      child.layout(BoxConstraints.tightFor(width: width), parentUsesSize: true);
+      total += child.size.height;
     }
     return total;
   }
@@ -2299,7 +3051,15 @@ class _RenderPageScalerMulti extends RenderBox
           }
         }
       }
-      chosenWidth = tooTall ? hi : lo;
+      // Always take [hi], the bound the search keeps on the side where the
+      // scaled content is *no taller* than the page. For a too-tall (dense)
+      // page that was already the case; for a too-short (sparse) page like
+      // Al-Fatiha or Al-Baqarah's first page, the old `lo` sat on the
+      // *overflow* side, so scaling up to fill clipped the final line (e.g.
+      // Fatiha's وَلَا ٱلضَّآلِّينَ vanished off the bottom). Choosing [hi]
+      // instead leaves an imperceptible sub-line gap rather than cropping a
+      // whole ayah.
+      chosenWidth = hi;
     }
 
     final double scaleFactor = remainingH.isFinite && naturalAtAvailW > 0

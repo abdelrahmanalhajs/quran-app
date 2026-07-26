@@ -1,11 +1,31 @@
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
+import 'package:provider/provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/hadith_repository.dart';
+import '../../state/audio_provider.dart';
+import '../../state/navigation_provider.dart';
 import '../constants/athan.dart';
+
+/// Payload values used to route a notification tap to the right page — see
+/// [NotificationService._onNotificationTapped]. Distinct from the old scheme
+/// of using the athan id as the payload, which made tapping a prayer
+/// notification replay the athan instead of opening the app on the prayer
+/// page (the actual expected behavior).
+class _NotifRoute {
+  static const prayer = 'route:prayer';
+  static const hadith = 'route:hadith';
+  static const sleep = 'route:sleep';
+  static const jumaa = 'route:jumaa';
+  static const morningAthkar = 'route:morning_athkar';
+  static const eveningAthkar = 'route:evening_athkar';
+  static const athkar = 'route:athkar';
+}
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
@@ -19,7 +39,32 @@ class NotificationService {
   // Prayer athan ids: 2001 (fajr) .. 2005 (isha), one per entry in kPrayerNotificationNames.
   static const int _athanIdBase = 2001;
 
-  static final AudioPlayer _athanPlayer = AudioPlayer();
+  /// Set from main() before the app's first frame, so a notification tap can
+  /// switch tabs/sub-tabs without any screen needing to hold its own
+  /// reference to the navigator.
+  static GlobalKey<NavigatorState>? navigatorKey;
+
+  /// Set from main() alongside [navigatorKey] — [playAthan] plays through
+  /// this same shared player rather than one of its own, since
+  /// [JustAudioBackground] only ever supports a single live [AudioPlayer]
+  /// for the whole app; see [AudioProvider.playOneShot]'s doc comment.
+  static AudioProvider? audioProvider;
+
+  // Holds a route that arrived before [navigatorKey] had a live context —
+  // either a cold-start launch (app was terminated, see [init]) or a tap
+  // that raced the very first frame. [consumePendingRoute] applies it once
+  // HomeShell has built.
+  static String? _pendingPayload;
+
+  // Exact alarms (SCHEDULE_EXACT_ALARM) are not granted by default on
+  // Android 13+. Attempting an exact schedule then throws
+  // PlatformException(exact_alarms_not_permitted), which previously went
+  // unhandled at startup and left the prayer-athan and reminder
+  // notifications never scheduled at all. Resolved once in [init]: use exact
+  // alarms when the OS allows them, otherwise fall back to inexact (still
+  // fires, just not to the exact minute) so scheduling always succeeds.
+  static AndroidScheduleMode _scheduleMode =
+      AndroidScheduleMode.exactAllowWhileIdle;
 
   static const List<Map<String, String>> _zikrPhrases = [
     {
@@ -63,56 +108,165 @@ class NotificationService {
       );
     }
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // The app's own launcher icon resource is named `launcher_icon`, not the
+    // Flutter-default `ic_launcher` (see flutter_launcher_icons config in
+    // pubspec.yaml) — referencing the default name here throws an unhandled
+    // PlatformException(invalid_icon) at startup, before the app ever
+    // renders anything, since that resource doesn't exist.
+    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iosInit = DarwinInitializationSettings();
     await _plugin.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
-  }
 
-  static void _onNotificationTapped(NotificationResponse response) {
-    final payload = response.payload;
-    if (payload == kAthanMakkah.id) {
-      playAthan(kAthanMakkah);
-    } else if (payload == kAthanMadina.id) {
-      playAthan(kAthanMadina);
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final canExact = await android?.canScheduleExactNotifications() ?? true;
+    if (canExact == false) {
+      _scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+    }
+
+    // The app may have been launched (from terminated, not just background)
+    // by tapping a notification — that doesn't fire
+    // onDidReceiveNotificationResponse, so it has to be checked explicitly.
+    // navigatorKey isn't set yet at this point in main(), so the route is
+    // stashed and applied later via [consumePendingRoute].
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp == true) {
+      _pendingPayload = launchDetails?.notificationResponse?.payload;
     }
   }
 
+  static void _onNotificationTapped(NotificationResponse response) {
+    _route(response.payload);
+  }
+
+  /// Switches tabs (and, for athkar, the right sub-tab) for the page a
+  /// notification's payload identifies. Tapping the prayer/athan
+  /// notification used to replay the athan instead of navigating anywhere —
+  /// this replaces that with opening the prayer page, which is what the tap
+  /// should actually do.
+  static void _route(String? payload) {
+    if (payload == null) return;
+    final context = navigatorKey?.currentContext;
+    if (context == null) {
+      _pendingPayload = payload;
+      return;
+    }
+    navigatorKey?.currentState?.popUntil((route) => route.isFirst);
+    final nav = context.read<HomeNavigationProvider>();
+    switch (payload) {
+      case _NotifRoute.prayer:
+        nav.setIndex(1);
+      case _NotifRoute.hadith:
+        nav.setIndex(3);
+      case _NotifRoute.sleep:
+        nav.goToAthkarTab(3);
+      case _NotifRoute.jumaa:
+        nav.goToAthkarTab(4);
+      case _NotifRoute.morningAthkar:
+        nav.goToAthkarTab(0);
+      case _NotifRoute.eveningAthkar:
+        nav.goToAthkarTab(1);
+      case _NotifRoute.athkar:
+        nav.setIndex(2);
+    }
+  }
+
+  /// Call once HomeShell has built (a post-frame callback in its initState)
+  /// so a route from a cold-start notification launch, or a tap that raced
+  /// the first frame, still gets applied.
+  static void consumePendingRoute() {
+    final payload = _pendingPayload;
+    if (payload == null) return;
+    _pendingPayload = null;
+    _route(payload);
+  }
+
+  static String _athanOneShotId(AthanOption athan) => 'athan_${athan.id}';
+
   /// Plays the full athan recording in-app. Used as a fallback on platforms
   /// (iOS) where the notification's own alert sound can't carry the full
-  /// multi-minute recording, and as a manual replay action everywhere.
+  /// multi-minute recording, and as a manual replay action everywhere. Plays
+  /// through the shared [audioProvider] rather than a player of its own —
+  /// see [AudioProvider.playOneShot]'s doc comment for why.
   static Future<void> playAthan(AthanOption athan) async {
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());
-    await _athanPlayer.setAsset(athan.assetPath);
-    await _athanPlayer.play();
+    await audioProvider?.playOneShot(
+      assetPath: athan.assetPath,
+      id: _athanOneShotId(athan),
+      title: athan.nameEn,
+    );
   }
 
-  static bool get isAthanPlaying => _athanPlayer.playing;
+  static bool get isAthanPlaying =>
+      audioProvider != null &&
+      kAthanOptions.any(
+        (a) => audioProvider!.isOneShotPlaying(_athanOneShotId(a)),
+      );
 
   /// Stops the in-app athan playback. Called whenever the user interacts
   /// with any button while the real prayer-time athan is sounding, so it
   /// doubles as a "dismiss" action without needing a dedicated stop button.
-  static Future<void> stopAthan() => _athanPlayer.stop();
+  static Future<void> stopAthan() async => audioProvider?.stop();
 
   static Future<bool> requestPermission() async {
-    final androidGranted = await _plugin
+    final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+        >();
+    final androidGranted = await android?.requestNotificationsPermission();
     final iosGranted = await _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    // Notification permission alone doesn't guarantee the athan/athkar
+    // notifications fire exactly on time: without the exact-alarm permission
+    // (Android 13+) the OS only delivers an "inexact" schedule, which can
+    // run several minutes late; this prompts the system settings screen so
+    // the user can grant it, then re-checks so this session's scheduling
+    // actually uses the precise mode it just got. Network connectivity
+    // plays no part in any of this — prayer times and the athan are
+    // entirely local (see PrayerRepository/this file), so once an exact
+    // alarm is scheduled it fires on time with or without internet.
+    if (android != null) {
+      final canExact = await android.canScheduleExactNotifications() ?? true;
+      if (!canExact) {
+        await android.requestExactAlarmsPermission();
+        final canExactNow =
+            await android.canScheduleExactNotifications() ?? true;
+        _scheduleMode = canExactNow
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle;
+      } else {
+        _scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      }
+
+      // Doze/App Standby can defer even an "exact" alarm by several
+      // minutes while the device is idle and the app isn't whitelisted —
+      // the other half of "azan notification arrives late". Requests the
+      // OS dialog to exempt this app; a no-op if already granted or denied
+      // before (won't re-prompt endlessly).
+      if (!kIsWeb) {
+        final batteryStatus = await ph.Permission.ignoreBatteryOptimizations
+            .status;
+        if (!batteryStatus.isGranted) {
+          await ph.Permission.ignoreBatteryOptimizations.request();
+        }
+      }
+    }
+
     return (androidGranted ?? true) && (iosGranted ?? true);
   }
 
   static Future<void> scheduleDailyHadith({
-    int hour = 17,
+    int hour = 16,
     int minute = 0,
     bool arabic = false,
   }) async {
@@ -120,52 +274,86 @@ class NotificationService {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final hadith = await repo.getHadithForDay(tomorrow);
 
+    final title = arabic ? 'حديث اليوم' : 'Hadith of the Day';
+    final body =
+        '${arabic ? hadith.ar : hadith.en}\n\n'
+        '${arabic ? hadith.sourceAr : hadith.source}';
+
     await _plugin.zonedSchedule(
       _dailyHadithId,
-      arabic ? 'حديث اليوم' : 'Hadith of the Day',
-      arabic ? hadith.ar : hadith.en,
+      title,
+      body,
       _nextInstanceOf(hour, minute),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_hadith',
           'Daily Hadith',
           channelDescription: 'A new hadith every day',
           importance: Importance.high,
           priority: Priority.high,
+          // Without this, Android collapses the notification to a single
+          // truncated line — the full hadith only became visible on manual
+          // expand. BigTextStyle shows the whole text right away.
+          styleInformation: BigTextStyleInformation(
+            body,
+            contentTitle: title,
+          ),
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _NotifRoute.hadith,
     );
   }
 
   static Future<void> cancelDailyHadith() => _plugin.cancel(_dailyHadithId);
 
+  // 24 ids (one per hour of the day) so each hour can carry its own zikr,
+  // cycling through [_zikrPhrases]. periodicallyShow can't do this — it
+  // repeats one fixed message — so a different remembrance every hour means
+  // scheduling a separate daily-repeating notification at each hour.
+  static const int _hourlyZikrIdBase = 1100;
+
   static Future<void> scheduleHourlyZikr({bool arabic = true}) async {
-    final phrase = _zikrPhrases[DateTime.now().hour % _zikrPhrases.length];
-    await _plugin.periodicallyShow(
-      _hourlyZikrId,
-      arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
-      arabic ? phrase['ar'] : phrase['en'],
-      RepeatInterval.hourly,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'hourly_zikr',
-          'Hourly Zikr',
-          channelDescription: 'A short remembrance of Allah every hour',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
+    await cancelHourlyZikr();
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'hourly_zikr',
+        'Hourly Zikr',
+        channelDescription: 'A short remembrance of Allah every hour',
+        importance: Importance.high,
+        priority: Priority.high,
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      iOS: DarwinNotificationDetails(),
     );
+    for (var hour = 0; hour < 24; hour++) {
+      final phrase = _zikrPhrases[hour % _zikrPhrases.length];
+      await _plugin.zonedSchedule(
+        _hourlyZikrIdBase + hour,
+        arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
+        arabic ? phrase['ar'] : phrase['en'],
+        _nextInstanceOf(hour, 0),
+        details,
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: _scheduleMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.athkar,
+      );
+    }
   }
 
-  static Future<void> cancelHourlyZikr() => _plugin.cancel(_hourlyZikrId);
+  static Future<void> cancelHourlyZikr() async {
+    // Cancel the old single periodic id too, for users upgrading from the
+    // previous one-message-an-hour implementation.
+    await _plugin.cancel(_hourlyZikrId);
+    for (var hour = 0; hour < 24; hour++) {
+      await _plugin.cancel(_hourlyZikrIdBase + hour);
+    }
+  }
 
   /// Schedules a notification for each of today's remaining prayer times
   /// (Fajr, Dhuhr, Asr, Maghrib, Isha), using [athan]'s recording as the
@@ -213,8 +401,8 @@ class NotificationService {
 
       await _plugin.zonedSchedule(
         _athanIdBase + i,
-        arabic ? 'حان وقت صلاة $label' : 'It is time for $label prayer',
-        arabic ? athan.nameAr : athan.nameEn,
+        arabic ? 'حان الآن موعد أذان $label' : 'It is now time for $label prayer',
+        null,
         scheduled,
         NotificationDetails(
           android: AndroidNotificationDetails(
@@ -230,15 +418,22 @@ class NotificationService {
             ),
             audioAttributesUsage: AudioAttributesUsage.alarm,
           ),
-          iOS: const DarwinNotificationDetails(
+          iOS: DarwinNotificationDetails(
+            // Without this the athan never sounded on iOS: the notification
+            // fired with the system's default alert tone instead. iOS can't
+            // use the Flutter-asset MP3 the in-app player uses — it needs a
+            // CAF/AIFF/WAV in the app bundle, under 30s — so each athan
+            // ships a trimmed bundle copy alongside it (see
+            // [AthanOption.iosNotificationSound]).
+            sound: athan.iosNotificationSound,
             interruptionLevel: InterruptionLevel.timeSensitive,
           ),
         ),
         matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-        payload: athan.id,
+        payload: _NotifRoute.prayer,
       );
     }
   }
@@ -303,9 +498,10 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _NotifRoute.sleep,
     );
   }
 
@@ -336,9 +532,10 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _NotifRoute.jumaa,
     );
   }
 
@@ -390,9 +587,10 @@ class NotificationService {
           iOS: DarwinNotificationDetails(),
         ),
         matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.morningAthkar,
       );
     }
 
@@ -417,9 +615,10 @@ class NotificationService {
           iOS: DarwinNotificationDetails(),
         ),
         matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: _scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.eveningAthkar,
       );
     }
   }
@@ -428,4 +627,5 @@ class NotificationService {
     await _plugin.cancel(_morningAthkarReminderId);
     await _plugin.cancel(_eveningAthkarReminderId);
   }
+
 }
