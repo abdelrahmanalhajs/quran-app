@@ -5,13 +5,14 @@ void main() {
   group('copied ayah text', () {
     test('carries the end-of-ayah rosette, not a bare digit', () {
       final copied = ayahWithEndMarker('ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ', 2);
-      // The ayah sign must be present with the number inside it, i.e.
-      // U+06DD immediately followed by the Arabic-Indic digits.
-      expect(copied.endsWith('\u06DD٢'), isTrue);
+      // Arabic-Indic number between ornate Arabic brackets, so the number
+      // renders inside them in any font.
+      expect(copied.endsWith('\uFD3E٢\uFD3F'), isTrue);
+      expect(copied.contains('\u06DD'), isFalse);
     });
 
     test('uses Arabic-Indic digits for multi-digit ayah numbers', () {
-      expect(ayahWithEndMarker('نص', 255), endsWith('\u06DD٢٥٥'));
+      expect(ayahWithEndMarker('نص', 255), endsWith('\uFD3E٢٥٥\uFD3F'));
     });
 
     test('leaves the ayah text itself untouched', () {

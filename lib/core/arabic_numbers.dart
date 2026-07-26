@@ -61,16 +61,17 @@ String normalizeArabicSearch(String input) {
       .trim();
 }
 
-/// U+06DD ARABIC END OF AYAH — the sign an ayah's number goes inside.
-const String kEndOfAyahSign = '\u06DD';
+/// Ornate Arabic brackets (U+FD3E/U+FD3F) — the pair used around ayah
+/// numbers in Arabic typesetting, e.g. ﴿١﴾.
+const String kAyahBracketOpen = '\uFD3E';
+const String kAyahBracketClose = '\uFD3F';
 
-/// [text] followed by the ayah sign with its number in it, for copying.
+/// [text] followed by its ayah number in Arabic-Indic digits between ornate
+/// Arabic brackets, for copying out of the app.
 ///
-/// U+06DD is the character that means exactly this: Unicode defines it as
-/// enclosing the Arabic-Indic digits that follow it, so "\u06DD" + "\u0662"
-/// *is* the ayah sign containing the number 2. Fonts built for Quranic text
-/// (Amiri, Scheherazade, KFGQPC) shape it that way; a font with no such
-/// shaping draws the sign and sets the number next to it, which nothing in
-/// the copied characters can override — the enclosure comes from the font.
+/// Unlike U+06DD — the dedicated end-of-ayah sign, which only fonts built
+/// for Quranic text shape as an enclosure — these brackets are drawn as a
+/// frame around whatever sits between them by virtually every Arabic font,
+/// so the number stays inside them wherever the text is pasted.
 String ayahWithEndMarker(String text, int numberInSurah) =>
-    '$text$kEndOfAyahSign${arabicIndicNumber(numberInSurah)}';
+    '$text $kAyahBracketOpen${arabicIndicNumber(numberInSurah)}$kAyahBracketClose';
