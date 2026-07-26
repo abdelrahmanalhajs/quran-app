@@ -61,17 +61,16 @@ String normalizeArabicSearch(String input) {
       .trim();
 }
 
-/// [text] followed by its ayah number, exactly as the Mushaf page stores
-/// them — the ayah's letters, then a bare Arabic-Indic digit, nothing else.
+/// U+06DD ARABIC END OF AYAH — the sign an ayah's number goes inside.
+const String kEndOfAyahSign = '\u06DD';
+
+/// [text] followed by the ayah sign with its number in it, for copying.
 ///
-/// The rosette around the number on the page is not a character: the KFGQPC
-/// font draws it around that plain digit, which is why the page needs no
-/// end-of-ayah sign of its own. Copying these same characters therefore
-/// reproduces the page wherever a Quranic font renders them, and adding
-/// anything extra would only misrepresent it — U+06DD (۝) makes that font
-/// paint a *second*, empty rosette, and ornate brackets swap the rosette for
-/// a different ornament entirely. What a plain UI font does with the digit is
-/// its own business; no choice of characters can give it a rosette it has no
-/// glyph for.
+/// U+06DD is the character that means exactly this: Unicode defines it as
+/// enclosing the Arabic-Indic digits that follow it, so "\u06DD" + "\u0662"
+/// *is* the ayah sign containing the number 2. Fonts built for Quranic text
+/// (Amiri, Scheherazade, KFGQPC) shape it that way; a font with no such
+/// shaping draws the sign and sets the number next to it, which nothing in
+/// the copied characters can override — the enclosure comes from the font.
 String ayahWithEndMarker(String text, int numberInSurah) =>
-    '$text${arabicIndicNumber(numberInSurah)}';
+    '$text$kEndOfAyahSign${arabicIndicNumber(numberInSurah)}';
