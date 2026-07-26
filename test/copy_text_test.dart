@@ -5,14 +5,13 @@ void main() {
   group('copied ayah text', () {
     test('carries the end-of-ayah rosette, not a bare digit', () {
       final copied = ayahWithEndMarker('ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ', 2);
-      // U+06DD is the character that means "ayah sign enclosing this
-      // number"; a bare "٢" with no sign at all is the bug.
-      expect(copied.endsWith('\u06DD٢'), isTrue);
-      expect(copied.contains('\u06DD'), isTrue);
+      // The number has to end up *inside* an ornament in ordinary system
+      // fonts; U+06DD leaves it outside one, which was the reported bug.
+      expect(copied.endsWith('\uFD3E٢\uFD3F'), isTrue);
     });
 
     test('uses Arabic-Indic digits for multi-digit ayah numbers', () {
-      expect(ayahWithEndMarker('نص', 255), endsWith('\u06DD٢٥٥'));
+      expect(ayahWithEndMarker('نص', 255), endsWith('\uFD3E٢٥٥\uFD3F'));
     });
 
     test('leaves the ayah text itself untouched', () {

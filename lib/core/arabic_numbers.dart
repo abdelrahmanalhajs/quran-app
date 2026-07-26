@@ -61,23 +61,22 @@ String normalizeArabicSearch(String input) {
       .trim();
 }
 
-/// U+06DD ARABIC END OF AYAH — the rosette an ayah's number sits inside.
+/// An ayah number wrapped in ornate brackets (U+FD3E/U+FD3F), e.g. ﴿٢﴾.
 ///
-/// This is the character the Mushaf page's own look is expressing: Unicode
-/// defines U+06DD as enclosing the digits that follow it, which is precisely
-/// "the ayah sign with its number inside". The page doesn't need it because
-/// the KFGQPC font already draws that ornament around bare digits, but
-/// copied text is plain — without this character a paste is left with a
-/// stray "\u0662" and no sign at all.
-///
-/// How it *looks* after pasting is up to the receiving app's font: Amiri,
-/// Scheherazade and other Quranic fonts shape the number inside the rosette;
-/// fonts that don't implement U+06DD shaping draw the rosette and set the
-/// number beside it. No choice of characters can force the latter to enclose
-/// it — that is a property of the destination's font, not of the text.
-const String kEndOfAyahSign = '\u06DD';
+/// The page needs no such thing: the KFGQPC font draws its own rosette
+/// around bare digits, which is why the Mushaf shows the number inside an
+/// ornament with no extra character. A clipboard carries characters, not the
+/// font, so the marker has to survive in whatever font the text is pasted
+/// into — and that rules out the obvious candidate. U+06DD (۝), the
+/// dedicated end-of-ayah sign, is *specified* to enclose the digits that
+/// follow it, but only Quranic fonts implement that shaping: the system
+/// fonts behind WhatsApp, Notes and the like draw the rosette and leave the
+/// number sitting outside it. These brackets are shaped as an enclosure by
+/// virtually every Arabic font, so the number stays inside one wherever the
+/// text lands.
+String ayahNumberMarker(int numberInSurah) =>
+    '\uFD3E${arabicIndicNumber(numberInSurah)}\uFD3F';
 
-/// [text] followed by its end-of-ayah sign and number, exactly in the order
-/// the page reads them and with no separator, for copying out of the app.
+/// [text] followed by its bracketed ayah number, for copying out of the app.
 String ayahWithEndMarker(String text, int numberInSurah) =>
-    '$text$kEndOfAyahSign${arabicIndicNumber(numberInSurah)}';
+    '$text ${ayahNumberMarker(numberInSurah)}';
