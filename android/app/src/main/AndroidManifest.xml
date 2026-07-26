@@ -100,6 +100,21 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/prayer_widget_info" />
         </receiver>
+
+        <!-- Required by the pasteboard plugin to put the rendered ayah image
+             on the clipboard: Android hands images to other apps as content://
+             URIs, which needs a FileProvider under this exact authority.
+             Without it, writing an image fails with "Couldn't find meta-data
+             for provider with authority ...provider". -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
