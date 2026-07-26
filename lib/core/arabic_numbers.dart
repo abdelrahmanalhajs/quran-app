@@ -61,17 +61,17 @@ String normalizeArabicSearch(String input) {
       .trim();
 }
 
-/// Ornate Arabic brackets (U+FD3E/U+FD3F) — the pair used around ayah
-/// numbers in Arabic typesetting, e.g. ﴿١﴾.
-const String kAyahBracketOpen = '\uFD3E';
-const String kAyahBracketClose = '\uFD3F';
-
-/// [text] followed by its ayah number in Arabic-Indic digits between ornate
-/// Arabic brackets, for copying out of the app.
+/// [text] followed by its ayah number in Arabic-Indic digits in plain
+/// parentheses, e.g. "\u0628\u0633\u0645 ... (\u0661)", for copying out of the app.
 ///
-/// Unlike U+06DD — the dedicated end-of-ayah sign, which only fonts built
-/// for Quranic text shape as an enclosure — these brackets are drawn as a
-/// frame around whatever sits between them by virtually every Arabic font,
-/// so the number stays inside them wherever the text is pasted.
+/// Deliberately plain "()" rather than the ornate pair U+FD3E/U+FD3F: those
+/// carry wide decorative padding, which leaves the digit looking adrift
+/// inside them. Nor U+06DD, the dedicated end-of-ayah sign, which only fonts
+/// built for Quranic text shape as an enclosure — in ordinary fonts it draws
+/// an empty rosette with the number stranded beside it. Plain parentheses sit
+/// tight to the number and render the same way in every font.
+///
+/// The parentheses mirror automatically in right-to-left text, so "(" is
+/// drawn on the right-hand side as Arabic typography expects.
 String ayahWithEndMarker(String text, int numberInSurah) =>
-    '$text $kAyahBracketOpen${arabicIndicNumber(numberInSurah)}$kAyahBracketClose';
+    '$text (${arabicIndicNumber(numberInSurah)})';
