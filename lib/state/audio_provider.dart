@@ -283,11 +283,39 @@ class AudioProvider extends ChangeNotifier {
       await _player.setAudioSource(ConcatenatingAudioSource(children: sources));
       await _player.play();
     } catch (_) {
+      // Per-ayah playback only ever streams from the network — there's no
+      // downloaded per-ayah file to fall back to (see [OfflineRecitations]'s
+      // doc comment: only whole-surah files are saved). So a failure here is
+      // exactly what happens with no connection, which is precisely when a
+      // downloaded surah is most likely to be in use. Rather than leaving
+      // playback dead, fall back to the local whole-surah file like
+      // [playSurah] does, same as the no-per-ayah-support case above — the
+      // caller shows the same "played from the start instead" message.
+      _ayahPlaylistStart = null;
+      final localPath = kIsWeb
+          ? null
+          : OfflineRecitations.instance.localSurahPath(reciter.id, surahNumber);
+      if (localPath != null &&
+          OfflineRecitations.instance.isDownloaded(reciter.id, surahNumber)) {
+        _currentAyahIndex = null;
+        try {
+          final tag = MediaItem(
+            id: 'surah_${surahNumber}_${reciter.id}',
+            title: surahTitle ?? 'Surah $surahNumber',
+            artist: reciter.nameEn,
+          );
+          await _player.setAudioSource(AudioSource.file(localPath, tag: tag));
+          await _player.play();
+          return false;
+        } catch (_) {
+          // Even the local file failed to load — fall through to the same
+          // recreate-and-clear recovery as the network-only case.
+        }
+      }
       // See [playSurah]: clear state and get a fresh player so a retry
       // works without restarting the app.
       _currentSurah = null;
       _currentReciter = null;
-      _ayahPlaylistStart = null;
       await _recreatePlayer();
     } finally {
       _isLoading = false;
