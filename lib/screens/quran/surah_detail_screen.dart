@@ -3030,7 +3030,13 @@ class _RenderPageScalerMulti extends RenderBox
       } else {
         lo = boundary;
       }
-      for (var i = 0; i < 14; i++) {
+      // 26 iterations (up from 14) — halves the search range each time, so
+      // this converges on [hi] far closer to the true no-overflow boundary
+      // than before. [hi] is still always the answer (see below), so this
+      // is a pure precision increase: it can only shrink the residual gap
+      // left below the last line, never reintroduce the old clipping bug,
+      // since the search never crosses onto the overflow side.
+      for (var i = 0; i < 26; i++) {
         final double mid = (lo + hi) / 2;
         final double midNat = _scaledNaturalHeightAt(scaledChildren, mid);
         final double scaledHeight = midNat * availW / mid;
@@ -3057,8 +3063,9 @@ class _RenderPageScalerMulti extends RenderBox
       // Al-Fatiha or Al-Baqarah's first page, the old `lo` sat on the
       // *overflow* side, so scaling up to fill clipped the final line (e.g.
       // Fatiha's وَلَا ٱلضَّآلِّينَ vanished off the bottom). Choosing [hi]
-      // instead leaves an imperceptible sub-line gap rather than cropping a
-      // whole ayah.
+      // is still deliberate and unchanged — only the search precision above
+      // grew, so [hi] now sits much closer to the exact boundary, leaving
+      // the smallest gap that still guarantees no ayah gets clipped.
       chosenWidth = hi;
     }
 
