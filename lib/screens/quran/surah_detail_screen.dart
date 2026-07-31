@@ -3069,9 +3069,27 @@ class _RenderPageScalerMulti extends RenderBox
       chosenWidth = hi;
     }
 
-    final double scaleFactor = remainingH.isFinite && naturalAtAvailW > 0
-        ? availW / chosenWidth
-        : 1.0;
+    final bool fitting = remainingH.isFinite && naturalAtAvailW > 0;
+    final double scaleFactorX = fitting ? availW / chosenWidth : 1.0;
+    // Horizontal scale alone leaves a gap below the last line on most
+    // pages: [chosenWidth] is picked by a *width* search, but width only
+    // changes the rendered height in discrete jumps (a line wraps or it
+    // doesn't) — so the tightest safe width still usually reflows to a
+    // total height a fraction of a line short of [remainingH], no matter
+    // how precisely the width search converges. A uniform scale carries
+    // that shortfall straight into the scaled height, which is what left a
+    // visible strip of page below the last ayah. Stretching vertically by
+    // its own factor — independent of the horizontal one — closes that gap
+    // exactly instead, at the cost of a small (well under one line's worth)
+    // difference between the horizontal and vertical scale on any given
+    // page, which is imperceptible compared to a whole blank line.
+    final double totalNaturalHeightAtChosen = fitting
+        ? _scaledNaturalHeightAt(scaledChildren, chosenWidth)
+        : 0.0;
+    final double scaleFactorY =
+        fitting && totalNaturalHeightAtChosen > 0
+        ? remainingH / totalNaturalHeightAtChosen
+        : scaleFactorX;
 
     _transforms.clear();
     _hasVisualOverflow = false;
@@ -3084,9 +3102,9 @@ class _RenderPageScalerMulti extends RenderBox
         offsetY += child.size.height;
       } else {
         child.layout(BoxConstraints.tightFor(width: chosenWidth), parentUsesSize: true);
-        final double scaledHeight = child.size.height * scaleFactor;
+        final double scaledHeight = child.size.height * scaleFactorY;
         _transforms[child] = Matrix4.translationValues(0, offsetY, 0)
-          ..scaleByDouble(scaleFactor, scaleFactor, 1.0, 1);
+          ..scaleByDouble(scaleFactorX, scaleFactorY, 1.0, 1);
         pd.offset = Offset(0, offsetY);
         offsetY += scaledHeight;
       }
