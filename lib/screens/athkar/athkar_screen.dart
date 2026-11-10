@@ -54,7 +54,9 @@ class _AthkarScreenState extends State<AthkarScreen>
   Widget build(BuildContext context) {
     // Lets a notification tap (sleep athkar / jumu'ah sunan) land on the
     // right sub-tab — see [HomeNavigationProvider.goToAthkarTab].
-    final requestedTab = context.watch<HomeNavigationProvider>().athkarTabRequest;
+    final requestedTab = context
+        .watch<HomeNavigationProvider>()
+        .athkarTabRequest;
     if (requestedTab != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

@@ -372,9 +372,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.share_outlined),
               title: Text('settings.share_app'.tr()),
               onTap: () => SharePlus.instance.share(
-                ShareParams(
-                  text: 'settings.share_app_text'.tr(),
-                ),
+                ShareParams(text: 'settings.share_app_text'.tr()),
               ),
             ),
           ],
@@ -596,7 +594,9 @@ class _OfflineRecitationsSectionState
     } else if (complete) {
       subtitle = 'settings.offline_available'.tr(args: ['$_total', '$_total']);
     } else if (_downloaded > 0) {
-      subtitle = 'settings.offline_partial'.tr(args: ['$_downloaded', '$_total']);
+      subtitle = 'settings.offline_partial'.tr(
+        args: ['$_downloaded', '$_total'],
+      );
     } else {
       subtitle = 'settings.offline_recitations_hint'.tr();
     }
@@ -615,14 +615,16 @@ class _OfflineRecitationsSectionState
             children: [
               Expanded(
                 child: Text(
-                  'settings.offline_reciter'.tr(args: [
-                    context.locale.languageCode == 'ar'
-                        ? reciter.nameAr
-                        : reciter.nameEn,
-                  ]),
+                  'settings.offline_reciter'.tr(
+                    args: [
+                      context.locale.languageCode == 'ar'
+                          ? reciter.nameAr
+                          : reciter.nameEn,
+                    ],
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ),
               if (!_busy)

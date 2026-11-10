@@ -173,7 +173,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     _initialBundle = _bundleCache[widget.surah.number];
     _bundleFuture = _initialBundle != null
         ? Future.value(_initialBundle)
-        : _loadBundle(context.read<QuranProvider>().repository, widget.surah.number);
+        : _loadBundle(
+            context.read<QuranProvider>().repository,
+            widget.surah.number,
+          );
   }
 
   static Future<_SurahPageBundle> _loadBundle(
@@ -289,10 +292,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       PageRouteBuilder(
         transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
-        pageBuilder: (_, _, _) => SurahDetailScreen(
-          surah: resolvedTarget,
-          startPage: targetPage,
-        ),
+        pageBuilder: (_, _, _) =>
+            SurahDetailScreen(surah: resolvedTarget, startPage: targetPage),
       ),
     );
   }
@@ -361,13 +362,14 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
                     textAlign: TextAlign.center,
                     textDirection: TextDirection.rtl,
-                    style: AppTheme.quranTextStyle(
-                      context,
-                      fontSize: kQuranListViewFontSizes[listStepIndex],
-                    ).copyWith(
-                      height: kQuranFontSizeLineHeight[listStepIndex],
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style:
+                        AppTheme.quranTextStyle(
+                          context,
+                          fontSize: kQuranListViewFontSizes[listStepIndex],
+                        ).copyWith(
+                          height: kQuranFontSizeLineHeight[listStepIndex],
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 );
               }
@@ -721,9 +723,7 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
           children: [
             const SizedBox(width: 4),
             IconButton(
-              icon: Icon(
-                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              ),
+              icon: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border),
               tooltip: 'quran.toggle_ayah_bookmark'.tr(),
               onPressed: () {
                 final messenger = ScaffoldMessenger.of(context);
@@ -749,9 +749,7 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
               tooltip: 'quran.copy_ayah'.tr(),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
-                await Clipboard.setData(
-                  ClipboardData(text: _copyText()),
-                );
+                await Clipboard.setData(ClipboardData(text: _copyText()));
                 messenger.showSnackBar(
                   SnackBar(content: Text('quran.ayah_copied'.tr())),
                 );
@@ -798,49 +796,50 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                       final onThisAyah =
                           audio.currentSurah == widget.ayah.surahNumber &&
                           audio.currentReciter?.id == reciter.id &&
-                          audio.currentAbsoluteAyah == widget.ayah.numberInSurah;
+                          audio.currentAbsoluteAyah ==
+                              widget.ayah.numberInSurah;
                       final playing = onThisAyah && audio.isPlaying;
                       return FilledButton.tonalIcon(
-                    icon: Icon(
-                      playing ? Icons.pause : Icons.play_arrow,
-                      size: 18,
-                    ),
-                    label: Text(
-                      playing
-                          ? 'quran.pause'.tr()
-                          : (onThisAyah
-                                ? 'quran.resume'.tr()
-                                : 'quran.play_from_here'.tr()),
-                    ),
-                    onPressed: () async {
-                      if (onThisAyah) {
-                        await audio.playSurah(
-                          widget.ayah.surahNumber,
-                          reciter,
-                          surahTitle: widget.surahNameAr,
-                        );
-                        return;
-                      }
-                      final messenger = ScaffoldMessenger.of(context);
-                      final startedAtAyah = await audio.playFromAyah(
-                        surahNumber: widget.ayah.surahNumber,
-                        ayahNumberInSurah: widget.ayah.numberInSurah,
-                        totalAyahsInSurah: widget.totalAyahs,
-                        reciter: reciter,
-                        surahTitle: widget.surahNameAr,
-                      );
-                      if (!startedAtAyah) {
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'quran.ayah_playback_unavailable'.tr(
-                                args: [reciter.nameAr],
+                        icon: Icon(
+                          playing ? Icons.pause : Icons.play_arrow,
+                          size: 18,
+                        ),
+                        label: Text(
+                          playing
+                              ? 'quran.pause'.tr()
+                              : (onThisAyah
+                                    ? 'quran.resume'.tr()
+                                    : 'quran.play_from_here'.tr()),
+                        ),
+                        onPressed: () async {
+                          if (onThisAyah) {
+                            await audio.playSurah(
+                              widget.ayah.surahNumber,
+                              reciter,
+                              surahTitle: widget.surahNameAr,
+                            );
+                            return;
+                          }
+                          final messenger = ScaffoldMessenger.of(context);
+                          final startedAtAyah = await audio.playFromAyah(
+                            surahNumber: widget.ayah.surahNumber,
+                            ayahNumberInSurah: widget.ayah.numberInSurah,
+                            totalAyahsInSurah: widget.totalAyahs,
+                            reciter: reciter,
+                            surahTitle: widget.surahNameAr,
+                          );
+                          if (!startedAtAyah) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'quran.ayah_playback_unavailable'.tr(
+                                    args: [reciter.nameAr],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      }
-                    },
+                            );
+                          }
+                        },
                       );
                     },
                   ),
@@ -1016,14 +1015,15 @@ class _MushafPageView extends StatefulWidget {
 }
 
 class _MushafPageViewState extends State<_MushafPageView>
-    // Plural [TickerProviderStateMixin], not the Single- variant: every page
-    // turn spins up its own short-lived AnimationController (see
-    // [_startPageTurn]), and the single-ticker mixin only ever hands out one
-    // ticker for the State's whole life — so the first swipe worked but every
-    // turn after it silently failed to animate (and thus never committed the
-    // page change), which looked like swiping back/forward "stops working"
-    // after one page.
-    with TickerProviderStateMixin {
+        // Plural [TickerProviderStateMixin], not the Single- variant: every page
+        // turn spins up its own short-lived AnimationController (see
+        // [_startPageTurn]), and the single-ticker mixin only ever hands out one
+        // ticker for the State's whole life — so the first swipe worked but every
+        // turn after it silently failed to animate (and thus never committed the
+        // page change), which looked like swiping back/forward "stops working"
+        // after one page.
+        with
+        TickerProviderStateMixin {
   static const _pageBg = Color(0xFFFBF3E0);
   static const _frameGreen = Color(0xFF1F5C4A);
   static const _ink = Color(0xFF161410);
@@ -1185,7 +1185,9 @@ class _MushafPageViewState extends State<_MushafPageView>
   String _selectionCopyText() {
     final ayahs = _selectedAyahData.values.toList()
       ..sort((a, b) => a.number.compareTo(b.number));
-    return ayahs.map((a) => ayahWithEndMarker(a.textAr, a.numberInSurah)).join(' ');
+    return ayahs
+        .map((a) => ayahWithEndMarker(a.textAr, a.numberInSurah))
+        .join(' ');
   }
 
   /// Whether the in-progress gesture turned out to be a pinch (`true`), a
@@ -1465,14 +1467,14 @@ class _MushafPageViewState extends State<_MushafPageView>
         settings.bookmarkPage == page;
     if (isHere) {
       settings.clearBookmark();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('quran.bookmark_removed'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('quran.bookmark_removed'.tr())));
     } else {
       settings.setBookmark(widget.surahNumber, page);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('quran.bookmark_added'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('quran.bookmark_added'.tr())));
     }
   }
 
@@ -1600,8 +1602,10 @@ class _MushafPageViewState extends State<_MushafPageView>
       final dragged = _gesturePanDx.abs() >= width * 0.22;
       if (flicked || dragged) {
         final goNext = flicked ? velocity > 0 : _gesturePanDx > 0;
-        final target = (goNext ? _currentIndex + 1 : _currentIndex - 1)
-            .clamp(0, _itemCount - 1);
+        final target = (goNext ? _currentIndex + 1 : _currentIndex - 1).clamp(
+          0,
+          _itemCount - 1,
+        );
         if (target != _currentIndex) {
           _startPageTurn(target, slideLeft: !goNext);
         }
@@ -1643,7 +1647,10 @@ class _MushafPageViewState extends State<_MushafPageView>
   Widget _buildStaticPage(BuildContext context, int index) {
     return SafeArea(
       bottom: false,
-      child: ResponsiveCenter(maxWidth: 900, child: _buildPageForIndex(context, index)),
+      child: ResponsiveCenter(
+        maxWidth: 900,
+        child: _buildPageForIndex(context, index),
+      ),
     );
   }
 
@@ -1977,9 +1984,7 @@ class _MushafPageViewState extends State<_MushafPageView>
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                     ),
                   ),
@@ -2014,14 +2019,10 @@ class _MushafPageViewState extends State<_MushafPageView>
                         settings.setQuranViewMode(QuranViewMode.list),
                   ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.headphones_outlined,
-                      color: _pageBg,
-                    ),
+                    icon: const Icon(Icons.headphones_outlined, color: _pageBg),
                     tooltip: 'quran.reciter'.tr(),
                     onPressed: () async {
-                      final settingsProvider = context
-                          .read<SettingsProvider>();
+                      final settingsProvider = context.read<SettingsProvider>();
                       final picked = await showReciterPicker(
                         context,
                         settings.reciter,
@@ -2321,9 +2322,7 @@ class _MushafPageViewState extends State<_MushafPageView>
         // when an obligatory ayah's own text has no سجد-rooted word, the
         // overline belongs on the *previous* ayah instead (see
         // [ayahHasSajdaTriggerWord]).
-        final nextAyah = ayahIndex + 1 < run.length
-            ? run[ayahIndex + 1]
-            : null;
+        final nextAyah = ayahIndex + 1 < run.length ? run[ayahIndex + 1] : null;
         final overlineSajdaWord = ayah.sajdaObligatory
             ? ayahHasSajdaTriggerWord(ayah.textAr)
             : (nextAyah != null &&
@@ -2542,7 +2541,10 @@ class _MushafPageViewState extends State<_MushafPageView>
       final newQuarterAyah = pageAyahs.last;
       hizbWord = 'quran.hizb_word'.tr();
       hizbNumber = localizedNumber(context, newQuarterAyah.hizb);
-      hizbFraction = _hizbQuarterFraction(context, newQuarterAyah.quarterInHizb);
+      hizbFraction = _hizbQuarterFraction(
+        context,
+        newQuarterAyah.quarterInHizb,
+      );
     }
     // Always pinned to the physical left edge — [Alignment.centerLeft]
     // rather than a directional start/end alignment, since this should
@@ -2959,9 +2961,7 @@ class _KhatmQuranPageState extends State<_KhatmQuranPage> {
               Container(
                 height: 1,
                 width: 80,
-                color: _MushafPageViewState._frameGreen.withValues(
-                  alpha: 0.4,
-                ),
+                color: _MushafPageViewState._frameGreen.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 28),
               FutureBuilder<List<Thikr>>(
@@ -2993,10 +2993,7 @@ class _KhatmQuranPageState extends State<_KhatmQuranPage> {
                                 : TextStyle(
                                     color: _MushafPageViewState._ink,
                                     height: 1.6,
-                                    fontSize: responsiveFontSize(
-                                      context,
-                                      16,
-                                    ),
+                                    fontSize: responsiveFontSize(context, 16),
                                   ),
                           ),
                         ),
@@ -3174,7 +3171,10 @@ class _RenderPageScalerMulti extends RenderBox
     while (child != null) {
       final pd = child.parentData! as _PageScalerParentData;
       if (!pd.scaled) {
-        child.layout(BoxConstraints.tightFor(width: availW), parentUsesSize: true);
+        child.layout(
+          BoxConstraints.tightFor(width: availW),
+          parentUsesSize: true,
+        );
         fixedHeight += child.size.height;
       }
       child = childAfter(child);
@@ -3182,7 +3182,10 @@ class _RenderPageScalerMulti extends RenderBox
 
     final double remainingH = availH - fixedHeight;
     final scaledChildren = _scaledChildren();
-    final double naturalAtAvailW = _scaledNaturalHeightAt(scaledChildren, availW);
+    final double naturalAtAvailW = _scaledNaturalHeightAt(
+      scaledChildren,
+      availW,
+    );
     double chosenWidth = availW;
 
     // Same binary search as the single-child version, just measuring the
@@ -3266,8 +3269,7 @@ class _RenderPageScalerMulti extends RenderBox
     final double totalNaturalHeightAtChosen = fitting
         ? _scaledNaturalHeightAt(scaledChildren, chosenWidth)
         : 0.0;
-    final double scaleFactorY =
-        fitting && totalNaturalHeightAtChosen > 0
+    final double scaleFactorY = fitting && totalNaturalHeightAtChosen > 0
         ? remainingH / totalNaturalHeightAtChosen
         : scaleFactorX;
 
@@ -3281,7 +3283,10 @@ class _RenderPageScalerMulti extends RenderBox
         pd.offset = Offset(0, offsetY);
         offsetY += child.size.height;
       } else {
-        child.layout(BoxConstraints.tightFor(width: chosenWidth), parentUsesSize: true);
+        child.layout(
+          BoxConstraints.tightFor(width: chosenWidth),
+          parentUsesSize: true,
+        );
         final double scaledHeight = child.size.height * scaleFactorY;
         _transforms[child] = Matrix4.translationValues(0, offsetY, 0)
           ..scaleByDouble(scaleFactorX, scaleFactorY, 1.0, 1);

@@ -253,7 +253,9 @@ class AudioProvider extends ChangeNotifier {
       final localPath = kIsWeb
           ? null
           : OfflineRecitations.instance.localSurahPath(reciter.id, surahNumber);
-      final source = (localPath != null && OfflineRecitations.instance.isDownloaded(reciter.id, surahNumber))
+      final source =
+          (localPath != null &&
+              OfflineRecitations.instance.isDownloaded(reciter.id, surahNumber))
           ? AudioSource.file(localPath, tag: tag)
           : _audioSource(reciter.audioUrlForSurah(surahNumber), tag);
       await _player.setAudioSource(source);
@@ -409,7 +411,10 @@ class AudioProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await _player.setAudioSource(
-        AudioSource.asset(assetPath, tag: MediaItem(id: id, title: title)),
+        AudioSource.asset(
+          assetPath,
+          tag: MediaItem(id: id, title: title),
+        ),
       );
       await _player.play();
     } catch (_) {

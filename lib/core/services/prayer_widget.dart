@@ -45,7 +45,9 @@ class PrayerWidget {
       );
       await HomeWidget.saveWidgetData(
         'prayer_placeholder',
-        arabic ? 'افتح التطبيق لتحديد موقعك' : 'Open the app to set your location',
+        arabic
+            ? 'افتح التطبيق لتحديد موقعك'
+            : 'Open the app to set your location',
       );
       await HomeWidget.updateWidget(
         androidName: _androidProvider,

@@ -262,8 +262,8 @@ class NotificationService {
       // OS dialog to exempt this app; a no-op if already granted or denied
       // before (won't re-prompt endlessly).
       if (!kIsWeb) {
-        final batteryStatus = await ph.Permission.ignoreBatteryOptimizations
-            .status;
+        final batteryStatus =
+            await ph.Permission.ignoreBatteryOptimizations.status;
         if (!batteryStatus.isGranted) {
           await ph.Permission.ignoreBatteryOptimizations.request();
         }
@@ -302,10 +302,7 @@ class NotificationService {
           // Without this, Android collapses the notification to a single
           // truncated line — the full hadith only became visible on manual
           // expand. BigTextStyle shows the whole text right away.
-          styleInformation: BigTextStyleInformation(
-            body,
-            contentTitle: title,
-          ),
+          styleInformation: BigTextStyleInformation(body, contentTitle: title),
         ),
         iOS: const DarwinNotificationDetails(),
       ),
@@ -409,7 +406,9 @@ class NotificationService {
 
       await _plugin.zonedSchedule(
         _athanIdBase + i,
-        arabic ? 'حان الآن موعد أذان $label' : 'It is now time for $label prayer',
+        arabic
+            ? 'حان الآن موعد أذان $label'
+            : 'It is now time for $label prayer',
         null,
         scheduled,
         NotificationDetails(
@@ -566,7 +565,7 @@ class NotificationService {
   }
 
   /// Schedules a reminder 30 minutes after Fajr to recite the morning
-  /// athkar, and another 30 minutes after Maghrib for the evening athkar —
+  /// athkar, and another 30 minutes after Asr for the evening athkar —
   /// tied to the prayer times rather than a fixed clock time. [times] should be the
   /// same map of "HH:mm" prayer times used for [schedulePrayerAthans]; call
   /// this again whenever those times are refreshed.
@@ -574,13 +573,15 @@ class NotificationService {
     required Map<String, String> times,
     required bool arabic,
   }) async {
-    // 30 minutes after Fajr / Maghrib, and the notification is just the one
+    // 30 minutes after Fajr / Asr, and the notification is just the one
     // line — no separate title + body.
     final morning = _addMinutes(times['fajr'], 30);
     if (morning != null) {
       await _plugin.zonedSchedule(
         _morningAthkarReminderId,
-        arabic ? 'حان الآن موعد أذكار الصباح' : "It's now time for the morning athkar",
+        arabic
+            ? 'حان الآن موعد أذكار الصباح'
+            : "It's now time for the morning athkar",
         null,
         _nextInstanceOf(morning.hour, morning.minute),
         const NotificationDetails(
@@ -602,11 +603,13 @@ class NotificationService {
       );
     }
 
-    final evening = _addMinutes(times['maghrib'], 30);
+    final evening = _addMinutes(times['asr'], 30);
     if (evening != null) {
       await _plugin.zonedSchedule(
         _eveningAthkarReminderId,
-        arabic ? 'حان الآن موعد أذكار المساء' : "It's now time for the evening athkar",
+        arabic
+            ? 'حان الآن موعد أذكار المساء'
+            : "It's now time for the evening athkar",
         null,
         _nextInstanceOf(evening.hour, evening.minute),
         const NotificationDetails(
@@ -614,7 +617,7 @@ class NotificationService {
             'evening_athkar_reminder',
             'Evening Athkar Reminder',
             channelDescription:
-                'A reminder after Maghrib to recite the evening athkar',
+                'A reminder after Asr to recite the evening athkar',
             importance: Importance.high,
             priority: Priority.high,
           ),
@@ -633,5 +636,4 @@ class NotificationService {
     await _plugin.cancel(_morningAthkarReminderId);
     await _plugin.cancel(_eveningAthkarReminderId);
   }
-
 }

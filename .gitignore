@@ -51,3 +51,9 @@ app.*.map.json
 
 # HarmonyOS port toolchain (SDK, Flutter-ohos fork, build caches) - large, machine-local
 .harmonyos-toolchain/
+
+# Local signing material / scratch archives — never commit
+*.cer
+*.p7b
+*.csr
+/lib.zip

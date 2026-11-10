@@ -65,7 +65,10 @@ class AppTheme {
     );
   }
 
-  static TextStyle quranTextStyle(BuildContext context, {double fontSize = 26}) {
+  static TextStyle quranTextStyle(
+    BuildContext context, {
+    double fontSize = 26,
+  }) {
     return TextStyle(
       fontFamily: _quranFont,
       fontWeight: FontWeight.normal,

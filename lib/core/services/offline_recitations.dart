@@ -84,7 +84,11 @@ class OfflineRecitations {
     }
   }
 
-  Future<void> _downloadOne(HttpClient client, Reciter reciter, int surah) async {
+  Future<void> _downloadOne(
+    HttpClient client,
+    Reciter reciter,
+    int surah,
+  ) async {
     final url = reciter.audioUrlForSurah(surah);
     final path = localSurahPath(reciter.id, surah)!;
     final tmp = File('$path.part');

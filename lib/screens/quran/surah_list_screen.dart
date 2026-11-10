@@ -167,9 +167,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
         if (juzList.isEmpty) {
           return Center(child: Text('quran.no_results'.tr()));
         }
-        final surahsByNumber = {
-          for (final s in provider.surahs) s.number: s,
-        };
+        final surahsByNumber = {for (final s in provider.surahs) s.number: s};
         return ListView.separated(
           padding: EdgeInsets.symmetric(
             horizontal: responsiveHorizontalPadding(context) - 4,
@@ -273,9 +271,7 @@ class _JuzTile extends StatelessWidget {
           child: Text(localizedNumber(context, juz.number)),
         ),
         title: Text(
-          'quran.juz_label'.tr(
-            args: [localizedNumber(context, juz.number)],
-          ),
+          'quran.juz_label'.tr(args: [localizedNumber(context, juz.number)]),
           style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: Text(
@@ -292,9 +288,7 @@ class _JuzTile extends StatelessWidget {
               dense: true,
               leading: CircleAvatar(
                 radius: 14,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.primaryContainer,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                 child: Text(
                   localizedNumber(context, surah.number),
                   style: Theme.of(context).textTheme.labelSmall,

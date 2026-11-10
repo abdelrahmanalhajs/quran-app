@@ -250,8 +250,8 @@ class _GuideItemTile extends StatelessWidget {
                 Text(
                   item.bodyKey.tr(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ],
             ),

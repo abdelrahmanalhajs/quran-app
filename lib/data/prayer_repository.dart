@@ -103,16 +103,40 @@ class PrayerRepository {
       if (marks.isEmpty) return null;
       final m = marks.first;
       String? pick(String? s) => (s == null || s.trim().isEmpty) ? null : s;
-      final place =
+      final raw =
           pick(m.administrativeArea) ??
           pick(m.subAdministrativeArea) ??
           pick(m.locality) ??
           pick(m.country);
-      if (place == null) return null;
+      if (raw == null) return null;
+      final place = cleanPlaceName(raw);
       return (place: place, countryCode: pick(m.isoCountryCode)?.toUpperCase());
     } catch (_) {
       return null;
     }
+  }
+
+  /// Reduces a geocoder's administrative-area name to just the place
+  /// itself: "محافظة القاهرة" → "القاهرة", "منطقة الرياض" → "الرياض",
+  /// "Cairo Governorate" → "Cairo", "Riyadh Province" → "Riyadh".
+  static String cleanPlaceName(String name) {
+    var s = name.trim();
+    final arPrefix = RegExp(
+      r'^(محافظة|منطقة|ولاية|إمارة|امارة|مقاطعة|إقليم|اقليم|لواء|قضاء|مدينة)\s+',
+    );
+    final enPrefix = RegExp(
+      r'^(Governorate|Province|Region|State|Emirate|Prefecture|Wilayat|Muhafazat)\s+of\s+',
+      caseSensitive: false,
+    );
+    final enSuffix = RegExp(
+      r'\s+(Governorate|Province|Region|State|Emirate|Prefecture|Municipality|District|Division|Capital Governorate)$',
+      caseSensitive: false,
+    );
+    s = s.replaceFirst(arPrefix, '');
+    s = s.replaceFirst(enPrefix, '');
+    s = s.replaceFirst(enSuffix, '');
+    s = s.trim();
+    return s.isEmpty ? name.trim() : s;
   }
 
   Future<void> _ensurePermission() async {
@@ -166,8 +190,14 @@ class PrayerRepository {
     final cc = countryCode ?? _guessCountryFromCoordinates(lat, lng);
     final method = switch (cc) {
       'SA' || 'YE' => adhan.CalculationMethod.umm_al_qura,
-      'EG' || 'SD' || 'LY' || 'SY' || 'LB' || 'IQ' || 'JO' || 'PS' =>
-        adhan.CalculationMethod.egyptian,
+      'EG' ||
+      'SD' ||
+      'LY' ||
+      'SY' ||
+      'LB' ||
+      'IQ' ||
+      'JO' ||
+      'PS' => adhan.CalculationMethod.egyptian,
       'AE' => adhan.CalculationMethod.dubai,
       'QA' || 'BH' || 'OM' => adhan.CalculationMethod.qatar,
       'KW' => adhan.CalculationMethod.kuwait,

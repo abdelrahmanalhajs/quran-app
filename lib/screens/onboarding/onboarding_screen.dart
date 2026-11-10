@@ -19,11 +19,7 @@ const _kSteps = [
     'onboarding.step3_title',
     'onboarding.step3_body',
   ),
-  _Step(
-    Icons.headphones,
-    'onboarding.step4_title',
-    'onboarding.step4_body',
-  ),
+  _Step(Icons.headphones, 'onboarding.step4_title', 'onboarding.step4_body'),
   _Step(Icons.explore, 'onboarding.step5_title', 'onboarding.step5_body'),
   _Step(
     Icons.favorite_outline,
@@ -73,9 +69,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _finish() async {
     await context.read<SettingsProvider>().setOnboardingDone();
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeShell()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
   }
 
   void _next() {
@@ -172,19 +168,13 @@ class _LanguagePage extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Text(
                     'Choose your language',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 6),
                   const Text(
                     'اختر لغتك',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 36),

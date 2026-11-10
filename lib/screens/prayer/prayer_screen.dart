@@ -500,10 +500,10 @@ class _QiblaTabState extends State<_QiblaTab> {
                       : 'prayer.calibration_hint'.tr(),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: lowAccuracy
-                            ? Colors.amber.shade800
-                            : Theme.of(context).colorScheme.outline,
-                      ),
+                    color: lowAccuracy
+                        ? Colors.amber.shade800
+                        : Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ),
             ],

@@ -25,13 +25,10 @@ String arabicIndicNumber(int number) {
 /// Western digits, regardless of which numeral style the user's keyboard
 /// actually produced.
 String westernDigits(String input) {
-  return input
-      .split('')
-      .map((c) {
-        final i = _arabicIndicDigits.indexOf(c);
-        return i == -1 ? c : i.toString();
-      })
-      .join();
+  return input.split('').map((c) {
+    final i = _arabicIndicDigits.indexOf(c);
+    return i == -1 ? c : i.toString();
+  }).join();
 }
 
 /// Diacritics (tashkeel: fatha/damma/kasra/shadda/sukun/tanwin/maddah,
@@ -43,9 +40,7 @@ String westernDigits(String input) {
 /// Arabic-Indic digit block (U+0660-U+0669) sits right in the middle of
 /// this codepoint range and must never be swept up by it — digits are
 /// handled separately by [westernDigits].
-final RegExp _arabicDiacritics = RegExp(
-  '[ً-ٰٓۖ-ۭـ]',
-);
+final RegExp _arabicDiacritics = RegExp('[ً-ٰٓۖ-ۭـ]');
 
 /// Alef-with-hamza/wasl forms (U+0623/U+0625/U+0622/U+0671), folded down to
 /// the plain alef (U+0627) most people actually type.

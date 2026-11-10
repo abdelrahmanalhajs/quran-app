@@ -73,7 +73,10 @@ class PrayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// again in the other language after a locale switch.
   String? get placeLanguage => _placeLang;
 
-  Future<void> load({bool arabicAthanLabels = false, bool silent = false}) async {
+  Future<void> load({
+    bool arabicAthanLabels = false,
+    bool silent = false,
+  }) async {
     if (_loading) return;
     _loading = true;
     _arabic = arabicAthanLabels;
@@ -151,7 +154,11 @@ class PrayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     final cachedLat = prefs.getDouble(_kPlaceLat);
     final cachedLng = prefs.getDouble(_kPlaceLng);
     if (cachedLat != null && cachedLng != null) {
-      _placeName = prefs.getString(_kPlaceName);
+      final cached = prefs.getString(_kPlaceName);
+      // Names cached by an earlier version still carry "محافظة" etc.
+      _placeName = cached == null
+          ? null
+          : PrayerRepository.cleanPlaceName(cached);
       _placeLang = prefs.getString(_kPlaceLang);
       _latitude ??= cachedLat;
       _longitude ??= cachedLng;
@@ -190,7 +197,10 @@ class PrayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     _computedForOffset = now.timeZoneOffset;
 
     if (kIsWeb) return;
-    await PrayerWidget.update(times: _times!.obligatoryPrayers, arabic: _arabic);
+    await PrayerWidget.update(
+      times: _times!.obligatoryPrayers,
+      arabic: _arabic,
+    );
     if (await AthanSettings.isEnabled()) {
       final athan = await AthanSettings.getReciter();
       await NotificationService.schedulePrayerAthans(
