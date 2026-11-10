@@ -56,6 +56,13 @@ class NotificationService {
   // HomeShell has built.
   static String? _pendingPayload;
 
+  /// True when this launch was a tap on one of the app's notifications.
+  /// HomeShell checks it to skip its usual resume-into-the-last-read-page
+  /// on cold start — that resume finishes asynchronously, *after* the
+  /// notification's route has been applied, so it used to push the Quran
+  /// page right over the prayer/athkar/hadith page the tap had just opened.
+  static bool launchedFromNotification = false;
+
   // Exact alarms (SCHEDULE_EXACT_ALARM) are not granted by default on
   // Android 13+. Attempting an exact schedule then throws
   // PlatformException(exact_alarms_not_permitted), which previously went
@@ -137,6 +144,7 @@ class NotificationService {
     final launchDetails = await _plugin.getNotificationAppLaunchDetails();
     if (launchDetails?.didNotificationLaunchApp == true) {
       _pendingPayload = launchDetails?.notificationResponse?.payload;
+      launchedFromNotification = _pendingPayload != null;
     }
   }
 
@@ -557,23 +565,23 @@ class NotificationService {
     return (hour: total ~/ 60, minute: total % 60);
   }
 
-  /// Schedules a reminder shortly after Fajr to recite the morning athkar,
-  /// and another shortly after Asr for the evening athkar — the traditional
-  /// timing for each, rather than a fixed clock time. [times] should be the
+  /// Schedules a reminder 30 minutes after Fajr to recite the morning
+  /// athkar, and another 30 minutes after Maghrib for the evening athkar —
+  /// tied to the prayer times rather than a fixed clock time. [times] should be the
   /// same map of "HH:mm" prayer times used for [schedulePrayerAthans]; call
   /// this again whenever those times are refreshed.
   static Future<void> scheduleAthkarPrayerReminders({
     required Map<String, String> times,
     required bool arabic,
   }) async {
-    final morning = _addMinutes(times['fajr'], 15);
+    // 30 minutes after Fajr / Maghrib, and the notification is just the one
+    // line — no separate title + body.
+    final morning = _addMinutes(times['fajr'], 30);
     if (morning != null) {
       await _plugin.zonedSchedule(
         _morningAthkarReminderId,
-        arabic ? 'أذكار الصباح' : 'Morning Athkar',
-        arabic
-            ? 'حان وقت أذكار الصباح بعد صلاة الفجر'
-            : "It's time for the morning athkar, after Fajr prayer",
+        arabic ? 'حان الآن موعد أذكار الصباح' : "It's now time for the morning athkar",
+        null,
         _nextInstanceOf(morning.hour, morning.minute),
         const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -594,21 +602,19 @@ class NotificationService {
       );
     }
 
-    final evening = _addMinutes(times['asr'], 15);
+    final evening = _addMinutes(times['maghrib'], 30);
     if (evening != null) {
       await _plugin.zonedSchedule(
         _eveningAthkarReminderId,
-        arabic ? 'أذكار المساء' : 'Evening Athkar',
-        arabic
-            ? 'حان وقت أذكار المساء بعد صلاة العصر'
-            : "It's time for the evening athkar, after Asr prayer",
+        arabic ? 'حان الآن موعد أذكار المساء' : "It's now time for the evening athkar",
+        null,
         _nextInstanceOf(evening.hour, evening.minute),
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'evening_athkar_reminder',
             'Evening Athkar Reminder',
             channelDescription:
-                'A reminder after Asr to recite the evening athkar',
+                'A reminder after Maghrib to recite the evening athkar',
             importance: Importance.high,
             priority: Priority.high,
           ),

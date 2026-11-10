@@ -110,6 +110,14 @@ class QuranApp extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
+      // Flutter cross-fades between light and dark themes over 200ms by
+      // default. With every tab (incl. the heavy Mushaf pages) mounted in
+      // the IndexedStack, that fade rebuilds the whole app each frame and
+      // stutters, with text sitting at a low-contrast mid-grey along the
+      // way — read as the text color "taking time" to follow the theme.
+      // Switch instantly instead: white text on dark, black on light,
+      // immediately.
+      themeAnimationDuration: Duration.zero,
       scrollBehavior: const _NoOverscrollBehavior(),
       home: settings.onboardingDone
           ? const HomeShell()

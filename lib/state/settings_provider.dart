@@ -77,8 +77,8 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   Reciter _reciter = kReciters.first;
-  // Default to Medium (30).
-  double _quranFontSize = 30;
+  // Default to Small (28), the smallest size.
+  double _quranFontSize = 28;
   QuranViewMode _quranViewMode = QuranViewMode.page;
   int? _lastReadSurah;
   int? _lastReadPage;
@@ -142,12 +142,12 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 30;
+    _quranFontSize = prefs.getDouble(_kQuranFontSize) ?? 28;
     // Migrate users whose saved value is from an older scale (incl. the old
     // 24px and 26px Small) onto the current Small/Medium/Large pixel sizes,
-    // defaulting to Medium.
+    // defaulting to Small.
     if (!kQuranFontSizeSteps.contains(_quranFontSize)) {
-      _quranFontSize = 30;
+      _quranFontSize = 28;
     }
     final viewModeStr = prefs.getString(_kQuranViewMode);
     _quranViewMode = viewModeStr == 'list'

@@ -217,11 +217,11 @@ class _ThikrCardState extends State<_ThikrCard> {
                 children: [
                   Icon(
                     isSunnah
-                        ? Icons.star_outline
+                        ? Icons.circle
                         : (done
                               ? Icons.check_circle
                               : Icons.touch_app_outlined),
-                    size: 18,
+                    size: isSunnah ? 8 : 18,
                     color: isSunnah
                         ? Theme.of(context).colorScheme.primary
                         : (done ? Colors.green : null),
@@ -231,7 +231,7 @@ class _ThikrCardState extends State<_ThikrCard> {
                     isSunnah
                         ? 'athkar.sunnah'.tr()
                         : (done
-                              ? 'athkar.repeat'.tr()
+                              ? 'athkar.done'.tr()
                               : '${'athkar.tap_to_count'.tr()} ($_count/${widget.thikr.repeat})'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),

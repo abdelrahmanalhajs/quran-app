@@ -56,7 +56,12 @@ class _HomeShellState extends State<HomeShell> {
     // see [_resumeLastRead] — rather than always opening to the surah
     // list, mirroring what switching back to the Quran tab does within a
     // session (see [_onDestinationSelected]).
-    WidgetsBinding.instance.addPostFrameCallback((_) => _resumeLastRead());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ...unless a notification tap launched the app, in which case the
+      // page it routes to must stay on top (see
+      // [NotificationService.launchedFromNotification]).
+      if (!NotificationService.launchedFromNotification) _resumeLastRead();
+    });
     // Applies a route from a notification that launched the app from
     // terminated (didn't fire onDidReceiveNotificationResponse) or raced
     // this very first frame. Runs after [_resumeLastRead] so a notification

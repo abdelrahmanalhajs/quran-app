@@ -159,15 +159,38 @@ class SurahDetailScreen extends StatefulWidget {
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   late Future<_SurahPageBundle> _bundleFuture;
 
+  /// Built bundles, by surah number. The data is the immutable Quran text,
+  /// so a bundle never goes stale. Crossing into the adjacent surah primes
+  /// this before swapping screens (see [_goToAdjacentSurah]), so the new
+  /// screen's very first frame is already the page, not a loading spinner.
+  static final Map<int, _SurahPageBundle> _bundleCache = {};
+
+  _SurahPageBundle? _initialBundle;
+
   @override
   void initState() {
     super.initState();
-    _bundleFuture = _loadBundle();
+    _initialBundle = _bundleCache[widget.surah.number];
+    _bundleFuture = _initialBundle != null
+        ? Future.value(_initialBundle)
+        : _loadBundle(context.read<QuranProvider>().repository, widget.surah.number);
   }
 
-  Future<_SurahPageBundle> _loadBundle() async {
-    final repo = context.read<QuranProvider>().repository;
-    final surahNumber = widget.surah.number;
+  static Future<_SurahPageBundle> _loadBundle(
+    QuranRepository repo,
+    int surahNumber,
+  ) async {
+    final cached = _bundleCache[surahNumber];
+    if (cached != null) return cached;
+    final bundle = await _buildBundle(repo, surahNumber);
+    _bundleCache[surahNumber] = bundle;
+    return bundle;
+  }
+
+  static Future<_SurahPageBundle> _buildBundle(
+    QuranRepository repo,
+    int surahNumber,
+  ) async {
     final results = await Future.wait([
       repo.getSurahAyahs(surahNumber),
       repo.getSurahList(),
@@ -255,9 +278,18 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     }
     if (target == null) return;
     final resolvedTarget = target;
+    // Load the target surah's pages *before* swapping screens, and swap
+    // with no transition: the sentinel page the swipe just landed on is
+    // already this same page (see [_MushafPageViewState._buildPageForIndex]),
+    // so the hand-off is invisible and crossing a surah boundary reads as
+    // an ordinary page turn rather than a new screen sliding/zooming in.
+    await _loadBundle(repo, resolvedTarget.number);
+    if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => SurahDetailScreen(
+      PageRouteBuilder(
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (_, _, _) => SurahDetailScreen(
           surah: resolvedTarget,
           startPage: targetPage,
         ),
@@ -276,12 +308,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
     final body = FutureBuilder<_SurahPageBundle>(
       future: _bundleFuture,
+      initialData: _initialBundle,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
         if (snapshot.hasError) {
           return Center(child: Text('quran.error'.tr()));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
         final bundle = snapshot.data!;
         final ayahs = bundle.ayahs;
@@ -984,6 +1017,13 @@ class _MushafPageViewState extends State<_MushafPageView>
   late List<List<Ayah>> _screenPages;
   int? _prevSentinelIndex;
   int? _nextSentinelIndex;
+
+  // The adjacent surah's neighbouring Mushaf page (and, for the previous
+  // one, the page before it, which decides its quarter-Hizb mark), rendered
+  // in the sentinel slots — see [_buildPageForIndex].
+  List<Ayah>? _prevPreviewAyahs;
+  Ayah? _prevPreviewPrevLast;
+  List<Ayah>? _nextPreviewAyahs;
   // Set once this screen's last Mushaf page is the Quran's very last page
   // (604) — reserves one extra, real slot right after it for a closing
   // "Khatm al-Quran" dua screen, so reaching the end of the whole Quran
@@ -1125,7 +1165,6 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// [_handleScaleUpdate].
   bool? _gestureIsZoom;
   double _gestureBaseScale = 1.0;
-  Offset _gestureBaseOffset = Offset.zero;
 
   /// Horizontal distance the (single-finger, non-zoom) gesture has travelled
   /// so far, accumulated in [_handleScaleUpdate]. Used so a deliberate but
@@ -1135,11 +1174,25 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// turning back a page).
   double _gesturePanDx = 0;
 
+  /// How far a one-finger drag on a *zoomed* page tried to push past the
+  /// page's left/right edge. Past a threshold, releasing turns the page —
+  /// so reading on while zoomed is just "keep dragging", no zoom-out needed.
+  double _zoomEdgeOverscrollDx = 0;
+
+  static const double _maxZoom = 3.0;
+
+  /// Keys the page area so pinch-zoom can find its size/center.
+  final GlobalKey _gestureAreaKey = GlobalKey();
+
   /// Whether the tap-to-reveal back/reciter/view-toggle/search bar (top)
   /// and embedded app-tab bar (bottom) are showing. Off by default so the
   /// reading view stays fully immersive — see [_toggleChrome].
   bool _chromeVisible = false;
   final TextEditingController _searchController = TextEditingController();
+
+  /// Lets a tap or swipe on the page itself dismiss the search keyboard
+  /// and carry on reading — see [_dismissSearch].
+  final FocusNode _searchFocusNode = FocusNode();
   String _searchQuery = '';
   List<SurahSummary> _allSurahs = [];
 
@@ -1159,11 +1212,24 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// The page's tap handler. When a 2-second hold has just opened an ayah's
   /// sheet, the finger lift still arrives here as a tap — swallow that one so
   /// the chrome doesn't toggle underneath the sheet.
+  /// If the search field is being typed in, hides the keyboard and the
+  /// results list so the page underneath can be read and swiped right away —
+  /// no need to press back first. Returns whether it was open.
+  bool _dismissSearch() {
+    if (!_searchFocusNode.hasFocus && _searchQuery.isEmpty) return false;
+    _searchFocusNode.unfocus();
+    _searchController.clear();
+    setState(() => _searchQuery = '');
+    return true;
+  }
+
   void _handleTap() {
     if (_suppressNextTap) {
       _suppressNextTap = false;
       return;
     }
+    // First tap on the page while searching just closes the search.
+    if (_dismissSearch()) return;
     // While picking ayahs, a tap that misses the text shouldn't hide the
     // chrome and strand the selection bar; taps that land on an ayah are
     // handled by that ayah's own recogniser.
@@ -1214,6 +1280,7 @@ class _MushafPageViewState extends State<_MushafPageView>
         (_prevSentinelIndex != null ? 1 : 0) +
         (_nextSentinelIndex != null ? 1 : 0) +
         (_khatmIndex != null ? 1 : 0);
+    _loadAdjacentPreviews();
 
     // A page that's shared with the adjacent surah may already have been
     // shown in full on the screen the user is coming from (the adjacent
@@ -1275,8 +1342,39 @@ class _MushafPageViewState extends State<_MushafPageView>
     _disposeRecognizers();
     _pageController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _turnController?.dispose();
     super.dispose();
+  }
+
+  void _loadAdjacentPreviews() {
+    if (_screenPages.isEmpty) return;
+    final repo = context.read<QuranProvider>().repository;
+    if (_prevSentinelIndex != null) {
+      final page = _screenPages.first.first.page - 1;
+      if (page >= 1) {
+        Future.wait([
+          repo.getPageAyahs(page),
+          if (page > 1) repo.getPageAyahs(page - 1),
+        ]).then((r) {
+          if (!mounted) return;
+          setState(() {
+            _prevPreviewAyahs = r[0];
+            _prevPreviewPrevLast = r.length > 1 && r[1].isNotEmpty
+                ? r[1].last
+                : null;
+          });
+        });
+      }
+    }
+    if (_nextSentinelIndex != null) {
+      final page = _screenPages.last.first.page + 1;
+      if (page <= 604) {
+        repo.getPageAyahs(page).then((a) {
+          if (mounted) setState(() => _nextPreviewAyahs = a);
+        });
+      }
+    }
   }
 
   void _onPageChanged(int index) {
@@ -1382,9 +1480,19 @@ class _MushafPageViewState extends State<_MushafPageView>
   void _handleScaleStart(ScaleStartDetails details) {
     _gestureIsZoom = null;
     _gestureBaseScale = _zoomScale;
-    _gestureBaseOffset = _zoomOffset;
     _gesturePanDx = 0;
+    _zoomEdgeOverscrollDx = 0;
+    // Swiping the page while the search keyboard is up closes it and lets
+    // the swipe turn the page as usual.
+    _dismissSearch();
   }
+
+  /// The furthest [_zoomOffset] can go at [scale] while keeping the page
+  /// covering the screen (no empty space dragged into view).
+  Offset _maxZoomOffset(double scale, Size size) => Offset(
+    (scale - 1) * size.width / (2 * scale),
+    (scale - 1) * size.height / (2 * scale),
+  );
 
   void _handleScaleUpdate(ScaleUpdateDetails details) {
     final stepIndex = quranFontSizeStepIndex(widget.fontSize);
@@ -1396,13 +1504,36 @@ class _MushafPageViewState extends State<_MushafPageView>
     } else if (_gestureIsZoom == false && details.pointerCount >= 2) {
       _gestureIsZoom = true;
       _gestureBaseScale = _zoomScale;
-      _gestureBaseOffset = _zoomOffset;
     }
 
     if (_gestureIsZoom == true) {
+      final box =
+          _gestureAreaKey.currentContext?.findRenderObject() as RenderBox?;
+      final size = box?.size ?? MediaQuery.sizeOf(context);
+      final center = size.center(Offset.zero);
+      final oldScale = _zoomScale;
+      final newScale = (_gestureBaseScale * details.scale).clamp(1.0, _maxZoom);
+      // Zoom toward the fingers (keep the content under the focal point
+      // fixed) instead of always toward the screen center, then follow the
+      // drag. focalPointDelta is this frame's movement only, so it's added
+      // to the *current* offset — adding it to the gesture's starting
+      // offset (as before) discarded every earlier frame, which is why a
+      // zoomed page could barely be moved left or right.
+      final focal = details.localFocalPoint - center;
+      var offset =
+          _zoomOffset +
+          focal / newScale -
+          focal / oldScale +
+          details.focalPointDelta / newScale;
+      final max = _maxZoomOffset(newScale, size);
+      final clampedDx = offset.dx.clamp(-max.dx, max.dx);
+      if (details.pointerCount == 1) {
+        _zoomEdgeOverscrollDx += (offset.dx - clampedDx) * newScale;
+      }
+      offset = Offset(clampedDx, offset.dy.clamp(-max.dy, max.dy));
       setState(() {
-        _zoomScale = (_gestureBaseScale * details.scale).clamp(1.0, 2.5);
-        _zoomOffset = _gestureBaseOffset + details.focalPointDelta / _zoomScale;
+        _zoomScale = newScale;
+        _zoomOffset = newScale == 1.0 ? Offset.zero : offset;
       });
     } else {
       _gesturePanDx += details.focalPointDelta.dx;
@@ -1410,6 +1541,22 @@ class _MushafPageViewState extends State<_MushafPageView>
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
+    if (_gestureIsZoom == true &&
+        _turnController == null &&
+        _zoomScale > 1.0 &&
+        _zoomEdgeOverscrollDx.abs() >=
+            MediaQuery.sizeOf(context).width * 0.15) {
+      // Dragged a zoomed page past its edge: carry on to the next/previous
+      // page, the same direction a normal swipe that way would go.
+      final goNext = _zoomEdgeOverscrollDx > 0;
+      final target = (goNext ? _currentIndex + 1 : _currentIndex - 1).clamp(
+        0,
+        _itemCount - 1,
+      );
+      if (target != _currentIndex) {
+        _startPageTurn(target, slideLeft: !goNext);
+      }
+    }
     if (_gestureIsZoom != true && _turnController == null) {
       final velocity = details.velocity.pixelsPerSecond.dx;
       // A page turns either on a quick flick (velocity) OR on a slow but
@@ -1515,18 +1662,43 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// (the manual page-turn overlay), so both render identical content for
   /// a given page index.
   Widget _buildPageForIndex(BuildContext context, int index) {
+    // The slots just past this surah's first/last page show the adjacent
+    // surah's real neighbouring Mushaf page (preloaded in initState), so
+    // swiping across a surah boundary looks like any other page turn; on
+    // landing, [_onPageChanged] swaps to that surah's screen with no
+    // transition (see [_SurahDetailScreenState._goToAdjacentSurah]).
     if (index == _prevSentinelIndex) {
-      return const _AdjacentSurahTransitionPage(forward: false);
+      final preview = _prevPreviewAyahs;
+      return preview == null || preview.isEmpty
+          ? const _AdjacentSurahTransitionPage()
+          : _buildMushafPage(
+              context,
+              preview,
+              prevPageLastAyah: _prevPreviewPrevLast,
+            );
     }
     if (index == _nextSentinelIndex) {
-      return const _AdjacentSurahTransitionPage(forward: true);
+      final preview = _nextPreviewAyahs;
+      return preview == null || preview.isEmpty
+          ? const _AdjacentSurahTransitionPage()
+          : _buildMushafPage(
+              context,
+              preview,
+              prevPageLastAyah: _screenPages.last.last,
+            );
     }
     if (index == _khatmIndex) {
       return const _KhatmQuranPage();
     }
     final screenPageIndex = index - _realPagesStart;
     final pageAyahs = _screenPages[screenPageIndex];
-    final page = _buildMushafPage(context, pageAyahs, screenPageIndex);
+    final page = _buildMushafPage(
+      context,
+      pageAyahs,
+      prevPageLastAyah: screenPageIndex > 0
+          ? _screenPages[screenPageIndex - 1].last
+          : null,
+    );
     final stepIndex = quranFontSizeStepIndex(widget.fontSize);
     return kQuranFontSizeFitsPage[stepIndex] ? _applyZoom(page) : page;
   }
@@ -1598,6 +1770,7 @@ class _MushafPageViewState extends State<_MushafPageView>
             // wouldn't be hit-tested at all, since the default
             // `deferToChild` behavior only recognizes gestures where a
             // child actually paints.
+            key: _gestureAreaKey,
             behavior: HitTestBehavior.opaque,
             onScaleStart: _handleScaleStart,
             onScaleUpdate: _handleScaleUpdate,
@@ -1755,6 +1928,7 @@ class _MushafPageViewState extends State<_MushafPageView>
                   Expanded(
                     child: TextField(
                       controller: _searchController,
+                      focusNode: _searchFocusNode,
                       onChanged: (v) => setState(() => _searchQuery = v),
                       style: const TextStyle(color: _pageBg),
                       decoration: InputDecoration(
@@ -2027,11 +2201,16 @@ class _MushafPageViewState extends State<_MushafPageView>
     _jumpToSurah(target, startPage: boundary.startPage);
   }
 
+  /// [prevPageLastAyah] is the last ayah of the Mushaf page right before
+  /// this one, when known — it decides where a quarter-Hizb (۞) begins. It's
+  /// passed in rather than looked up in [_screenPages] so the adjacent
+  /// surah's page (not part of this screen's own pages) can be rendered as
+  /// a preview too; see [_buildPageForIndex].
   Widget _buildMushafPage(
     BuildContext context,
-    List<Ayah> pageAyahs,
-    int screenPageIndex,
-  ) {
+    List<Ayah> pageAyahs, {
+    required Ayah? prevPageLastAyah,
+  }) {
     final signsColored = context.watch<SettingsProvider>().quranSignsColored;
     final stepIndex = quranFontSizeStepIndex(widget.fontSize);
     final lineHeight = kQuranFontSizeLineHeight[stepIndex];
@@ -2069,9 +2248,7 @@ class _MushafPageViewState extends State<_MushafPageView>
     // at page granularity, just checked per-ayah here so the mark can be
     // inserted inline at the right word instead of only summarized in the
     // footer.
-    Ayah? prevAyah = screenPageIndex > 0
-        ? _screenPages[screenPageIndex - 1].last
-        : null;
+    Ayah? prevAyah = prevPageLastAyah;
 
     final runs = _groupBySurah(pageAyahs);
     for (var r = 0; r < runs.length; r++) {
@@ -2326,7 +2503,7 @@ class _MushafPageViewState extends State<_MushafPageView>
     String? hizbWord;
     String? hizbNumber;
     String? hizbFraction;
-    if (_isQuarterStart(screenPageIndex)) {
+    if (_isQuarterStart(pageAyahs, prevPageLastAyah)) {
       // The quarter that just started may have been reached partway
       // through this page rather than right at its first ayah — e.g. Al
       // Baqarah's ¼-Hizb mark falls at ayah 26, mid-page — so the Hizb/
@@ -2557,16 +2734,14 @@ class _MushafPageViewState extends State<_MushafPageView>
   /// fresh page opening directly on one of the 40 surahs in
   /// [kSurahsStartingNewQuarterAtAyah1], it falls back to that lookup
   /// instead of silently missing the badge.
-  bool _isQuarterStart(int screenPageIndex) {
-    final pageAyahs = _screenPages[screenPageIndex];
+  bool _isQuarterStart(List<Ayah> pageAyahs, Ayah? prevPageLastAyah) {
     final first = pageAyahs.first;
     // The Quran's very first ayah is unconditionally Hizb 1's own start —
     // the one boundary that's always knowable even with no earlier ayah
     // loaded to compare against.
     if (first.surahNumber == 1 && first.numberInSurah == 1) return true;
-    if (screenPageIndex > 0) {
-      final prevLast = _screenPages[screenPageIndex - 1].last;
-      if (prevLast.hizbQuarter != first.hizbQuarter) return true;
+    if (prevPageLastAyah != null) {
+      if (prevPageLastAyah.hizbQuarter != first.hizbQuarter) return true;
     } else if (first.numberInSurah == 1 &&
         kSurahsStartingNewQuarterAtAyah1.contains(first.surahNumber)) {
       return true;
@@ -2698,39 +2873,14 @@ class _ChromeOverlay extends StatelessWidget {
 /// the adjacent surah. Styled to match the Mushaf page background so the
 /// transition doesn't flash an unstyled blank page.
 class _AdjacentSurahTransitionPage extends StatelessWidget {
-  final bool forward;
+  const _AdjacentSurahTransitionPage();
 
-  const _AdjacentSurahTransitionPage({required this.forward});
-
+  /// Only shown if the adjacent page's preview hasn't loaded yet: a plain
+  /// blank page rather than a "next surah" interstitial with a spinner, so
+  /// even then the turn reads as an ordinary page.
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _MushafPageViewState._pageBg,
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            forward ? Icons.arrow_forward : Icons.arrow_back,
-            color: _MushafPageViewState._frameGreen,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            forward ? 'quran.next_surah'.tr() : 'quran.previous_surah'.tr(),
-            style: const TextStyle(
-              color: _MushafPageViewState._frameGreen,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ],
-      ),
-    );
+    return Container(color: _MushafPageViewState._pageBg);
   }
 }
 

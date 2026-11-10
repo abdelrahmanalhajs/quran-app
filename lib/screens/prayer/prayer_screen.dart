@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
+import '../../core/arabic_numbers.dart';
 import '../../core/responsive.dart';
 import '../../state/navigation_provider.dart';
 import '../../state/prayer_provider.dart';
@@ -200,14 +202,25 @@ class _PrayerTimesTab extends StatelessWidget {
       ('prayer.maghrib', t.maghrib, Icons.nights_stay_outlined),
       ('prayer.isha', t.isha, Icons.bedtime_outlined),
     ];
+    final lang = context.locale.languageCode;
+    if (provider.placeName != null && provider.placeLanguage != lang) {
+      // Language was switched since the name was looked up — fetch it again
+      // in the current language.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => provider.refreshPlaceName(arabic: lang == 'ar'),
+      );
+    }
     return RefreshIndicator(
       onRefresh: () =>
           provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
       child: ListView.separated(
         padding: EdgeInsets.all(responsiveHorizontalPadding(context)),
-        itemCount: entries.length,
+        itemCount: entries.length + 1,
         separatorBuilder: (context, index) => const SizedBox(height: 8),
         itemBuilder: (context, i) {
+          if (i == entries.length) {
+            return _LocationAndHijriDate(placeName: provider.placeName);
+          }
           final (key, time, icon) = entries[i];
           return Card(
             child: ListTile(
@@ -220,6 +233,61 @@ class _PrayerTimesTab extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Shown in the space under the prayer times: the device's governorate and,
+/// under it, today's Hijri date.
+class _LocationAndHijriDate extends StatelessWidget {
+  const _LocationAndHijriDate({required this.placeName});
+
+  final String? placeName;
+
+  @override
+  Widget build(BuildContext context) {
+    final arabic = context.locale.languageCode == 'ar';
+    HijriCalendar.setLocal(arabic ? 'ar' : 'en');
+    final h = HijriCalendar.now();
+    final day = localizedNumber(context, h.hDay);
+    final year = localizedNumber(context, h.hYear);
+    final hijri = arabic
+        ? '$day ${h.longMonthName} $year هـ'
+        : '$day ${h.longMonthName} $year AH';
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 28, bottom: 16),
+      child: Column(
+        children: [
+          if (placeName != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    placeName!,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+          if (placeName != null) const SizedBox(height: 8),
+          Text(
+            hijri,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
