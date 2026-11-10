@@ -273,48 +273,69 @@ class NotificationService {
     return (androidGranted ?? true) && (iosGranted ?? true);
   }
 
+  /// How many days of hadith notifications are queued ahead. Each is a
+  /// separate one-shot notification carrying that day's hadith; they're
+  /// re-queued on every app launch (see HomeShell), so the window keeps
+  /// rolling forward. Kept well under iOS's 64-pending-notification cap.
+  static const int _hadithDaysAhead = 14;
+  static const int _hadithIdBase = 3000;
+
   static Future<void> scheduleDailyHadith({
     int hour = 16,
     int minute = 0,
     bool arabic = false,
   }) async {
     final repo = HadithRepository();
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
-    final hadith = await repo.getHadithForDay(tomorrow);
-
     final title = arabic ? 'حديث اليوم' : 'Hadith of the Day';
-    final body =
-        '${arabic ? hadith.ar : hadith.en}\n\n'
-        '${arabic ? hadith.sourceAr : hadith.source}';
-
-    await _plugin.zonedSchedule(
-      _dailyHadithId,
-      title,
-      body,
-      _nextInstanceOf(hour, minute),
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'daily_hadith',
-          'Daily Hadith',
-          channelDescription: 'A new hadith every day',
-          importance: Importance.high,
-          priority: Priority.high,
-          // Without this, Android collapses the notification to a single
-          // truncated line — the full hadith only became visible on manual
-          // expand. BigTextStyle shows the whole text right away.
-          styleInformation: BigTextStyleInformation(body, contentTitle: title),
+    // A single repeating notification would show the same text every day
+    // until the app is opened again; one notification per day lets each
+    // day carry a different hadith.
+    await _plugin.cancel(_dailyHadithId); // the old repeating one
+    final first = _nextInstanceOf(hour, minute);
+    for (var i = 0; i < _hadithDaysAhead; i++) {
+      final when = first.add(Duration(days: i));
+      final hadith = await repo.getHadithForDay(
+        DateTime(when.year, when.month, when.day),
+      );
+      final body =
+          '${arabic ? hadith.ar : hadith.en}\n\n'
+          '${arabic ? hadith.sourceAr : hadith.source}';
+      await _plugin.zonedSchedule(
+        _hadithIdBase + i,
+        title,
+        body,
+        when,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_hadith',
+            'Daily Hadith',
+            channelDescription: 'A new hadith every day',
+            importance: Importance.high,
+            priority: Priority.high,
+            // Without this, Android collapses the notification to a single
+            // truncated line — the full hadith only became visible on manual
+            // expand. BigTextStyle shows the whole text right away.
+            styleInformation: BigTextStyleInformation(
+              body,
+              contentTitle: title,
+            ),
+          ),
+          iOS: const DarwinNotificationDetails(),
         ),
-        iOS: const DarwinNotificationDetails(),
-      ),
-      matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: _scheduleMode,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: _NotifRoute.hadith,
-    );
+        androidScheduleMode: _scheduleMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.hadith,
+      );
+    }
   }
 
-  static Future<void> cancelDailyHadith() => _plugin.cancel(_dailyHadithId);
+  static Future<void> cancelDailyHadith() async {
+    await _plugin.cancel(_dailyHadithId);
+    for (var i = 0; i < _hadithDaysAhead; i++) {
+      await _plugin.cancel(_hadithIdBase + i);
+    }
+  }
 
   // 24 ids (one per hour of the day) so each hour can carry its own zikr,
   // cycling through [_zikrPhrases]. periodicallyShow can't do this — it

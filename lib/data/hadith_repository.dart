@@ -15,13 +15,25 @@ class HadithRepository {
     return _cache!;
   }
 
+  /// The hadith for [day]. Walks the collection in a shuffled order (a
+  /// fixed stride through it rather than file order) so consecutive days
+  /// don't land on neighbouring, often similar, entries — while still
+  /// visiting every hadith once before any repeats, and giving the same
+  /// hadith for the same day everywhere (Hadith tab and notification).
   Future<Hadith> getHadithForDay(DateTime day) async {
     final all = await _all();
-    final dayOfYear = int.parse(
-      '${day.difference(DateTime(day.year, 1, 1)).inDays}',
-    );
-    return all[dayOfYear % all.length];
+    final n = all.length;
+    final dayNumber =
+        DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
+        Duration.millisecondsPerDay;
+    var stride = 97 % n;
+    while (stride == 0 || _gcd(stride, n) != 1) {
+      stride++;
+    }
+    return all[(dayNumber * stride) % n];
   }
+
+  static int _gcd(int a, int b) => b == 0 ? a : _gcd(b, a % b);
 
   Future<Hadith> getTodayHadith() => getHadithForDay(DateTime.now());
 

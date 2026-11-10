@@ -1,42 +1,1730 @@
 [
-  {"ar": "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى", "en": "Actions are judged by intentions, and every person will be rewarded according to what they intended.", "narrator": "Umar ibn Al-Khattab", "narrator_ar": "عمر بن الخطاب", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ", "en": "Whoever believes in Allah and the Last Day should speak good or remain silent.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ", "en": "None of you truly believes until he loves for his brother what he loves for himself.", "narrator": "Anas ibn Malik", "narrator_ar": "أنس بن مالك", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "الطُّهُورُ شَطْرُ الْإِيمَانِ", "en": "Cleanliness is half of faith.", "narrator": "Abu Malik Al-Ashari", "narrator_ar": "أبو مالك الأشعري", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ", "en": "Whoever follows a path to seek knowledge, Allah will make easy for him a path to Paradise.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ", "en": "A Muslim is one from whose tongue and hand other Muslims are safe.", "narrator": "Abdullah ibn Amr", "narrator_ar": "عبدالله بن عمرو", "source": "Bukhari", "source_ar": "البخاري"},
-  {"ar": "خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ", "en": "The best of people are those most beneficial to others.", "narrator": "Jabir ibn Abdullah", "narrator_ar": "جابر بن عبدالله", "source": "Daraqutni", "source_ar": "الدارقطني"},
-  {"ar": "الْكَلِمَةُ الطَّيِّبَةُ صَدَقَةٌ", "en": "A good word is charity.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "مَنْ لَا يَرْحَمْ لَا يُرْحَمْ", "en": "Whoever does not show mercy will not be shown mercy.", "narrator": "Jarir ibn Abdullah", "narrator_ar": "جرير بن عبدالله", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ صَدَقَةٌ", "en": "Your smile in the face of your brother is charity.", "narrator": "Abu Dharr", "narrator_ar": "أبو ذر", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "إِنَّ اللَّهَ جَمِيلٌ يُحِبُّ الْجَمَالَ", "en": "Indeed Allah is beautiful and loves beauty.", "narrator": "Abdullah ibn Mas'ud", "narrator_ar": "عبدالله بن مسعود", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ", "en": "The deeds most loved by Allah are those done consistently, even if small.", "narrator": "Aisha", "narrator_ar": "عائشة", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُصِبْ مِنْهُ", "en": "If Allah wants good for someone, He afflicts him with trials.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Bukhari", "source_ar": "البخاري"},
-  {"ar": "الدُّنْيَا سِجْنُ الْمُؤْمِنِ وَجَنَّةُ الْكَافِرِ", "en": "This world is a prison for the believer and a paradise for the disbeliever.", "narrator": "Various Companions", "narrator_ar": "صحابة متعددون", "source": "Sahih Al-Jami", "source_ar": "صحيح الجامع"},
-  {"ar": "إِنَّ اللَّهَ لَا يَنْظُرُ إِلَى أَجْسَادِكُمْ وَلَا إِلَى صُوَرِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ", "en": "Indeed Allah does not look at your bodies or appearances, but He looks at your hearts.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "مَنْ صَمَتَ نَجَا", "en": "Whoever remains silent is saved.", "narrator": "Abdullah ibn Amr", "narrator_ar": "عبدالله بن عمرو", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "الرَّاحِمُونَ يَرْحَمُهُمُ الرَّحْمَنُ", "en": "Those who show mercy will be shown mercy by the Most Merciful.", "narrator": "Abdullah ibn Amr", "narrator_ar": "عبدالله بن عمرو", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ", "en": "Charity does not decrease wealth.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "إِنَّ اللَّهَ يُحِبُّ إِذَا عَمِلَ أَحَدُكُمْ عَمَلًا أَنْ يُتْقِنَهُ", "en": "Indeed Allah loves that when one of you does a job, he does it with excellence.", "narrator": "Aisha", "narrator_ar": "عائشة", "source": "Al-Bayhaqi", "source_ar": "البيهقي"},
-  {"ar": "لَيْسَ الشَّدِيدُ بِالصُّرَعَةِ، إِنَّمَا الشَّدِيدُ الَّذِي يَمْلِكُ نَفْسَهُ عِنْدَ الْغَضَبِ", "en": "The strong man is not the one who can wrestle others down. The strong man is the one who controls himself when angry.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "مَنْ كَظَمَ غَيْظًا وَهُوَ قَادِرٌ عَلَى أَنْ يُنْفِذَهُ دَعَاهُ اللَّهُ يَوْمَ الْقِيَامَةِ عَلَى رُؤُوسِ الْخَلَائِقِ", "en": "Whoever suppresses his anger while able to act on it, Allah will call him before all creation on the Day of Judgment.", "narrator": "Mu'adh ibn Anas", "narrator_ar": "معاذ بن أنس", "source": "Abu Dawud", "source_ar": "أبو داود"},
-  {"ar": "الْجَنَّةُ تَحْتَ أَقْدَامِ الْأُمَّهَاتِ", "en": "Paradise lies beneath the feet of mothers.", "narrator": "Various", "narrator_ar": "رواة متعددون", "source": "Sahih Al-Jami", "source_ar": "صحيح الجامع"},
-  {"ar": "خَيْرُكُمْ خَيْرُكُمْ لِنِسَائِهِ", "en": "The best of you is the one who is best to his wife.", "narrator": "Ibn Abbas", "narrator_ar": "ابن عباس", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "مَنْ حَسُنَ إِسْلَامُ الْمَرْءِ تَرْكُهُ مَا لَا يَعْنِيهِ", "en": "Part of the perfection of one's Islam is leaving aside what does not concern him.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "احْفَظِ اللَّهَ يَحْفَظْكَ", "en": "Be mindful of Allah, and He will protect you.", "narrator": "Ibn Abbas", "narrator_ar": "ابن عباس", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ", "en": "Fear Allah wherever you are.", "narrator": "Abu Dharr", "narrator_ar": "أبو ذر", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "مَنْ تَوَاضَعَ لِلَّهِ رَفَعَهُ اللَّهُ", "en": "Whoever humbles himself for Allah, Allah will raise his status.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Sahih Al-Jami", "source_ar": "صحيح الجامع"},
-  {"ar": "الْحَيَاءُ مِنَ الْإِيمَانِ", "en": "Modesty is part of faith.", "narrator": "Abdullah ibn Umar", "narrator_ar": "عبدالله بن عمر", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "مَنْ غَشَّنَا فَلَيْسَ مِنَّا", "en": "Whoever cheats us is not one of us.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "إِنَّمَا بُعِثْتُمْ مُيَسِّرِينَ وَلَمْ تُبْعَثُوا مُعَسِّرِينَ", "en": "You have been sent to make things easy, and not to make them difficult.", "narrator": "Anas ibn Malik", "narrator_ar": "أنس بن مالك", "source": "Bukhari", "source_ar": "البخاري"},
-  {"ar": "يَسِّرُوا وَلَا تُعَسِّرُوا، وَبَشِّرُوا وَلَا تُنَفِّرُوا", "en": "Make things easy and do not make them difficult, give glad tidings and do not repel people.", "narrator": "Anas ibn Malik", "narrator_ar": "أنس بن مالك", "source": "Bukhari & Muslim", "source_ar": "البخاري ومسلم"},
-  {"ar": "إِنَّ اللَّهَ رَفِيقٌ يُحِبُّ الرِّفْقَ", "en": "Indeed Allah is Gentle and loves gentleness.", "narrator": "Aisha", "narrator_ar": "عائشة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "مَنْ يُحْرَمِ الرِّفْقَ يُحْرَمِ الْخَيْرَ", "en": "Whoever is deprived of gentleness is deprived of goodness.", "narrator": "Jarir ibn Abdullah", "narrator_ar": "جرير بن عبدالله", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "الْمُؤْمِنُ الْقَوِيُّ خَيْرٌ وَأَحَبُّ إِلَى اللَّهِ مِنَ الْمُؤْمِنِ الضَّعِيفِ", "en": "The strong believer is better and more beloved to Allah than the weak believer.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "إِذَا أَحَبَّ اللَّهُ عَبْدًا ابْتَلَاهُ", "en": "When Allah loves a servant, He tests him.", "narrator": "Mahmud ibn Labid", "narrator_ar": "محمود بن لبيد", "source": "Sahih Al-Jami", "source_ar": "صحيح الجامع"},
-  {"ar": "مَنْ صَلَّى عَلَيَّ صَلَاةً صَلَّى اللَّهُ عَلَيْهِ بِهَا عَشْرًا", "en": "Whoever sends one blessing upon me, Allah will send ten blessings upon him.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "أَقْرَبُ مَا يَكُونُ الْعَبْدُ مِنْ رَبِّهِ وَهُوَ سَاجِدٌ", "en": "The closest a servant comes to his Lord is while he is in prostration.", "narrator": "Abu Hurairah", "narrator_ar": "أبو هريرة", "source": "Muslim", "source_ar": "مسلم"},
-  {"ar": "الدُّعَاءُ هُوَ الْعِبَادَةُ", "en": "Supplication is worship.", "narrator": "An-Nu'man ibn Bashir", "narrator_ar": "النعمان بن بشير", "source": "Tirmidhi", "source_ar": "الترمذي"},
-  {"ar": "مَنْ قَالَ لَا إِلَهَ إِلَّا اللَّهُ دَخَلَ الْجَنَّةَ", "en": "Whoever says there is no deity but Allah will enter Paradise.", "narrator": "Ubadah ibn As-Samit", "narrator_ar": "عبادة بن الصامت", "source": "Bukhari", "source_ar": "البخاري"},
-  {"ar": "إِنَّ مِنْ أَحَبِّكُمْ إِلَيَّ وَأَقْرَبِكُمْ مِنِّي مَجْلِسًا يَوْمَ الْقِيَامَةِ أَحْسَنَكُمْ خُلُقًا", "en": "The most beloved of you to me and closest to me in sitting on the Day of Judgment is the one with the best character.", "narrator": "Abdullah ibn Mas'ud", "narrator_ar": "عبدالله بن مسعود", "source": "Bukhari", "source_ar": "البخاري"}
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى",
+  "en": "The Prophet Muhammad (ﷺ) said: Actions are judged by intentions, and every person will be rewarded according to what they intended.",
+  "narrator": "Umar ibn Al-Khattab",
+  "narrator_ar": "عمر بن الخطاب",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever believes in Allah and the Last Day should speak good or remain silent.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: None of you truly believes until he loves for his brother what he loves for himself.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الطُّهُورُ شَطْرُ الْإِيمَانِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Cleanliness is half of faith.",
+  "narrator": "Abu Malik Al-Ashari",
+  "narrator_ar": "أبو مالك الأشعري",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever follows a path to seek knowledge, Allah will make easy for him a path to Paradise.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: A Muslim is one from whose tongue and hand other Muslims are safe.",
+  "narrator": "Abdullah ibn Amr",
+  "narrator_ar": "عبدالله بن عمرو",
+  "source": "Bukhari",
+  "source_ar": "البخاري"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The best of people are those most beneficial to others.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبدالله",
+  "source": "Daraqutni",
+  "source_ar": "الدارقطني"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الْكَلِمَةُ الطَّيِّبَةُ صَدَقَةٌ",
+  "en": "The Prophet Muhammad (ﷺ) said: A good word is charity.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ لَا يَرْحَمْ لَا يُرْحَمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever does not show mercy will not be shown mercy.",
+  "narrator": "Jarir ibn Abdullah",
+  "narrator_ar": "جرير بن عبدالله",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ صَدَقَةٌ",
+  "en": "The Prophet Muhammad (ﷺ) said: Your smile in the face of your brother is charity.",
+  "narrator": "Abu Dharr",
+  "narrator_ar": "أبو ذر",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ جَمِيلٌ يُحِبُّ الْجَمَالَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Indeed Allah is beautiful and loves beauty.",
+  "narrator": "Abdullah ibn Mas'ud",
+  "narrator_ar": "عبدالله بن مسعود",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ",
+  "en": "The Prophet Muhammad (ﷺ) said: The deeds most loved by Allah are those done consistently, even if small.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُصِبْ مِنْهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: If Allah wants good for someone, He afflicts him with trials.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Bukhari",
+  "source_ar": "البخاري"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الدُّنْيَا سِجْنُ الْمُؤْمِنِ وَجَنَّةُ الْكَافِرِ",
+  "en": "The Prophet Muhammad (ﷺ) said: This world is a prison for the believer and a paradise for the disbeliever.",
+  "narrator": "Various Companions",
+  "narrator_ar": "صحابة متعددون",
+  "source": "Sahih Al-Jami",
+  "source_ar": "صحيح الجامع"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ لَا يَنْظُرُ إِلَى أَجْسَادِكُمْ وَلَا إِلَى صُوَرِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Indeed Allah does not look at your bodies or appearances, but He looks at your hearts.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ صَمَتَ نَجَا",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever remains silent is saved.",
+  "narrator": "Abdullah ibn Amr",
+  "narrator_ar": "عبدالله بن عمرو",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الرَّاحِمُونَ يَرْحَمُهُمُ الرَّحْمَنُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Those who show mercy will be shown mercy by the Most Merciful.",
+  "narrator": "Abdullah ibn Amr",
+  "narrator_ar": "عبدالله بن عمرو",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: Charity does not decrease wealth.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ يُحِبُّ إِذَا عَمِلَ أَحَدُكُمْ عَمَلًا أَنْ يُتْقِنَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Indeed Allah loves that when one of you does a job, he does it with excellence.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Al-Bayhaqi",
+  "source_ar": "البيهقي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَيْسَ الشَّدِيدُ بِالصُّرَعَةِ، إِنَّمَا الشَّدِيدُ الَّذِي يَمْلِكُ نَفْسَهُ عِنْدَ الْغَضَبِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The strong man is not the one who can wrestle others down. The strong man is the one who controls himself when angry.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ كَظَمَ غَيْظًا وَهُوَ قَادِرٌ عَلَى أَنْ يُنْفِذَهُ دَعَاهُ اللَّهُ يَوْمَ الْقِيَامَةِ عَلَى رُؤُوسِ الْخَلَائِقِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever suppresses his anger while able to act on it, Allah will call him before all creation on the Day of Judgment.",
+  "narrator": "Mu'adh ibn Anas",
+  "narrator_ar": "معاذ بن أنس",
+  "source": "Abu Dawud",
+  "source_ar": "أبو داود"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: خَيْرُكُمْ خَيْرُكُمْ لِنِسَائِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The best of you is the one who is best to his wife.",
+  "narrator": "Ibn Abbas",
+  "narrator_ar": "ابن عباس",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مِنْ حُسْنِ إِسْلَامِ الْمَرْءِ تَرْكُهُ مَا لَا يَعْنِيهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Part of the perfection of one's Islam is leaving aside what does not concern him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: احْفَظِ اللَّهَ يَحْفَظْكَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Be mindful of Allah, and He will protect you.",
+  "narrator": "Ibn Abbas",
+  "narrator_ar": "ابن عباس",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Fear Allah wherever you are.",
+  "narrator": "Abu Dharr",
+  "narrator_ar": "أبو ذر",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ تَوَاضَعَ لِلَّهِ رَفَعَهُ اللَّهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever humbles himself for Allah, Allah will raise his status.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Al-Jami",
+  "source_ar": "صحيح الجامع"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الْحَيَاءُ مِنَ الْإِيمَانِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Modesty is part of faith.",
+  "narrator": "Abdullah ibn Umar",
+  "narrator_ar": "عبدالله بن عمر",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ غَشَّنَا فَلَيْسَ مِنَّا",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever cheats us is not one of us.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّمَا بُعِثْتُمْ مُيَسِّرِينَ وَلَمْ تُبْعَثُوا مُعَسِّرِينَ",
+  "en": "The Prophet Muhammad (ﷺ) said: You have been sent to make things easy, and not to make them difficult.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Bukhari",
+  "source_ar": "البخاري"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَسِّرُوا وَلَا تُعَسِّرُوا، وَبَشِّرُوا وَلَا تُنَفِّرُوا",
+  "en": "The Prophet Muhammad (ﷺ) said: Make things easy and do not make them difficult, give glad tidings and do not repel people.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Bukhari & Muslim",
+  "source_ar": "البخاري ومسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ رَفِيقٌ يُحِبُّ الرِّفْقَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Indeed Allah is Gentle and loves gentleness.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ يُحْرَمِ الرِّفْقَ يُحْرَمِ الْخَيْرَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever is deprived of gentleness is deprived of goodness.",
+  "narrator": "Jarir ibn Abdullah",
+  "narrator_ar": "جرير بن عبدالله",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الْمُؤْمِنُ الْقَوِيُّ خَيْرٌ وَأَحَبُّ إِلَى اللَّهِ مِنَ الْمُؤْمِنِ الضَّعِيفِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The strong believer is better and more beloved to Allah than the weak believer.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ إِذَا أَحَبَّ قَوْمًا ابْتَلَاهُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: When Allah loves a people, He tests them.",
+  "narrator": "Mahmud ibn Labid",
+  "narrator_ar": "محمود بن لبيد",
+  "source": "Sahih Al-Jami",
+  "source_ar": "صحيح الجامع"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ صَلَّى عَلَيَّ صَلَاةً صَلَّى اللَّهُ عَلَيْهِ بِهَا عَشْرًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever sends one blessing upon me, Allah will send ten blessings upon him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَقْرَبُ مَا يَكُونُ الْعَبْدُ مِنْ رَبِّهِ وَهُوَ سَاجِدٌ",
+  "en": "The Prophet Muhammad (ﷺ) said: The closest a servant comes to his Lord is while he is in prostration.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Muslim",
+  "source_ar": "مسلم"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الدُّعَاءُ هُوَ الْعِبَادَةُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Supplication is worship.",
+  "narrator": "An-Nu'man ibn Bashir",
+  "narrator_ar": "النعمان بن بشير",
+  "source": "Tirmidhi",
+  "source_ar": "الترمذي"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ قَالَ لَا إِلَهَ إِلَّا اللَّهُ دَخَلَ الْجَنَّةَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever says there is no deity but Allah will enter Paradise.",
+  "narrator": "Ubadah ibn As-Samit",
+  "narrator_ar": "عبادة بن الصامت",
+  "source": "Bukhari",
+  "source_ar": "البخاري"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ مِنْ أَحَبِّكُمْ إِلَيَّ وَأَقْرَبِكُمْ مِنِّي مَجْلِسًا يَوْمَ الْقِيَامَةِ أَحْسَنَكُمْ خُلُقًا",
+  "en": "The Prophet Muhammad (ﷺ) said: The most beloved of you to me and closest to me in sitting on the Day of Judgment is the one with the best character.",
+  "narrator": "Abdullah ibn Mas'ud",
+  "narrator_ar": "عبدالله بن مسعود",
+  "source": "Bukhari",
+  "source_ar": "البخاري"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ الظُّلْمَ ظُلُمَاتٌ يَوْمَ الْقِيَامَةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Oppression is the darkness on the Day of Resurrection.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih Muslim 2579",
+  "source_ar": "صحيح مسلم ٢٥٧٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَرْحَمُ اللَّهُ مَنْ لاَ يَرْحَمُ النَّاسَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah will not be merciful to those who are not merciful to mankind.",
+  "narrator": "Jarir ibn Abdullah",
+  "narrator_ar": "جرير بن عبد الله",
+  "source": "Sahih al-Bukhari 7376",
+  "source_ar": "صحيح البخاري ٧٣٧٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا جَاءَ رَمَضَانُ فُتِحَتْ أَبْوَابُ الْجَنَّةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: When Ramadan begins, the gates of Paradise are opened.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 1898",
+  "source_ar": "صحيح البخاري ١٨٩٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ أَفْضَلَكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: The most superior among you (Muslims) are those who learn the Qur'an and teach it.",
+  "narrator": "Uthman ibn Affan",
+  "narrator_ar": "عثمان بن عفان",
+  "source": "Sahih al-Bukhari 5028",
+  "source_ar": "صحيح البخاري ٥٠٢٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: قَالَ اللَّهُ عَزَّ وَجَلَّ سَبَقَتْ رَحْمَتِي غَضَبِي",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah, the Exalted and Glorious, said: My mercy excels My wrath.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2751",
+  "source_ar": "صحيح مسلم ٢٧٥١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يُلْدَغُ الْمُؤْمِنُ مِنْ جُحْرٍ وَاحِدٍ مَرَّتَيْنِ",
+  "en": "The Prophet Muhammad (ﷺ) said: A believer is not stung twice (by something) out of one and the same hole.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6133",
+  "source_ar": "صحيح البخاري ٦١٣٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَسُبُّوا الدَّهْرَ فَإِنَّ اللَّهَ هُوَ الدَّهْرُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Do not curse Time, for it is Allah Who is Time.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2246",
+  "source_ar": "صحيح مسلم ٢٢٤٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَزَالُ النَّاسُ بِخَيْرٍ مَا عَجَّلُوا الْفِطْرَ",
+  "en": "The Prophet Muhammad (ﷺ) said: The people will remain on the right path as long as they hasten the breaking of the fast.",
+  "narrator": "Sahl ibn Sad",
+  "narrator_ar": "سهل بن سعد",
+  "source": "Sahih al-Bukhari 1957",
+  "source_ar": "صحيح البخاري ١٩٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا أَنْزَلَ اللَّهُ دَاءً إِلاَّ أَنْزَلَ لَهُ شِفَاءً",
+  "en": "The Prophet Muhammad (ﷺ) said: There is no disease that Allah has created, except that He also has created its treatment.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 5678",
+  "source_ar": "صحيح البخاري ٥٦٧٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا دُعِيَ أَحَدُكُمْ إِلَى الْوَلِيمَةِ فَلْيَأْتِهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: When any one of you is invited to a feast, he should attend it.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih Muslim 1429",
+  "source_ar": "صحيح مسلم ١٤٢٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ أَبَرَّ الْبِرِّ صِلَةُ الْوَلَدِ أَهْلَ وُدِّ أَبِيهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The finest act of goodness on the part of a son is to treat kindly the loved ones of his father.",
+  "narrator": "Umar ibn al-Khattab",
+  "narrator_ar": "عمر بن الخطاب",
+  "source": "Sahih Muslim 2552",
+  "source_ar": "صحيح مسلم ٢٥٥٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: قَالَ اللَّهُ أَنْفِقْ يَا ابْنَ آدَمَ أُنْفِقْ عَلَيْكَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah said, 'O son of Adam! Spend, and I shall spend on you.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 5352",
+  "source_ar": "صحيح البخاري ٥٣٥٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ أَبْغَضَ الرِّجَالِ إِلَى اللَّهِ الأَلَدُّ الْخَصِمُ",
+  "en": "The Prophet Muhammad (ﷺ) said: The most hated person in the sight of Allah is the most quarrelsome person.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 2457",
+  "source_ar": "صحيح البخاري ٢٤٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ صَلَّى عَلَىَّ وَاحِدَةً صَلَّى اللَّهُ عَلَيْهِ عَشْرًا",
+  "en": "The Prophet Muhammad (ﷺ) said: He who blesses me once, Allah would bless him ten times.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 408",
+  "source_ar": "صحيح مسلم ٤٠٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الْمُؤْمِنُ لِلْمُؤْمِنِ كَالْبُنْيَانِ يَشُدُّ بَعْضُهُ بَعْضًا",
+  "en": "The Prophet Muhammad (ﷺ) said: A believer is like a brick for another believer, the one supporting the other.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih Muslim 2585",
+  "source_ar": "صحيح مسلم ٢٥٨٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تُقْبَلُ صَلاَةُ أَحَدِكُمْ إِذَا أَحْدَثَ حَتَّى يَتَوَضَّأَ",
+  "en": "The Prophet Muhammad (ﷺ) said: The prayer of none amongst you would be accepted in a state of impurity until he performs ablution.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 225",
+  "source_ar": "صحيح مسلم ٢٢٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ لاَ يَنْظُرُ إِلَى مَنْ يَجُرُّ إِزَارَهُ بَطَرًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah will not look toward him who trails his lower garment out of pride.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2087",
+  "source_ar": "صحيح مسلم ٢٠٨٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ تَعَمَّدَ عَلَىَّ كَذِبًا فَلْيَتَبَوَّأْ مَقْعَدَهُ مِنَ النَّارِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever tells a lie against me intentionally, then (surely) let him occupy his seat in Hell-fire.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 108",
+  "source_ar": "صحيح البخاري ١٠٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا أَطَالَ أَحَدُكُمُ الْغَيْبَةَ فَلاَ يَطْرُقْ أَهْلَهُ لَيْلاً",
+  "en": "The Prophet Muhammad (ﷺ) said: When anyone of you is away from his house for a long time, he should not return to his family at night.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih al-Bukhari 5244",
+  "source_ar": "صحيح البخاري ٥٢٤٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مِنَ الشَّجَرِ شَجَرَةٌ تَكُونُ مِثْلَ الْمُسْلِمِ، وَهْىَ النَّخْلَةُ",
+  "en": "The Prophet Muhammad (ﷺ) said: There is a tree among the trees which is similar to a Muslim (in goodness), and that is the date palm tree.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih al-Bukhari 5448",
+  "source_ar": "صحيح البخاري ٥٤٤٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَرْجِعُوا بَعْدِي كُفَّارًا، يَضْرِبُ بَعْضُكُمْ رِقَابَ بَعْضٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: Do not revert to disbelief after me by striking (cutting) the necks of one another.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih al-Bukhari 7077",
+  "source_ar": "صحيح البخاري ٧٠٧٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا سَمِعْتُمُ النِّدَاءَ فَقُولُوا مِثْلَ ما يَقُولُ الْمُؤَذِّنُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whenever you hear the Adhan, say what the Mu'adh-dhin is saying.",
+  "narrator": "Abu Said al-Khudri",
+  "narrator_ar": "أبو سعيد الخدري",
+  "source": "Sahih al-Bukhari 611",
+  "source_ar": "صحيح البخاري ٦١١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَمَنَّوْا لِقَاءَ الْعَدُوِّ، فَإِذَا لَقِيتُمُوهُمْ فَاصْبِرُوا",
+  "en": "The Prophet Muhammad (ﷺ) said: Do not wish to meet the enemy, but when you meet face) the enemy, be patient.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 3026",
+  "source_ar": "صحيح البخاري ٣٠٢٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ بَنَى مَسْجِدًا لِلَّهِ بَنَى اللَّهُ لَهُ فِي الْجَنَّةِ مِثْلَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who builds a mosque for Allah, Allah would build for him (a house) in Paradise like it.",
+  "narrator": "Uthman ibn Affan",
+  "narrator_ar": "عثمان بن عفان",
+  "source": "Sahih Muslim 533",
+  "source_ar": "صحيح مسلم ٥٣٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: خَيْرُ الصَّدَقَةِ مَا كَانَ عَنْ ظَهْرِ غِنًى، وَابْدَأْ بِمَنْ تَعُولُ",
+  "en": "The Prophet Muhammad (ﷺ) said: The best charity is that which is practiced by a wealthy person. And start giving first to your dependents.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 1426",
+  "source_ar": "صحيح البخاري ١٤٢٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ أَحَبَّ أَسْمَائِكُمْ إِلَى اللَّهِ عَبْدُ اللَّهِ وَعَبْدُ الرَّحْمَنِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The names dearest to Allah are 'Abdullah and 'Abd al-Rahman.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih Muslim 2132",
+  "source_ar": "صحيح مسلم ٢١٣٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَيْسَ الْغِنَى عَنْ كَثْرَةِ الْعَرَضِ، وَلَكِنَّ الْغِنَى غِنَى النَّفْسِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Wealth is not in having many possessions, but rather (true) wealth is feeling sufficiency in the soul.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6446",
+  "source_ar": "صحيح البخاري ٦٤٤٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَسُبُّوا الأَمْوَاتَ، فَإِنَّهُمْ قَدْ أَفْضَوْا إِلَى مَا قَدَّمُوا",
+  "en": "The Prophet Muhammad (ﷺ) said: Do not abuse the dead, for they have reached the result of what they have done.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 6516",
+  "source_ar": "صحيح البخاري ٦٥١٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا زَالَ يُوصِينِي جِبْرِيلُ بِالْجَارِ حَتَّى ظَنَنْتُ أَنَّهُ سَيُوَرِّثُهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Gabriel continued to recommend me about treating the neighbors Kindly and politely so much so that I thought he would order me to make them as my heirs.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 6014",
+  "source_ar": "صحيح البخاري ٦٠١٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا دُعِيَ أَحَدُكُمْ إِلَى طَعَامٍ وَهُوَ صَائِمٌ فَلْيَقُلْ إِنِّي صَائِمٌ",
+  "en": "The Prophet Muhammad (ﷺ) said: If any one of you is invited to a meal when he is fasting, he should say: \"I am fasting.\"",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 1150",
+  "source_ar": "صحيح مسلم ١١٥٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ فِي الْجَنَّةِ لَشَجَرَةً يَسِيرُ الرَّاكِبُ فِي ظِلِّهَا مِائَةَ سَنَةٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: In Paradise, there is a tree under the shadow of which a rider can travel for a hundred years.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2826",
+  "source_ar": "صحيح مسلم ٢٨٢٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَثَلُ الَّذِي يَذْكُرُ رَبَّهُ وَالَّذِي لاَ يَذْكُرُ مَثَلُ الْحَىِّ وَالْمَيِّتِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The example of the one who celebrates the Praises of his Lord (Allah) in comparison to the one who does not celebrate the Praises of his Lord, is that of a living creature compared to a dead one.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 6407",
+  "source_ar": "صحيح البخاري ٦٤٠٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الإِيمَانُ بِضْعٌ وَسَبْعُونَ شُعْبَةً وَالْحَيَاءُ شُعْبَةٌ مِنَ الإِيمَانِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Iman has over seventy branches, and modesty is a branch of Iman.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 35",
+  "source_ar": "صحيح مسلم ٣٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ حَفِظَ عَشْرَ آيَاتٍ مِنْ أَوَّلِ سُورَةِ الْكَهْفِ عُصِمَ مِنَ الدَّجَّالِ",
+  "en": "The Prophet Muhammad (ﷺ) said: If anyone learns by heart the first ten verses of the Surah al-Kahf, he will be protected from the Dajjal.",
+  "narrator": "Abu ad-Darda",
+  "narrator_ar": "أبو الدرداء",
+  "source": "Sahih Muslim 809",
+  "source_ar": "صحيح مسلم ٨٠٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَصُومَنَّ أَحَدُكُمْ يَوْمَ الْجُمُعَةِ، إِلاَّ يَوْمًا قَبْلَهُ أَوْ بَعْدَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: None of you should fast on Friday unless he fasts a day before or after it.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 1985",
+  "source_ar": "صحيح البخاري ١٩٨٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ صَامَ رَمَضَانَ ثُمَّ أَتْبَعَهُ سِتًّا مِنْ شَوَّالٍ كَانَ كَصِيَامِ الدَّهْرِ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who observed the fast of Ramadan and then followed it with six (fasts) of Shawwal. it would be as if he fasted perpetually.",
+  "narrator": "Abu Ayyub al-Ansari",
+  "narrator_ar": "أبو أيوب الأنصاري",
+  "source": "Sahih Muslim 1164",
+  "source_ar": "صحيح مسلم ١١٦٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ قَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever establishes prayers during the nights of Ramadan faithfully out of sincere faith and hoping to attain Allah's rewards (not for showing off), all his past sins will be forgiven.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 37, Sahih Muslim 759",
+  "source_ar": "صحيح البخاري ٣٧، صحيح مسلم ٧٥٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ صَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever observes fasts during the month of Ramadan out of sincere faith, and hoping to attain Allah's rewards, then all his past sins will be forgiven.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 38",
+  "source_ar": "صحيح البخاري ٣٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ سَرَّهُ أَنْ يُبْسَطَ عَلَيْهِ رِزْقُهُ أَوْ يُنْسَأَ فِي أَثَرِهِ فَلْيَصِلْ رَحِمَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who is desirous that his means of sustenance should be expanded for him or his age may be lengthened, should join the tie of relationship.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 2557",
+  "source_ar": "صحيح مسلم ٢٥٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَا نِسَاءَ الْمُسْلِمَاتِ لاَ تَحْقِرَنَّ جَارَةٌ لِجَارَتِهَا، وَلَوْ فِرْسِنَ شَاةٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: O Muslim women! None of you should look down upon the gift sent by her female neighbor even if it were the trotters of the sheep (fleshless part of legs).",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 2566",
+  "source_ar": "صحيح البخاري ٢٥٦٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَسْتُرُ عَبْدٌ عَبْدًا فِي الدُّنْيَا إِلاَّ سَتَرَهُ اللَّهُ يَوْمَ الْقِيَامَةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The servant (who conceals) the faults of others in this world, Allah would conceal his faults on the Day of Resurrection.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2590",
+  "source_ar": "صحيح مسلم ٢٥٩٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ نَذَرَ أَنْ يُطِيعَ اللَّهَ فَلْيُطِعْهُ، وَمَنْ نَذَرَ أَنْ يَعْصِيَهُ فَلاَ يَعْصِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever vows that he will be obedient to Allah, should remain obedient to Him; and whoever made a vow that he will disobey Allah, should not disobey Him.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 6696",
+  "source_ar": "صحيح البخاري ٦٦٩٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ عُرِضَ عَلَيْهِ رَيْحَانٌ فَلاَ يَرُدُّهُ فَإِنَّهُ خَفِيفُ الْمَحْمِلِ طَيِّبُ الرِّيحِ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who is presented with a flower should not reject it, for it is light to carry and pleasant in odour.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2253",
+  "source_ar": "صحيح مسلم ٢٢٥٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ شَرَّ النَّاسِ ذُو الْوَجْهَيْنِ الَّذِي يَأْتِي هَؤُلاَءِ بِوَجْهٍ وَهَؤُلاَءِ بِوَجْهٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: The worst amongst people is one with the double face. He comes to some people with one face and to others with the other face.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2526",
+  "source_ar": "صحيح مسلم ٢٥٢٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَيْسَ الشَّدِيدُ بِالصُّرَعَةِ إِنَّمَا الشَّدِيدُ الَّذِي يَمْلِكُ نَفْسَهُ عِنْدَ الْغَضَبِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The strong-man is not one who wrestles well but the strong man is one who controls himself when he is in a fit of rage.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2609",
+  "source_ar": "صحيح مسلم ٢٦٠٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ يَدْخُلُ الْجَنَّةَ يَنْعَمُ لاَ يَبْأَسُ لاَ تَبْلَى ثِيَابُهُ وَلاَ يَفْنَى شَبَابُهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who would get into Paradise (would be made to enjoy such an everlasting) bliss that he would neither become destitute, nor would his clothes wear out, nor his youth would decline.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2836",
+  "source_ar": "صحيح مسلم ٢٨٣٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ يَقُمْ لَيْلَةَ الْقَدْرِ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever establishes the prayers on the night of Qadr out of sincere faith and hoping to attain Allah's rewards (not to show off) then all his past sins will be forgiven.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 35",
+  "source_ar": "صحيح البخاري ٣٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا أَكَلَ أَحَدُكُمْ فَلْيَلْعَقْ أَصَابِعَهُ فَإِنَّهُ لاَ يَدْرِي فِي أَيَّتِهِنَّ الْبَرَكَةُ",
+  "en": "The Prophet Muhammad (ﷺ) said: When any one of you eats food he should lick his fingers, for he does not know in what part of the food sticking to his fingers the blessing lies.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2035",
+  "source_ar": "صحيح مسلم ٢٠٣٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا مَرِضَ الْعَبْدُ أَوْ سَافَرَ، كُتِبَ لَهُ مِثْلُ مَا كَانَ يَعْمَلُ مُقِيمًا صَحِيحًا",
+  "en": "The Prophet Muhammad (ﷺ) said: When a slave falls ill or travels, then he will get reward similar to that he gets for good deeds practiced at home when in good health.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 2996",
+  "source_ar": "صحيح البخاري ٢٩٩٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَيْسَ الْوَاصِلُ بِالْمُكَافِئِ، وَلَكِنِ الْوَاصِلُ الَّذِي إِذَا قَطَعَتْ رَحِمُهُ وَصَلَهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: Al-Wasil is not the one who recompenses the good done to him by his relatives, but Al-Wasil is the one who keeps good relations with those relatives who had severed the bond of kinship with him.",
+  "narrator": "Abdullah ibn Amr",
+  "narrator_ar": "عبد الله بن عمرو",
+  "source": "Sahih al-Bukhari 5991",
+  "source_ar": "صحيح البخاري ٥٩٩١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَحَبُّ الْبِلاَدِ إِلَى اللَّهِ مَسَاجِدُهَا وَأَبْغَضُ الْبِلاَدِ إِلَى اللَّهِ أَسْوَاقُهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: The parts of land dearest to Allah are its mosques, and the parts most hateful to Allah are markets.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 671",
+  "source_ar": "صحيح مسلم ٦٧١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا مِنْ مُسْلِمٍ غَرَسَ غَرْسًا فَأَكَلَ مِنْهُ إِنْسَانٌ أَوْ دَابَّةٌ إِلاَّ كَانَ لَهُ صَدَقَةً",
+  "en": "The Prophet Muhammad (ﷺ) said: If any Muslim plants any plant and a human being or an animal eats of it, he will be rewarded as if he had given that much in charity.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 6012",
+  "source_ar": "صحيح البخاري ٦٠١٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَمْشِ أَحَدُكُمْ فِي نَعْلٍ وَاحِدَةٍ لِيُنْعِلْهُمَا جَمِيعًا أَوْ لِيَخْلَعْهُمَا جَمِيعًا",
+  "en": "The Prophet Muhammad (ﷺ) said: None of you should walk in one sandal; either he should wear the two or should take off the two.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2097",
+  "source_ar": "صحيح مسلم ٢٠٩٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَبَاغَضُوا وَلاَ تَدَابَرُوا وَلاَ تَنَافَسُوا وَكُونُوا عِبَادَ اللَّهِ إِخْوَانًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Don't bear aversion against one another and don't be jealous of one another and be servants of Allah.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2563",
+  "source_ar": "صحيح مسلم ٢٥٦٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا عَطَسَ أَحَدُكُمْ فَحَمِدَ اللَّهَ فَشَمِّتُوهُ فَإِنْ لَمْ يَحْمَدِ اللَّهَ فَلاَ تُشَمِّتُوهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: When any one of you sneezes he should praise Allah and the other should say: May Allah have mercy upon you, and if he does not praise Allah, no mercy should be begged for him.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih Muslim 2992",
+  "source_ar": "صحيح مسلم ٢٩٩٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَا عَبْدَ اللَّهِ لاَ تَكُنْ بِمِثْلِ فُلاَنٍ كَانَ يَقُومُ اللَّيْلَ فَتَرَكَ قِيَامَ اللَّيْلِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Abdullah, don't be like so and so who observed prayer during the whole night and then abandoned it (altogether).",
+  "narrator": "Abdullah ibn Amr",
+  "narrator_ar": "عبد الله بن عمرو",
+  "source": "Sahih Muslim 1159",
+  "source_ar": "صحيح مسلم ١١٥٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يُؤْمِنُ أَحَدُكُمْ حَتَّى أَكُونَ أَحَبَّ إِلَيْهِ مِنْ وَالِدِهِ وَوَلَدِهِ وَالنَّاسِ أَجْمَعِينَ",
+  "en": "The Prophet Muhammad (ﷺ) said: None of you will have faith till he loves me more than his father, his children and all mankind.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 15",
+  "source_ar": "صحيح البخاري ١٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ صَامَ يَوْمًا فِي سَبِيلِ اللَّهِ بَاعَدَ اللَّهُ وَجْهَهُ عَنِ النَّارِ سَبْعِينَ خَرِيفًا",
+  "en": "The Prophet Muhammad (ﷺ) said: He who observes fast for a day in the way of Allah He would remove his face from the Hell to the extent of seventy years' distance.",
+  "narrator": "Abu Said al-Khudri",
+  "narrator_ar": "أبو سعيد الخدري",
+  "source": "Sahih Muslim 1153",
+  "source_ar": "صحيح مسلم ١١٥٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يُقِيمُ الرَّجُلُ الرَّجُلَ مِنْ مَقْعَدِهِ ثُمَّ يَجْلِسُ فِيهِ وَلَكِنْ تَفَسَّحُوا وَتَوَسَّعُوا",
+  "en": "The Prophet Muhammad (ﷺ) said: No person should ask another person to stand at his place and then he should himself sit there, but he should simply say: Make room and accommodate.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih Muslim 2177",
+  "source_ar": "صحيح مسلم ٢١٧٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ نَسِيَ وَهُوَ صَائِمٌ فَأَكَلَ أَوْ شَرِبَ فَلْيُتِمَّ صَوْمَهُ فَإِنَّمَا أَطْعَمَهُ اللَّهُ وَسَقَاهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: If anyone forgets that he is fasting and eats or drinks he should complete his fast, for it is only Allah Who has fed him and given him drink.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 1155",
+  "source_ar": "صحيح مسلم ١١٥٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا مِنْ مُصِيبَةٍ تُصِيبُ الْمُسْلِمَ إِلاَّ كَفَّرَ اللَّهُ بِهَا عَنْهُ، حَتَّى الشَّوْكَةِ يُشَاكُهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: No calamity befalls a Muslim but that Allah expiates some of his sins because of it, even though it were the prick he receives from a thorn.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 5640",
+  "source_ar": "صحيح البخاري ٥٦٤٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَا أُمَّةَ مُحَمَّدٍ وَاللَّهِ لَوْ تَعْلَمُونَ مَا أَعْلَمُ لَبَكَيْتُمْ كَثِيرًا، وَلَضَحِكْتُمْ قَلِيلاً",
+  "en": "The Prophet Muhammad (ﷺ) said: O followers of Muhammad! By Allah, if you knew what I know, you would weep much and laugh little.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 6631",
+  "source_ar": "صحيح البخاري ٦٦٣١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا جَاءَ رَمَضَانُ فُتِّحَتْ أَبْوَابُ الْجَنَّةِ وَغُلِّقَتْ أَبْوَابُ النَّارِ وَصُفِّدَتِ الشَّيَاطِينُ",
+  "en": "The Prophet Muhammad (ﷺ) said: When there comes the month of Ramadan, the gates of mercy are opened, and the gates of Hell are locked and the devils are chained.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 1079",
+  "source_ar": "صحيح مسلم ١٠٧٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ لاَ يَنْظُرُ إِلَى صُوَرِكُمْ وَأَمْوَالِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ وَأَعْمَالِكُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Verily Allah does not look to your faces and your wealth but He looks to your heart and to your deeds.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2564",
+  "source_ar": "صحيح مسلم ٢٥٦٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مِنْ أَشَدِّ أُمَّتِي لِي حُبًّا نَاسٌ يَكُونُونَ بَعْدِي يَوَدُّ أَحَدُهُمْ لَوْ رَآنِي بِأَهْلِهِ وَمَالِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The people most loved by me from amongst my Ummah would be those who would come after me but everyone amongst them would have the keenest desire to catch a glimpse of me even at the cost of his family and wealth.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2832",
+  "source_ar": "صحيح مسلم ٢٨٣٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ أَحَبَّ لِقَاءَ اللَّهِ أَحَبَّ اللَّهُ لِقَاءَهُ، وَمَنْ كَرِهَ لِقَاءَ اللَّهِ كَرِهَ اللَّهُ لِقَاءَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever loves to meet Allah, Allah loves to meet him; and whoever hates to meet Allah, Allah hates to meet him.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 6508",
+  "source_ar": "صحيح البخاري ٦٥٠٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ سَرَّهُ أَنْ يُنْجِيَهُ اللَّهُ مِنْ كُرَبِ يَوْمِ الْقِيَامَةِ فَلْيُنَفِّسْ عَنْ مُعْسِرٍ أَوْ يَضَعْ عَنْهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who loves that Allah saves him from the torments of the Day of Resurrection should give respite to the insolvent or remit (his debt).",
+  "narrator": "Abu Qatadah",
+  "narrator_ar": "أبو قتادة",
+  "source": "Sahih Muslim 1563",
+  "source_ar": "صحيح مسلم ١٥٦٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لأَنْ يَحْتَطِبَ أَحَدُكُمْ حُزْمَةً عَلَى ظَهْرِهِ خَيْرٌ مِنْ أَنْ يَسْأَلَ أَحَدًا، فَيُعْطِيَهُ أَوْ يَمْنَعَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: No doubt, it is better for any one of you to cut a bundle of wood and carry it over his back rather than to ask someone who may or may not give him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 2074",
+  "source_ar": "صحيح البخاري ٢٠٧٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ غَدَا إِلَى الْمَسْجِدِ أَوْ رَاحَ أَعَدَّ اللَّهُ لَهُ فِي الْجَنَّةِ نُزُلاً كُلَّمَا غَدَا أَوْ رَاحَ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who went towards the mosque in the morning or evening, Allah would arrange a feast for him morning or evening in Paradise.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 669",
+  "source_ar": "صحيح مسلم ٦٦٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ مِنَ اللَّيْلِ سَاعَةً لاَ يُوَافِقُهَا عَبْدٌ مُسْلِمٌ يَسْأَلُ اللَّهَ خَيْرًا إِلاَّ أَعْطَاهُ إِيَّاهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: There is an hour during the night in which no Muslim bondman will ask Allah for good in this world and the next but He will grant it to him.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih Muslim 757",
+  "source_ar": "صحيح مسلم ٧٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا مِنْكُمْ مِنْ أَحَدٍ إِلاَّ سَيُكَلِّمُهُ رَبُّهُ، لَيْسَ بَيْنَهُ وَبَيْنَهُ تُرْجُمَانٌ وَلاَ حِجَابٌ يَحْجُبُهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: There will be none among you but his Lord will speak to him, and there will be no interpreter between them nor a screen to screen Him.",
+  "narrator": "Adi ibn Hatim",
+  "narrator_ar": "عدي بن حاتم",
+  "source": "Sahih al-Bukhari 7443",
+  "source_ar": "صحيح البخاري ٧٤٤٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تُصَدِّقُوا أَهْلَ الْكِتَابِ وَلاَ تُكَذِّبُوهُمْ، وَقُولُوا {آمَنَّا بِاللَّهِ وَمَا أُنْزِلَ} الآيَةَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Do not believe the people of the Scripture or disbelieve them, but say:-- \"We believe in Allah and what is revealed to us.\"",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 4485",
+  "source_ar": "صحيح البخاري ٤٤٨٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا أَحَدٌ أَصْبَرُ عَلَى أَذًى سَمِعَهُ مِنَ اللَّهِ، يَدَّعُونَ لَهُ الْوَلَدَ، ثُمَّ يُعَافِيهِمْ وَيَرْزُقُهُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: None is more patient than Allah against the harmful and annoying words He hears (from the people): They ascribe children to Him, yet He bestows upon them health and provision.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 7378",
+  "source_ar": "صحيح البخاري ٧٣٧٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ الْعَبْدَ لَيَتَكَلَّمُ بِالْكَلِمَةِ يَنْزِلُ بِهَا فِي النَّارِ أَبْعَدَ مَا بَيْنَ الْمَشْرِقِ وَالْمَغْرِبِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The servant speaks words for which he is sent down to the Hell-Fire farther than the distance between the east and the west.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2988",
+  "source_ar": "صحيح مسلم ٢٩٨٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَأْتِي عَلَى النَّاسِ زَمَانٌ، لاَ يُبَالِي الْمَرْءُ مَا أَخَذَ مِنْهُ أَمِنَ الْحَلاَلِ أَمْ مِنَ الْحَرَامِ",
+  "en": "The Prophet Muhammad (ﷺ) said: A time will come when one will not care how one gains one's money, legally or illegally.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 2059",
+  "source_ar": "صحيح البخاري ٢٠٥٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا نَظَرَ أَحَدُكُمْ إِلَى مَنْ فُضِّلَ عَلَيْهِ فِي الْمَالِ وَالْخَلْقِ، فَلْيَنْظُرْ إِلَى مَنْ هُوَ أَسْفَلَ مِنْهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: If anyone of you looked at a person who was made superior to him in property and (in good) appearance, then he should also look at the one who is inferior to him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6490",
+  "source_ar": "صحيح البخاري ٦٤٩٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَثَلُ الْبَيْتِ الَّذِي يُذْكَرُ اللَّهُ فِيهِ وَالْبَيْتِ الَّذِي لاَ يُذْكَرُ اللَّهُ فِيهِ مَثَلُ الْحَىِّ وَالْمَيِّتِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The house in which remembrance of Allah is made and the house in which Allah is not remembered are like the living and the dead.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih Muslim 779",
+  "source_ar": "صحيح مسلم ٧٧٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يُدْخِلُ أَحَدًا مِنْكُمْ عَمَلُهُ الْجَنَّةَ وَلاَ يُجِيرُهُ مِنَ النَّارِ وَلاَ أَنَا إِلاَّ بِرَحْمَةٍ مِنَ اللَّهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: None of you would get into Paradise because of his good deeds alone, and he would not be rescued from Fire, not even I, but because of the Mercy of Allah.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih Muslim 2817",
+  "source_ar": "صحيح مسلم ٢٨١٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ أَخَذَ أَمْوَالَ النَّاسِ يُرِيدُ أَدَاءَهَا أَدَّى اللَّهُ عَنْهُ، وَمَنْ أَخَذَ يُرِيدُ إِتْلاَفَهَا أَتْلَفَهُ اللَّهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever takes the money of the people with the intention of repaying it, Allah will repay it on his behalf, and whoever takes it in order to spoil it, then Allah will spoil him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 2387",
+  "source_ar": "صحيح البخاري ٢٣٨٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ قَالَ سُبْحَانَ اللَّهِ وَبِحَمْدِهِ. فِي يَوْمٍ مِائَةَ مَرَّةٍ حُطَّتْ خَطَايَاهُ، وَإِنْ كَانَتْ مِثْلَ زَبَدِ الْبَحْرِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever says, 'Subhan Allah wa bihamdihi,' one hundred times a day, will be forgiven all his sins even if they were as much as the foam of the sea.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6405",
+  "source_ar": "صحيح البخاري ٦٤٠٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: خَيْرُ يَوْمٍ طَلَعَتْ عَلَيْهِ الشَّمْسُ يَوْمُ الْجُمُعَةِ فِيهِ خُلِقَ آدَمُ وَفِيهِ أُدْخِلَ الْجَنَّةَ وَفِيهِ أُخْرِجَ مِنْهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: The best day on which the sun has risen is Friday; on it Adam was created, on it he was made to enter Paradise, on it he. was expelled from it.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 854",
+  "source_ar": "صحيح مسلم ٨٥٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ لَيَرْضَى عَنِ الْعَبْدِ أَنْ يَأْكُلَ الأَكْلَةَ فَيَحْمَدَهُ عَلَيْهَا أَوْ يَشْرَبَ الشَّرْبَةَ فَيَحْمَدَهُ عَلَيْهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah is pleased with His servant who says: Al-Hamdu lillah while taking a morsel of food and while drinking.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 2734",
+  "source_ar": "صحيح مسلم ٢٧٣٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ تَوَضَّأَ نَحْوَ وُضُوئِي هَذَا، ثُمَّ صَلَّى رَكْعَتَيْنِ، لاَ يُحَدِّثُ فِيهِمَا نَفْسَهُ، غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: If anyone performs ablution like that of mine and offers a two-rak'at prayer during which he does not think of anything else (not related to the present prayer) then his past sins will be forgiven.",
+  "narrator": "Uthman ibn Affan",
+  "narrator_ar": "عثمان بن عفان",
+  "source": "Sahih al-Bukhari 159",
+  "source_ar": "صحيح البخاري ١٥٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَزَالُ أَحَدُكُمْ فِي صَلاَةٍ مَا دَامَتِ الصَّلاَةُ تَحْبِسُهُ لاَ يَمْنَعُهُ أَنْ يَنْقَلِبَ إِلَى أَهْلِهِ إِلاَّ الصَّلاَةُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Everyone among you is constantly in prayer so long as the prayer detains him (for this noble objective) and nothing prevents him to return to his family but the prayer.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 649",
+  "source_ar": "صحيح مسلم ٦٤٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا دَعَا أَحَدُكُمْ فَلْيَعْزِمْ فِي الدُّعَاءِ وَلاَ يَقُلِ اللَّهُمَّ إِنْ شِئْتَ فَأَعْطِنِي فَإِنَّ اللَّهَ لاَ مُسْتَكْرِهَ لَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: When one of you makes supplication, he should supplicate with a will and should not say: O Allah, confer upon me if Thou likest, for there is none to coerce Allah.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 2678",
+  "source_ar": "صحيح مسلم ٢٦٧٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ يَقُولُ يَوْمَ الْقِيَامَةِ أَيْنَ الْمُتَحَابُّونَ بِجَلاَلِي الْيَوْمَ أُظِلُّهُمْ فِي ظِلِّي يَوْمَ لاَ ظِلَّ إِلاَّ ظِلِّي",
+  "en": "The Prophet Muhammad (ﷺ) said: Verily. Allah would say on the Day of Resurrection: Where are those who have mutual love for My Glory's sake? Today I shall shelter them in My shadow when there is no other shadow but the shadow of Mine.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2566",
+  "source_ar": "صحيح مسلم ٢٥٦٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ وَمَا زَادَ اللَّهُ عَبْدًا بِعَفْوٍ إِلاَّ عِزًّا وَمَا تَوَاضَعَ أَحَدٌ لِلَّهِ إِلاَّ رَفَعَهُ اللَّهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Charity does not decrease wealth, no one forgives another except that Allah increases his honor, and no one humbles himself for the sake of Allah except that Allah raises his status.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2588",
+  "source_ar": "صحيح مسلم ٢٥٨٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا رَقَدَ أَحَدُكُمْ عَنِ الصَّلاَةِ أَوْ غَفَلَ عَنْهَا فَلْيُصَلِّهَا إِذَا ذَكَرَهَا فَإِنَّ اللَّهَ يَقُولُ أَقِمِ الصَّلاَةَ لِذِكْرِي",
+  "en": "The Prophet Muhammad (ﷺ) said: When any one of you omits the prayer due to sleep or he forgets it, he should observe it when he remembers it, for Allah has said: \"Observe prayer for remembrance of Me.\"",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 684",
+  "source_ar": "صحيح مسلم ٦٨٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا مِنَ النَّاسِ مِنْ مُسْلِمٍ يُتَوَفَّى لَهُ ثَلاَثٌ لَمْ يَبْلُغُوا الْحِنْثَ، إِلاَّ أَدْخَلَهُ اللَّهُ الْجَنَّةَ بِفَضْلِ رَحْمَتِهِ إِيَّاهُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: A Muslim whose three children die before the age of puberty will be granted Paradise by Allah due to his mercy for them.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 1248",
+  "source_ar": "صحيح البخاري ١٢٤٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ بَيْنَ يَدَىِ السَّاعَةِ لأَيَّامًا يَنْزِلُ فِيهَا الْجَهْلُ، وَيُرْفَعُ فِيهَا الْعِلْمُ، وَيَكْثُرُ فِيهَا الْهَرْجُ، وَالْهَرْجُ الْقَتْلُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Near the establishment of the Hour there will be days during which Religious ignorance will spread, knowledge will be taken away (vanish) and there will be much Al-Harj, and Al- Harj means killing.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 7062",
+  "source_ar": "صحيح البخاري ٧٠٦٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ نَامَ عَنْ حِزْبِهِ أَوْ عَنْ شَىْءٍ مِنْهُ فَقَرَأَهُ فِيمَا بَيْنَ صَلاَةِ الْفَجْرِ وَصَلاَةِ الظُّهْرِ كُتِبَ لَهُ كَأَنَّمَا قَرَأَهُ مِنَ اللَّيْلِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Should anyone fall asleep and fail to recite his portion of the Qur'an, or a part of it, if he recites it between the dawn prayer and the noon prayer, it will be recorded for him as though he had recited it during the night.",
+  "narrator": "Umar ibn al-Khattab",
+  "narrator_ar": "عمر بن الخطاب",
+  "source": "Sahih Muslim 747",
+  "source_ar": "صحيح مسلم ٧٤٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَحِلُّ لِمُسْلِمٍ أَنْ يَهْجُرَ أَخَاهُ فَوْقَ ثَلاَثِ لَيَالٍ يَلْتَقِيَانِ فَيُعْرِضُ هَذَا وَيُعْرِضُ هَذَا وَخَيْرُهُمَا الَّذِي يَبْدَأُ بِالسَّلاَمِ",
+  "en": "The Prophet Muhammad (ﷺ) said: It is not permissible for a Muslim to have estranged relations with his brother beyond three nights, the one turning one way and the other turning the other way when they meet; the better of the two is one who is the first to give a greeting.",
+  "narrator": "Abu Ayyub al-Ansari",
+  "narrator_ar": "أبو أيوب الأنصاري",
+  "source": "Sahih Muslim 2560",
+  "source_ar": "صحيح مسلم ٢٥٦٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَبَاغَضُوا وَلاَ تَحَاسَدُوا وَلاَ تَدَابَرُوا وَكُونُوا عِبَادَ اللَّهِ إِخْوَانًا وَلاَ يَحِلُّ لِمُسْلِمٍ أَنْ يَهْجُرَ أَخَاهُ فَوْقَ ثَلاَثٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: Neither nurse mutual hatred, nor jealousy, nor enmity, and become as fellow brothers and servants of Allah. It is not lawful for a Muslim that he should keep his relations estranged with his brother beyond three days.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 2558",
+  "source_ar": "صحيح مسلم ٢٥٥٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا أُقِيمَتِ الصَّلاَةُ فَلاَ تَأْتُوهَا تَسْعَوْنَ وَأْتُوهَا تَمْشُونَ وَعَلَيْكُمُ السَّكِينَةُ فَمَا أَدْرَكْتُمْ فَصَلُّوا وَمَا فَاتَكُمْ فَأَتِمُّوا",
+  "en": "The Prophet Muhammad (ﷺ) said: When the Iqama has been pronounced for prayer, do not go running to it, but go walking in tranquillity and pray what you are in time for, and complete what you have missed.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 602",
+  "source_ar": "صحيح مسلم ٦٠٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا قَالَ أَحَدُكُمْ آمِينَ. وَقَالَتِ الْمَلاَئِكَةُ فِي السَّمَاءِ آمِينَ. فَوَافَقَتْ إِحْدَاهُمَا الأُخْرَى، غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: If any one of you says, \"Amin\" and the angels in the heavens say \"Amin\" and the former coincides with the latter, all his past sins will be forgiven.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 781",
+  "source_ar": "صحيح البخاري ٧٨١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَأْتِي الشَّيْطَانُ أَحَدَكُمْ فَيَقُولُ مَنْ خَلَقَ كَذَا مَنْ خَلَقَ كَذَا حَتَّى يَقُولَ مَنْ خَلَقَ رَبَّكَ فَإِذَا بَلَغَهُ فَلْيَسْتَعِذْ بِاللَّهِ، وَلْيَنْتَهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Satan comes to one of you and says, 'Who created so-and-so? 'till he says, 'Who has created your Lord?' So, when he inspires such a question, one should seek refuge with Allah and give up such thoughts.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 3276",
+  "source_ar": "صحيح البخاري ٣٢٧٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ رَآنِي فِي الْمَنَامِ فَقَدْ رَآنِي، فَإِنَّ الشَّيْطَانَ لاَ يَتَخَيَّلُ بِي، وَرُؤْيَا الْمُؤْمِنِ جُزْءٌ مِنْ سِتَّةٍ وَأَرْبَعِينَ جُزْءًا مِنَ النُّبُوَّةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever has seen me in a dream, then no doubt, he has seen me, for Satan cannot imitate my shape.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 6994",
+  "source_ar": "صحيح البخاري ٦٩٩٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ أَطَاعَنِي فَقَدْ أَطَاعَ اللَّهَ، وَمَنْ عَصَانِي فَقَدْ عَصَى اللَّهَ، وَمَنْ أَطَاعَ أَمِيرِي فَقَدْ أَطَاعَنِي، وَمَنْ عَصَى أَمِيرِي فَقَدْ عَصَانِي",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever obeys me, obeys Allah, and whoever disobeys me, disobeys Allah, and whoever obeys the ruler I appoint, obeys me, and whoever disobeys him, disobeys me.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 7137",
+  "source_ar": "صحيح البخاري ٧١٣٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنِّي لأَقُومُ إِلَى الصَّلاَةِ وَأَنَا أُرِيدُ أَنْ أُطَوِّلَ فِيهَا، فَأَسْمَعُ بُكَاءَ الصَّبِيِّ، فَأَتَجَوَّزُ فِي صَلاَتِي كَرَاهِيَةَ أَنْ أَشُقَّ عَلَى أُمِّهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whenever I stand for prayer, I want to prolong it but on hearing the cries of a child, I would shorten it as I dislike to put its mother in trouble.",
+  "narrator": "Abu Qatadah",
+  "narrator_ar": "أبو قتادة",
+  "source": "Sahih al-Bukhari 868",
+  "source_ar": "صحيح البخاري ٨٦٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَيْسَ الْمِسْكِينُ الَّذِي تَرُدُّهُ الأُكْلَةُ وَالأُكْلَتَانِ، وَلَكِنِ الْمِسْكِينُ الَّذِي لَيْسَ لَهُ غِنًى وَيَسْتَحْيِي أَوْ لاَ يَسْأَلُ النَّاسَ إِلْحَافًا",
+  "en": "The Prophet Muhammad (ﷺ) said: The poor person is not the one who asks a morsel or two (of meals) from the others, but the poor is the one who has nothing and is ashamed to beg from others.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 1476",
+  "source_ar": "صحيح البخاري ١٤٧٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ تَبَاغَضُوا، وَلاَ تَحَاسَدُوا، وَلاَ تَدَابَرُوا، وَكُونُوا عِبَادَ اللَّهِ إِخْوَانًا، وَلاَ يَحِلُّ لِمُسْلِمٍ أَنْ يَهْجُرَ أَخَاهُ فَوْقَ ثَلاَثِ لَيَالٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: Do not hate one another, nor be jealous of one another; and do not desert one another, but O Allah's worshipers! Be Brothers! And it is unlawful for a Muslim to desert his brother Muslim (and not to talk to him) for more than three nights.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 6076",
+  "source_ar": "صحيح البخاري ٦٠٧٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ، ثَقِيلَتَانِ فِي الْمِيزَانِ، حَبِيبَتَانِ إِلَى الرَّحْمَنِ، سُبْحَانَ اللَّهِ الْعَظِيمِ، سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: There are two expressions which are very easy for the tongue to say, but they are very heavy in the balance and are very dear to The Beneficent (Allah), and they are, 'Subhan Allah Al- `Azim and 'Subhan Allah wa bihamdihi.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6406",
+  "source_ar": "صحيح البخاري ٦٤٠٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّمَا مَثَلِي وَمَثَلُ أُمَّتِي كَمَثَلِ رَجُلٍ اسْتَوْقَدَ نَارًا فَجَعَلَتِ الدَّوَابُّ وَالْفَرَاشُ يَقَعْنَ فِيهِ فَأَنَا آخِذٌ بِحُجَزِكُمْ وَأَنْتُمْ تَقَحَّمُونَ فِيهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The similitude of mine and that of my Umma is that of a person who lit fire and there began to fall into it insects and moths. And I am there to hold you back, but you plunge into it.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2284",
+  "source_ar": "صحيح مسلم ٢٢٨٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا يُصِيبُ الْمُسْلِمَ مِنْ نَصَبٍ وَلاَ وَصَبٍ وَلاَ هَمٍّ وَلاَ حُزْنٍ وَلاَ أَذًى وَلاَ غَمٍّ حَتَّى الشَّوْكَةِ يُشَاكُهَا، إِلاَّ كَفَّرَ اللَّهُ بِهَا مِنْ خَطَايَاهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: No fatigue, nor disease, nor sorrow, nor sadness, nor hurt, nor distress befalls a Muslim, even if it were the prick he receives from a thorn, but that Allah expiates some of his sins for that.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 5641",
+  "source_ar": "صحيح البخاري ٥٦٤١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا أَحْسَنَ أَحَدُكُمْ إِسْلاَمَهُ، فَكُلُّ حَسَنَةٍ يَعْمَلُهَا تُكْتَبُ لَهُ بِعَشْرِ أَمْثَالِهَا إِلَى سَبْعِمِائَةِ ضِعْفٍ، وَكُلُّ سَيِّئَةٍ يَعْمَلُهَا تُكْتَبُ لَهُ بِمِثْلِهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: If any one of you improves (follows strictly) his Islamic religion then his good deeds will be rewarded ten times to seven hundred times for each good deed and a bad deed will be recorded as it is.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 42",
+  "source_ar": "صحيح البخاري ٤٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا أَتَى أَحَدَكُمْ خَادِمُهُ بِطَعَامِهِ، فَإِنْ لَمْ يُجْلِسْهُ مَعَهُ فَلْيُنَاوِلْهُ أُكْلَةً أَوْ أُكْلَتَيْنِ، أَوْ لُقْمَةً أَوْ لُقْمَتَيْنِ، فَإِنَّهُ وَلِيَ حَرَّهُ وَعِلاَجَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: When your servant brings your food to you, if you do not ask him to join you, then at least ask him to take one or two handfuls, for he has suffered from its heat (while cooking it) and has taken pains to cook it nicely.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 5460",
+  "source_ar": "صحيح البخاري ٥٤٦٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا مِنْ يَوْمٍ يُصْبِحُ الْعِبَادُ فِيهِ إِلاَّ مَلَكَانِ يَنْزِلاَنِ فَيَقُولُ أَحَدُهُمَا اللَّهُمَّ أَعْطِ مُنْفِقًا خَلَفًا، وَيَقُولُ الآخَرُ اللَّهُمَّ أَعْطِ مُمْسِكًا تَلَفًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Every day two angels come down from Heaven and one of them says, 'O Allah! Compensate every person who spends in Your Cause,' and the other (angel) says, 'O Allah! Destroy every miser.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 1442",
+  "source_ar": "صحيح البخاري ١٤٤٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنْ قَامَ لَيْلَةَ الْقَدْرِ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ، وَمَنْ صَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Whoever established prayers on the night of Qadr out of sincere faith and hoping for a reward from Allah, then all his previous sins will be forgiven; and whoever fasts in the month of Ramadan out of sincere faith, and hoping for a reward from Allah, then all his previous sins will be forgiven.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 1901",
+  "source_ar": "صحيح البخاري ١٩٠١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنِّي فَرَطُكُمْ عَلَى الْحَوْضِ، مَنْ مَرَّ عَلَىَّ شَرِبَ، وَمَنْ شَرِبَ لَمْ يَظْمَأْ أَبَدًا، لَيَرِدَنَّ عَلَىَّ أَقْوَامٌ أَعْرِفُهُمْ وَيَعْرِفُونِي، ثُمَّ يُحَالُ بَيْنِي وَبَيْنَهُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: I am your predecessor (forerunner) at the Lake-Fount, and whoever will pass by there, he will drink from it and whoever will drink from it, he will never be thirsty. There will come to me some people whom I will recognize, and they will recognize me, but a barrier will be placed between me and them.",
+  "narrator": "Sahl ibn Sad",
+  "narrator_ar": "سهل بن سعد",
+  "source": "Sahih al-Bukhari 6583",
+  "source_ar": "صحيح البخاري ٦٥٨٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَتَمَنَّى أَحَدُكُمُ الْمَوْتَ وَلاَ يَدْعُ بِهِ مِنْ قَبْلِ أَنْ يَأْتِيَهُ إِنَّهُ إِذَا مَاتَ أَحَدُكُمُ انْقَطَعَ عَمَلُهُ وَإِنَّهُ لاَ يَزِيدُ الْمُؤْمِنَ عُمْرُهُ إِلاَّ خَيْرًا",
+  "en": "The Prophet Muhammad (ﷺ) said: None amongst you should make a request for death, and do not call for it before it comes, for when any one of you dies, he ceases (to do good) deeds and the life of a believer is not prolonged but for goodness.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2682",
+  "source_ar": "صحيح مسلم ٢٦٨٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا قَالَ الإِمَامُ سَمِعَ اللَّهُ لِمَنْ حَمِدَهُ. فَقُولُوا اللَّهُمَّ رَبَّنَا لَكَ الْحَمْدُ. فَإِنَّهُ مَنْ وَافَقَ قَوْلُهُ قَوْلَ الْمَلاَئِكَةِ غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: When the Imam says, \"Sami`a l-lahu liman hamidah,\" you should say, \"Allahumma Rabbana laka l-hamd.\" And if the saying of any one of you coincides with that of the angels, all his past sins will be forgiven.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 796",
+  "source_ar": "صحيح البخاري ٧٩٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَثَلُ الَّذِي يَقْرَأُ الْقُرْآنَ وَهْوَ حَافِظٌ لَهُ مَعَ السَّفَرَةِ الْكِرَامِ الْبَرَرَةِ، وَمَثَلُ الَّذِي يَقْرَأُ الْقُرْآنَ وَهْوَ يَتَعَاهَدُهُ وَهْوَ عَلَيْهِ شَدِيدٌ، فَلَهُ أَجْرَانِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Such a person as recites the Qur'an and masters it by heart, will be with the noble righteous scribes (in Heaven). And such a person exerts himself to learn the Qur'an by heart, and recites it with great difficulty, will have a double reward.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 4937",
+  "source_ar": "صحيح البخاري ٤٩٣٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَثَلِي وَمَثَلُ الأَنْبِيَاءِ كَرَجُلٍ بَنَى دَارًا فَأَكْمَلَهَا وَأَحْسَنَهَا، إِلاَّ مَوْضِعَ لَبِنَةٍ، فَجَعَلَ النَّاسُ يَدْخُلُونَهَا وَيَتَعَجَّبُونَ، وَيَقُولُونَ لَوْلاَ مَوْضِعُ اللَّبِنَةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: My similitude in comparison with the other prophets is that of a man who has built a house completely and excellently except for a place of one brick. When the people enter the house, they admire its beauty and say: 'But for the place of this brick (how splendid the house will be).",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih al-Bukhari 3534",
+  "source_ar": "صحيح البخاري ٣٥٣٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا نَهَيْتُكُمْ عَنْهُ فَاجْتَنِبُوهُ وَمَا أَمَرْتُكُمْ بِهِ فَافْعَلُوا مِنْهُ مَا اسْتَطَعْتُمْ فَإِنَّمَا أَهْلَكَ الَّذِينَ مِنْ قَبْلِكُمْ كَثْرَةُ مَسَائِلِهِمْ وَاخْتِلاَفُهُمْ عَلَى أَنْبِيَائِهِمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Avoid that which I forbid you to do and do that which I command you to do to the best of your capacity. Verily the people before you went to their doom because they had put too many questions to their Prophets and then disagreed with their teachings.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 1337",
+  "source_ar": "صحيح مسلم ١٣٣٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: اتَّقُوا الظُّلْمَ فَإِنَّ الظُّلْمَ ظُلُمَاتٌ يَوْمَ الْقِيَامَةِ وَاتَّقُوا الشُّحَّ فَإِنَّ الشُّحَّ أَهْلَكَ مَنْ كَانَ قَبْلَكُمْ حَمَلَهُمْ عَلَى أَنْ سَفَكُوا دِمَاءَهُمْ وَاسْتَحَلُّوا مَحَارِمَهُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Be on your guard against committing oppression, for oppression is a darkness on the Day of Resurrection, and be on your guard against stinginess for stinginess destroyed those who were before you, as it incited them to shed blood and make lawful what was unlawful for them.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih Muslim 2578",
+  "source_ar": "صحيح مسلم ٢٥٧٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَنِ اغْتَسَلَ ثُمَّ أَتَى الْجُمُعَةَ فَصَلَّى مَا قُدِّرَ لَهُ ثُمَّ أَنْصَتَ حَتَّى يَفْرُغَ مِنْ خُطْبَتِهِ ثُمَّ يُصَلِّيَ مَعَهُ غُفِرَ لَهُ مَا بَيْنَهُ وَبَيْنَ الْجُمُعَةِ الأُخْرَى وَفَضْلَ ثَلاَثَةِ أَيَّامٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who took a bath and then came for Jumu'a prayer and then prayed what was fixed for him, then kept silence till the Imam finished the sermon, and then prayed along with him, his sins between that time and the next Friday would be forgiven, and even of three days more.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 857",
+  "source_ar": "صحيح مسلم ٨٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِيَّاكُمْ وَالظَّنَّ فَإِنَّ الظَّنَّ أَكْذَبُ الْحَدِيثِ وَلاَ تَحَسَّسُوا وَلاَ تَجَسَّسُوا وَلاَ تَنَافَسُوا وَلاَ تَحَاسَدُوا وَلاَ تَبَاغَضُوا وَلاَ تَدَابَرُوا وَكُونُوا عِبَادَ اللَّهِ إِخْوَانًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Avoid suspicion, for suspicion is the gravest lie in talk and do not be inquisitive about one another and do not spy upon one another and do not feel envy with the other, and nurse no malice, and nurse no aversion and hostility against one another. And be fellow-brothers and servants of Allah.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2563",
+  "source_ar": "صحيح مسلم ٢٥٦٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لاَ يَتَمَنَّيَنَّ أَحَدُكُمُ الْمَوْتَ مِنْ ضُرٍّ أَصَابَهُ، فَإِنْ كَانَ لاَ بُدَّ فَاعِلاً فَلْيَقُلِ اللَّهُمَّ أَحْيِنِي مَا كَانَتِ الْحَيَاةُ خَيْرًا لِي، وَتَوَفَّنِي إِذَا كَانَتِ الْوَفَاةُ خَيْرًا لِي",
+  "en": "The Prophet Muhammad (ﷺ) said: None of you should wish for death because of a calamity befalling him; but if he has to wish for death, he should say: \"O Allah! Keep me alive as long as life is better for me, and let me die if death is better for me.\"",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 5671",
+  "source_ar": "صحيح البخاري ٥٦٧١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: قَالَ اللَّهُ عَزَّ وَجَلَّ كُلُّ عَمَلِ ابْنِ آدَمَ لَهُ إِلاَّ الصِّيَامَ هُوَ لِي وَأَنَا أَجْزِي بِهِ فَوَالَّذِي نَفْسُ مُحَمَّدٍ بِيَدِهِ لَخِلْفَةُ فَمِ الصَّائِمِ أَطْيَبُ عِنْدَ اللَّهِ مِنْ رِيحِ الْمِسْكِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah, the Majestic and the Exalted, said: Every act of the son of Adam is for him except fasting. It is done for My sake, and I will give a reward for it. By Allah in Whose Hand is the life of Muhammad, the breath of the observer of fast is sweeter to Allah than the fragrance of musk.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 1151",
+  "source_ar": "صحيح مسلم ١١٥١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَا مِنَ الأَنْبِيَاءِ نَبِيٌّ إِلاَّ أُعْطِيَ مَا مِثْلُهُ آمَنَ عَلَيْهِ الْبَشَرُ، وَإِنَّمَا كَانَ الَّذِي أُوتِيتُ وَحْيًا أَوْحَاهُ اللَّهُ إِلَىَّ فَأَرْجُو أَنْ أَكُونَ أَكْثَرَهُمْ تَابِعًا يَوْمَ الْقِيَامَةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Every Prophet was given miracles because of which people believed, but what I have been given, is Divine Inspiration which Allah has revealed to me. So I hope that my followers will outnumber the followers of the other Prophets on the Day of Resurrection.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 4981",
+  "source_ar": "صحيح البخاري ٤٩٨١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: قَالَ اللَّهُ أَعْدَدْتُ لِعِبَادِي الصَّالِحِينَ مَا لاَ عَيْنَ رَأَتْ، وَلاَ أُذُنَ سَمِعَتْ، وَلاَ خَطَرَ عَلَى قَلْبِ بَشَرٍ، فَاقْرَءُوا إِنْ شِئْتُمْ {فَلاَ تَعْلَمُ نَفْسٌ مَا أُخْفِيَ لَهُمْ مِنْ قُرَّةِ أَعْيُنٍ }",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah said, \"I have prepared for My Pious slaves things which have never been seen by an eye, or heard by an ear, or imagined by a human being.\" If you wish, you can recite this Verse from the Holy Qur'an:--\"No soul knows what is kept hidden for them, of joy as a reward for what they used to do.\"",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 3244",
+  "source_ar": "صحيح البخاري ٣٢٤٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا مَضَى شَطْرُ اللَّيْلِ أَوْ ثُلُثَاهُ يَنْزِلُ اللَّهُ تَبَارَكَ وَتَعَالَى إِلَى السَّمَاءِ الدُّنْيَا فَيَقُولُ هَلْ مِنْ سَائِلٍ يُعْطَى هَلْ مِنْ دَاعٍ يُسْتَجَابُ لَهُ هَلْ مِنْ مُسْتَغْفِرٍ يُغْفَرُ لَهُ حَتَّى يَنْفَجِرَ الصُّبْحُ",
+  "en": "The Prophet Muhammad (ﷺ) said: When half of the night or two-third of it is over. Allah, the Blessed and the Exalted, descends to the lowest heaven and says: Is there any beggar, so that he be given? Is there any supplicator so that he be answered? Is there any beggar of forgiveness so that he be forgiven? (And Allah continues it saying) till it is daybreak.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 758",
+  "source_ar": "صحيح مسلم ٧٥٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ الرَّجُلَ لَيَعْمَلُ الزَّمَنَ الطَّوِيلَ بِعَمَلِ أَهْلِ الْجَنَّةِ ثُمَّ يُخْتَمُ لَهُ عَمَلُهُ بِعَمَلِ أَهْلِ النَّارِ وَإِنَّ الرَّجُلَ لَيَعْمَلُ الزَّمَنَ الطَّوِيلَ بِعَمَلِ أَهْلِ النَّارِ ثُمَّ يُخْتَمُ لَهُ عَمَلُهُ بِعَمَلِ أَهْلِ الْجَنَّةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Verily, a man would perform the deeds of the people of Paradise for a long time, then his deeds would be concluded with the deeds of the people of Hell. And verily, a man would perform the deeds of the people of Hell for a long time, and then his deeds would be concluded with the deeds of the people of Paradise.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2651",
+  "source_ar": "صحيح مسلم ٢٦٥١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا أَسْلَمَ الْعَبْدُ فَحَسُنَ إِسْلاَمُهُ يُكَفِّرُ اللَّهُ عَنْهُ كُلَّ سَيِّئَةٍ كَانَ زَلَفَهَا، وَكَانَ بَعْدَ ذَلِكَ الْقِصَاصُ، الْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا إِلَى سَبْعِمِائَةِ ضِعْفٍ، وَالسَّيِّئَةُ بِمِثْلِهَا إِلاَّ أَنْ يَتَجَاوَزَ اللَّهُ عَنْهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: If a person embraces Islam sincerely, then Allah shall forgive all his past sins, and after that starts the settlement of accounts, the reward of his good deeds will be ten times to seven hundred times for each good deed and one evil deed will be recorded as it is unless Allah forgives it.",
+  "narrator": "Abu Said al-Khudri",
+  "narrator_ar": "أبو سعيد الخدري",
+  "source": "Sahih al-Bukhari 41",
+  "source_ar": "صحيح البخاري ٤١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ يَرْضَى لَكُمْ ثَلاَثًا وَيَكْرَهُ لَكُمْ ثَلاَثًا فَيَرْضَى لَكُمْ أَنْ تَعْبُدُوهُ وَلاَ تُشْرِكُوا بِهِ شَيْئًا وَأَنْ تَعْتَصِمُوا بِحَبْلِ اللَّهِ جَمِيعًا وَلاَ تَفَرَّقُوا وَيَكْرَهُ لَكُمْ قِيلَ وَقَالَ وَكَثْرَةَ السُّؤَالِ وَإِضَاعَةَ الْمَالِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Verily Allah likes three things for you and He disapproves three things for you. He is pleased with you that you worship Him and associate nor anything with Him, that you hold fast the rope of Allah, and be not scattered; and He disapproves for you irrelevant talk, persistent questioning ane the wasting of wealth.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 1715",
+  "source_ar": "صحيح مسلم ١٧١٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِذَا رَأَى أَحَدُكُمُ الرُّؤْيَا يُحِبُّهَا، فَإِنَّهَا مِنَ اللَّهِ، فَلْيَحْمَدِ اللَّهَ عَلَيْهَا، وَلْيُحَدِّثْ بِهَا، وَإِذَا رَأَى غَيْرَ ذَلِكَ مِمَّا يَكْرَهُ، فَإِنَّمَا هِيَ مِنَ الشَّيْطَانِ، فَلْيَسْتَعِذْ مِنْ شَرِّهَا، وَلاَ يَذْكُرْهَا لأَحَدٍ، فَإِنَّهَا لَنْ تَضُرَّهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: If anyone of you saw a dream which he liked, then that was from Allah, and he should thank Allah for it and tell it to others; but if he saw something else, i.e, a dream which he did not like, then that is from Satan and he should seek refuge with Allah from it and should not tell it to anybody for it will not harm him.",
+  "narrator": "Abu Said al-Khudri",
+  "narrator_ar": "أبو سعيد الخدري",
+  "source": "Sahih al-Bukhari 7045",
+  "source_ar": "صحيح البخاري ٧٠٤٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّ اللَّهَ يُحِبُّ الْعُطَاسَ وَيَكْرَهُ التَّثَاؤُبَ، فَإِذَا عَطَسَ أَحَدُكُمْ وَحَمِدَ اللَّهَ كَانَ حَقًّا عَلَى كُلِّ مُسْلِمٍ سَمِعَهُ أَنْ يَقُولَ لَهُ يَرْحَمُكَ اللَّهُ. وَأَمَّا التَّثَاؤُبُ فَإِنَّمَا هُوَ مِنَ الشَّيْطَانِ، فَإِذَا تَثَاوَبَ أَحَدُكُمْ فَلْيَرُدَّهُ مَا اسْتَطَاعَ، فَإِنَّ أَحَدَكُمْ إِذَا تَثَاءَبَ ضَحِكَ مِنْهُ الشَّيْطَانُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah loves sneezing but dislikes yawning; so if anyone of you sneezes and then praises Allah, every Muslim who hears him (praising Allah) has to say Tashmit to him. But as regards yawning, it is from Satan, so if one of you yawns, he should try his best to stop it, for when anyone of you yawns, Satan laughs at him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6226",
+  "source_ar": "صحيح البخاري ٦٢٢٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّكُمْ سَتَرَوْنَ رَبَّكُمْ عِيَانًا",
+  "en": "The Prophet Muhammad (ﷺ) said: You will definitely see your Lord with your own eyes.",
+  "narrator": "Jarir ibn Abdullah",
+  "narrator_ar": "جرير بن عبد الله",
+  "source": "Sahih al-Bukhari 7435",
+  "source_ar": "صحيح البخاري ٧٤٣٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَفْضَلُ الصَّلاَةِ طُولُ الْقُنُوتِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The most excellent prayer is that in which the duration of standing is longer.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih Muslim 756",
+  "source_ar": "صحيح مسلم ٧٥٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: إِنَّهُ مَنْ لاَ يَرْحَمْ لاَ يُرْحَمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: He who does not show mercy (towards his children), no mercy would be shown to him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2318",
+  "source_ar": "صحيح مسلم ٢٣١٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: اتَّقُوا النَّارَ وَلَوْ بِشِقِّ تَمْرَةٍ",
+  "en": "The Prophet Muhammad (ﷺ) said: Save yourself from Hell-fire even by giving half a date-fruit in charity.",
+  "narrator": "Adi ibn Hatim",
+  "narrator_ar": "عدي بن حاتم",
+  "source": "Sahih al-Bukhari 1417",
+  "source_ar": "صحيح البخاري ١٤١٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: تَسَحَّرُوا فَإِنَّ فِي السَّحُورِ بَرَكَةً",
+  "en": "The Prophet Muhammad (ﷺ) said: Take Suhur as there is a blessing in it.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 1923, Sahih Muslim 1095",
+  "source_ar": "صحيح البخاري ١٩٢٣، صحيح مسلم ١٠٩٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَقِّنُوا مَوْتَاكُمْ لاَ إِلَهَ إِلاَّ اللَّهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Exhort to recite\" There is no god but Allah\" to those of you who are dying.",
+  "narrator": "Abu Said al-Khudri",
+  "narrator_ar": "أبو سعيد الخدري",
+  "source": "Sahih Muslim 916",
+  "source_ar": "صحيح مسلم ٩١٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: اجْعَلُوا آخِرَ صَلاَتِكُمْ بِاللَّيْلِ وِتْرًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Make Witr the end of your night prayer.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih Muslim 751",
+  "source_ar": "صحيح مسلم ٧٥١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: نُصِرْتُ بِالرُّعْبِ وَأُوتِيتُ جَوَامِعَ الْكَلِمِ",
+  "en": "The Prophet Muhammad (ﷺ) said: I have been helped by terror (in the hearts of enemies) and I have been given words which are concise but comprehensive in meaning.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 523",
+  "source_ar": "صحيح مسلم ٥٢٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: نَحْنُ الآخِرُونَ السَّابِقُونَ يَوْمَ الْقِيَامَةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: We (Muslims) are the last in the world, but will be foremost on the Day of Resurrection.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6624",
+  "source_ar": "صحيح البخاري ٦٦٢٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: صَلُّوا فِي بُيُوتِكُمْ وَلاَ تَتَّخِذُوهَا قُبُورًا",
+  "en": "The Prophet Muhammad (ﷺ) said: Pray in your houses, and do not make them graves.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih Muslim 777",
+  "source_ar": "صحيح مسلم ٧٧٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الرُّؤْيَا مِنَ اللَّهِ، وَالْحُلْمُ مِنَ الشَّيْطَانِ",
+  "en": "The Prophet Muhammad (ﷺ) said: A true good dream is from Allah, and a bad dream is from Satan.",
+  "narrator": "Abu Qatadah",
+  "narrator_ar": "أبو قتادة",
+  "source": "Sahih al-Bukhari 6984",
+  "source_ar": "صحيح البخاري ٦٩٨٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَوْلاَ أَنْ أَشُقَّ عَلَى أُمَّتِي لأَمَرْتُهُمْ بِالسِّوَاكِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Were I not afraid that it would be hard on my followers, I would order them to use the siwak (as obligatory, for cleaning the teeth).",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 7240",
+  "source_ar": "صحيح البخاري ٧٢٤٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: مَوْضِعُ سَوْطٍ فِي الْجَنَّةِ خَيْرٌ مِنَ الدُّنْيَا وَمَا فِيهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: A place in Paradise equal to the size of a lash is better than the whole world and whatever is in it.",
+  "narrator": "Sahl ibn Sad",
+  "narrator_ar": "سهل بن سعد",
+  "source": "Sahih al-Bukhari 3250",
+  "source_ar": "صحيح البخاري ٣٢٥٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: حُجِبَتِ النَّارُ بِالشَّهَوَاتِ، وَحُجِبَتِ الْجَنَّةُ بِالْمَكَارِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The (Hell) Fire is surrounded by all kinds of desires and passions, while Paradise is surrounded by all kinds of disliked undesirable things.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6487",
+  "source_ar": "صحيح البخاري ٦٤٨٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: سَوُّوا صُفُوفَكُمْ فَإِنَّ تَسْوِيَةَ الصَّفِّ مِنْ تَمَامِ الصَّلاَةِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Straighten your rows. for the straightening of a row is a part of the perfection of prayer.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 433",
+  "source_ar": "صحيح مسلم ٤٣٣"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَوْ تَعْلَمُونَ مَا أَعْلَمُ لَضَحِكْتُمْ قَلِيلاً وَلَبَكَيْتُمْ كَثِيرًا",
+  "en": "The Prophet Muhammad (ﷺ) said: If you knew that which I know, you would laugh little and weep much.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 6486",
+  "source_ar": "صحيح البخاري ٦٤٨٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: آيَةُ الإِيمَانِ حُبُّ الأَنْصَارِ، وَآيَةُ النِّفَاقِ بُغْضُ الأَنْصَارِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The sign of Belief is to love the Ansar, and the sign of hypocrisy is to hate the Ansar.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih al-Bukhari 3784",
+  "source_ar": "صحيح البخاري ٣٧٨٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَوْلاَ أَنَّكُمْ تُذْنِبُونَ لَخَلَقَ اللَّهُ خَلْقًا يُذْنِبُونَ يَغْفِرُ لَهُمْ",
+  "en": "The Prophet Muhammad (ﷺ) said: Had you not committed sins, Allah would have brought into existence a creation that would have committed sin (and Allah) would have forgiven them.",
+  "narrator": "Abu Ayyub al-Ansari",
+  "narrator_ar": "أبو أيوب الأنصاري",
+  "source": "Sahih Muslim 2748",
+  "source_ar": "صحيح مسلم ٢٧٤٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَصْدَقُ بَيْتٍ قَالَهُ الشَّاعِرُ أَلاَ كُلُّ شَىْءٍ مَا خَلاَ اللَّهَ بَاطِلُ",
+  "en": "The Prophet Muhammad (ﷺ) said: The truest poetic verse ever said by a poet, is: Indeed! Everything except Allah, is perishable.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6489, Sahih Muslim 2256",
+  "source_ar": "صحيح البخاري ٦٤٨٩، صحيح مسلم ٢٢٥٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: رَحِمَ اللَّهُ رَجُلاً سَمْحًا إِذَا بَاعَ، وَإِذَا اشْتَرَى، وَإِذَا اقْتَضَى",
+  "en": "The Prophet Muhammad (ﷺ) said: May Allah's mercy be on him who is lenient in his buying, selling, and in demanding back his money.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih al-Bukhari 2076",
+  "source_ar": "صحيح البخاري ٢٠٧٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَلَّهُ أَشَدُّ فَرَحًا بِتَوْبَةِ أَحَدِكُمْ مِنْ أَحَدِكُمْ بِضَالَّتِهِ إِذَا وَجَدَهَا",
+  "en": "The Prophet Muhammad (ﷺ) said: Allah is more pleased with the repentance of His servant when he turns penitently towards Him than one of you would be on finding the lost camel.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2675",
+  "source_ar": "صحيح مسلم ٢٦٧٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: تَحَرَّوْا لَيْلَةَ الْقَدْرِ فِي الْوِتْرِ مِنَ الْعَشْرِ الأَوَاخِرِ مِنْ رَمَضَانَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Search for the Night of Qadr in the odd nights of the last ten days of Ramadan.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 2017",
+  "source_ar": "صحيح البخاري ٢٠١٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: طَعَامُ الْوَاحِدِ يَكْفِي الاِثْنَيْنِ وَطَعَامُ الاِثْنَيْنِ يَكْفِي الأَرْبَعَةَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Food for one suffices two and food for two suffices for four.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih Muslim 2059",
+  "source_ar": "صحيح مسلم ٢٠٥٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: فُكُّوا الْعَانِيَ ـ يَعْنِي الأَسِيرَ ـ وَأَطْعِمُوا الْجَائِعَ وَعُودُوا الْمَرِيضَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Free the captives, feed the hungry and pay a visit to the sick.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 3046",
+  "source_ar": "صحيح البخاري ٣٠٤٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: بَدَأَ الإِسْلاَمُ غَرِيبًا وَسَيَعُودُ كَمَا بَدَأَ غَرِيبًا فَطُوبَى لِلْغُرَبَاءِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Islam initiated as something strange, and it would revert to its (old position) of being strange. so good tidings for the stranger.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 145",
+  "source_ar": "صحيح مسلم ١٤٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لِكُلِّ دَاءٍ دَوَاءٌ فَإِذَا أُصِيبَ دَوَاءُ الدَّاءِ بَرَأَ بِإِذْنِ اللَّهِ عَزَّ وَجَلَّ",
+  "en": "The Prophet Muhammad (ﷺ) said: There is a remedy for every malady, and when the remedy is applied to the disease it is cured with the permission of Allah, the Exalted and Glorious.",
+  "narrator": "Jabir ibn Abdullah",
+  "narrator_ar": "جابر بن عبد الله",
+  "source": "Sahih Muslim 2204",
+  "source_ar": "صحيح مسلم ٢٢٠٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يُسْتَجَابُ لأَحَدِكُمْ مَا لَمْ يَعْجَلْ فَيَقُولُ قَدْ دَعَوْتُ رَبِّي فَلَمْ يَسْتَجِبْ لِي",
+  "en": "The Prophet Muhammad (ﷺ) said: The supplication of one of you is granted if he does not grow impatient and say- I supplicated my Lord but it was not granted.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2735",
+  "source_ar": "صحيح مسلم ٢٧٣٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: وَلَوْ كُنْتُ مُتَّخِذًا مِنْ أُمَّتِي خَلِيلاً لاَتَّخَذْتُ، أَبَا بَكْرٍ وَلَكِنْ أَخِي وَصَاحِبِي",
+  "en": "The Prophet Muhammad (ﷺ) said: If I were to take a Khalil, I would have taken Abu Bakr, but he is my brother and my companion (in Islam).",
+  "narrator": "Ibn Abbas",
+  "narrator_ar": "عبد الله بن عباس",
+  "source": "Sahih al-Bukhari 3656",
+  "source_ar": "صحيح البخاري ٣٦٥٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: آيَةُ الْمُنَافِقِ ثَلاَثٌ إِذَا حَدَّثَ كَذَبَ، وَإِذَا وَعَدَ أَخْلَفَ، وَإِذَا اؤْتُمِنَ خَانَ",
+  "en": "The Prophet Muhammad (ﷺ) said: The signs of a hypocrite are three: Whenever he speaks, he tells a lie; and whenever he promises, he breaks his promise; and whenever he is entrusted, he betrays (proves to be dishonest).",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6095",
+  "source_ar": "صحيح البخاري ٦٠٩٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: وَاللَّهِ إِنِّي لأَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ فِي الْيَوْمِ أَكْثَرَ مِنْ سَبْعِينَ مَرَّةً",
+  "en": "The Prophet Muhammad (ﷺ) said: By Allah! I ask for forgiveness from Allah and turn to Him in repentance more than seventy times a day.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6307",
+  "source_ar": "صحيح البخاري ٦٣٠٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يُسَلِّمُ الرَّاكِبُ عَلَى الْمَاشِي وَالْمَاشِي عَلَى الْقَاعِدِ وَالْقَلِيلُ عَلَى الْكَثِيرِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The rider should first greet the pedestrian, and the pedestrian the one who is seated and a small group should greet a larger group (with as-Salam-u-'Alaikum).",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2160",
+  "source_ar": "صحيح مسلم ٢١٦٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَهْرَمُ ابْنُ آدَمَ وَتَشِبُّ مِنْهُ اثْنَتَانِ الْحِرْصُ عَلَى الْمَالِ وَالْحِرْصُ عَلَى الْعُمُرِ",
+  "en": "The Prophet Muhammad (ﷺ) said: The son of Adam grows old, but two (desires) in him remain young: desire for wealth and desire for life.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 1047",
+  "source_ar": "صحيح مسلم ١٠٤٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: بَيْنَمَا رَجُلٌ يَمْشِي بِطَرِيقٍ، وَجَدَ غُصْنَ شَوْكٍ فَأَخَذَهُ، فَشَكَرَ اللَّهُ لَهُ، فَغَفَرَ لَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: While a man was on the way, he found a thorny branch of a tree there on the way and removed it. Allah thanked him for that deed and forgave him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 2472",
+  "source_ar": "صحيح البخاري ٢٤٧٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: فِي الْجَنَّةِ ثَمَانِيَةُ أَبْوَابٍ، فِيهَا باب يُسَمَّى الرَّيَّانَ لاَ يَدْخُلُهُ إِلاَّ الصَّائِمُونَ",
+  "en": "The Prophet Muhammad (ﷺ) said: Paradise has eight gates, and one of them is called Ar-Raiyan through which none will enter but those who observe fasting.",
+  "narrator": "Sahl ibn Sad",
+  "narrator_ar": "سهل بن سعد",
+  "source": "Sahih al-Bukhari 3257",
+  "source_ar": "صحيح البخاري ٣٢٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: بُعِثْتُ مِنْ خَيْرِ قُرُونِ بَنِي آدَمَ قَرْنًا فَقَرْنًا، حَتَّى كُنْتُ مِنَ الْقَرْنِ الَّذِي كُنْتُ فِيهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: I have been sent (as an Apostle) in the best of all the generations of Adam's offspring since their Creation.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 3557",
+  "source_ar": "صحيح البخاري ٣٥٥٧"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: تَعَوَّذُوا بِاللَّهِ مِنْ جَهْدِ الْبَلاَءِ، وَدَرَكِ الشَّقَاءِ، وَسُوءِ الْقَضَاءِ، وَشَمَاتَةِ الأَعْدَاءِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Take refuge with Allah from the difficulties of severe calamities, from having an evil end and a bad fate and from the malicious joy of your enemies.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 6616",
+  "source_ar": "صحيح البخاري ٦٦١٦"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَمَّا خَلَقَ اللَّهُ الْخَلْقَ كَتَبَ فِي كِتَابِهِ فَهُوَ عِنْدَهُ فَوْقَ الْعَرْشِ إِنَّ رَحْمَتِي تَغْلِبُ غَضَبِي",
+  "en": "The Prophet Muhammad (ﷺ) said: When Allah created the creation as He was upon the Throne, He put down in His Book: Verily, My mercy predominates My wrath.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2751",
+  "source_ar": "صحيح مسلم ٢٧٥١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَتُؤَدُّنَّ الْحُقُوقَ إِلَى أَهْلِهَا يَوْمَ الْقِيَامَةِ حَتَّى يُقَادَ لِلشَّاةِ الْجَلْحَاءِ مِنَ الشَّاةِ الْقَرْنَاءِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Rights will certainly be restored to those entitled to them on the Day of Resurrection, (to the point that) even the hornless sheep will lay claim upon the horned one.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 2582",
+  "source_ar": "صحيح مسلم ٢٥٨٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: السَّاعِي عَلَى الأَرْمَلَةِ وَالْمِسْكِينِ كَالْمُجَاهِدِ فِي سَبِيلِ اللَّهِ، أَوِ الْقَائِمِ اللَّيْلَ الصَّائِمِ النَّهَارَ",
+  "en": "The Prophet Muhammad (ﷺ) said: The one who looks after a widow or a poor person is like a Mujahid (warrior) who fights for Allah's Cause, or like him who performs prayers all the night and fasts all the day.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 5353, Sahih Muslim 2982",
+  "source_ar": "صحيح البخاري ٥٣٥٣، صحيح مسلم ٢٩٨٢"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَحَدُكُمْ مَا قَعَدَ يَنْتَظِرُ الصَّلاَةَ فِي صَلاَةٍ مَا لَمْ يُحْدِثْ تَدْعُو لَهُ الْمَلاَئِكَةُ اللَّهُمَّ اغْفِرْ لَهُ اللَّهُمَّ ارْحَمْهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Anyone amongst you who sat in a place of worship waiting for the prayer is in prayer and his ablution is not broken, the angels invoke blessing upon him (in these words): O Allah! pardon him. O Allah! have mercy upon him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 649",
+  "source_ar": "صحيح مسلم ٦٤٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَتْبَعُ الْمَيِّتَ ثَلاَثَةٌ فَيَرْجِعُ اثْنَانِ وَيَبْقَى وَاحِدٌ يَتْبَعُهُ أَهْلُهُ وَمَالُهُ وَعَمَلُهُ فَيَرْجِعُ أَهْلُهُ وَمَالُهُ وَيَبْقَى عَمَلُهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Three things follow the bier of a dead man. Two of them come back and one is left with him: the members of his family, wealth and his good deeds. The members of his family and wealth come back and the deeds alone are left with him.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 2960",
+  "source_ar": "صحيح مسلم ٢٩٦٠"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: سَدِّدُوا وَقَارِبُوا، وَاعْلَمُوا أَنْ لَنْ يُدْخِلَ أَحَدَكُمْ عَمَلُهُ الْجَنَّةَ، وَأَنَّ أَحَبَّ الأَعْمَالِ أَدْوَمُهَا إِلَى اللَّهِ، وَإِنْ قَلَّ",
+  "en": "The Prophet Muhammad (ﷺ) said: Do good deeds properly, sincerely and moderately and know that your deeds will not make you enter Paradise, and that the most beloved deed to Allah is the most regular and constant even if it were little.",
+  "narrator": "Aisha",
+  "narrator_ar": "عائشة",
+  "source": "Sahih al-Bukhari 6464",
+  "source_ar": "صحيح البخاري ٦٤٦٤"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: كَانَ تَاجِرٌ يُدَايِنُ النَّاسَ، فَإِذَا رَأَى مُعْسِرًا قَالَ لِفِتْيَانِهِ تَجَاوَزُوا عَنْهُ، لَعَلَّ اللَّهَ أَنْ يَتَجَاوَزَ عَنَّا، فَتَجَاوَزَ اللَّهُ عَنْهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: There was a merchant who used to lend the people, and whenever his debtor was in straitened circumstances, he would say to his employees, 'Forgive him so that Allah may forgive us.' So, Allah forgave him.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 2078",
+  "source_ar": "صحيح البخاري ٢٠٧٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَوْ كَانَ لاِبْنِ آدَمَ وَادِيَانِ مِنْ مَالٍ لاَبْتَغَى وَادِيًا ثَالِثًا وَلاَ يَمْلأُ جَوْفَ ابْنِ آدَمَ إِلاَّ التُّرَابُ وَيَتُوبُ اللَّهُ عَلَى مَنْ تَابَ",
+  "en": "The Prophet Muhammad (ﷺ) said: If the son of Adam were to possess two valleys of riches. he would long for the third one. And the stomach of the son of Adam is not filled but with dust. And Allah returns to him who repents.",
+  "narrator": "Anas ibn Malik",
+  "narrator_ar": "أنس بن مالك",
+  "source": "Sahih Muslim 1048",
+  "source_ar": "صحيح مسلم ١٠٤٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: الرُّؤْيَا مِنَ اللَّهِ، وَالْحُلْمُ مِنَ الشَّيْطَانِ، فَإِذَا حَلَمَ أَحَدُكُمُ الْحُلُمَ يَكْرَهُهُ فَلْيَبْصُقْ عَنْ يَسَارِهِ وَلْيَسْتَعِذْ بِاللَّهِ مِنْهُ، فَلَنْ يَضُرَّهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: A good dream is from Allah, and a bad dream is from Satan; so, if anyone of you had a bad dream which he disliked, then he should spit on his left and seek refuge with Allah from it, for it will not harm him.",
+  "narrator": "Abu Qatadah",
+  "narrator_ar": "أبو قتادة",
+  "source": "Sahih al-Bukhari 7005",
+  "source_ar": "صحيح البخاري ٧٠٠٥"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: أَعْظَمُ النَّاسِ أَجْرًا فِي الصَّلاَةِ أَبْعَدُهُمْ فَأَبْعَدُهُمْ مَمْشًى، وَالَّذِي يَنْتَظِرُ الصَّلاَةَ حَتَّى يُصَلِّيَهَا مَعَ الإِمَامِ أَعْظَمُ أَجْرًا مِنَ الَّذِي يُصَلِّي ثُمَّ يَنَامُ",
+  "en": "The Prophet Muhammad (ﷺ) said: The people who get tremendous reward for the prayer are those who are farthest away (from the mosque) and then those who are next farthest and so on. Similarly one who waits to pray with the Imam has greater reward than one who prays and goes to bed.",
+  "narrator": "Abu Musa al-Ashari",
+  "narrator_ar": "أبو موسى الأشعري",
+  "source": "Sahih al-Bukhari 651",
+  "source_ar": "صحيح البخاري ٦٥١"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: عُوذُوا بِاللَّهِ مِنْ عَذَابِ اللَّهِ عُوذُوا بِاللَّهِ مِنْ عَذَابِ الْقَبْرِ عُوذُوا بِاللَّهِ مِنْ فِتْنَةِ الْمَسِيحِ الدَّجَّالِ عُوذُوا بِاللَّهِ مِنْ فِتْنَةِ الْمَحْيَا وَالْمَمَاتِ",
+  "en": "The Prophet Muhammad (ﷺ) said: Seek refuge with Allah from the torment of Hell, seek refuge with Allah from the torment of the grave, and seek refuge with Allah from the trial of Masih al-Dajjal and seek refuge with Allah from the trial of life and death.",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 588",
+  "source_ar": "صحيح مسلم ٥٨٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: يَنْزِلُ رَبُّنَا تَبَارَكَ وَتَعَالَى كُلَّ لَيْلَةٍ إِلَى السَّمَاءِ الدُّنْيَا حِينَ يَبْقَى ثُلُثُ اللَّيْلِ الآخِرُ فَيَقُولُ مَنْ يَدْعُونِي فَأَسْتَجِيبَ لَهُ وَمَنْ يَسْأَلُنِي فَأُعْطِيَهُ وَمَنْ يَسْتَغْفِرُنِي فَأَغْفِرَ لَهُ",
+  "en": "The Prophet Muhammad (ﷺ) said: Our Lord, the Blessed and the Exalted, descends every night to the lowest heaven when one-third of the latter part of the night is left, and says: Who supplicates Me so that I may answer him? Who asks Me so that I may give to him? Who asks Me forgiveness so that I may forgive him?",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih Muslim 758",
+  "source_ar": "صحيح مسلم ٧٥٨"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: لَقَدْ ظَنَنْتُ يَا أَبَا هُرَيْرَةَ أَنْ لاَ يَسْأَلَنِي عَنْ هَذَا الْحَدِيثِ أَحَدٌ أَوَّلُ مِنْكَ، لِمَا رَأَيْتُ مِنْ حِرْصِكَ عَلَى الْحَدِيثِ، أَسْعَدُ النَّاسِ بِشَفَاعَتِي يَوْمَ الْقِيَامَةِ مَنْ قَالَ لاَ إِلَهَ إِلاَّ اللَّهُ، خَالِصًا مِنْ قَلْبِهِ أَوْ نَفْسِهِ",
+  "en": "The Prophet Muhammad (ﷺ) said: O Abu Huraira! I have thought that none will ask me about it before you as I know your longing for the (learning of) Hadiths. The luckiest person who will have my intercession on the Day of Resurrection will be the one who said sincerely from the bottom of his heart \"None has the right to be worshipped but Allah.\"",
+  "narrator": "Abu Hurairah",
+  "narrator_ar": "أبو هريرة",
+  "source": "Sahih al-Bukhari 99",
+  "source_ar": "صحيح البخاري ٩٩"
+ },
+ {
+  "ar": "قَالَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ: هُمَا رَيْحَانَتَاىَ مِنَ الدُّنْيَا",
+  "en": "The Prophet Muhammad (ﷺ) said: They (Hasan and Husain) are my two sweet-smelling flowers in this world.",
+  "narrator": "Ibn Umar",
+  "narrator_ar": "عبد الله بن عمر",
+  "source": "Sahih al-Bukhari 5994",
+  "source_ar": "صحيح البخاري ٥٩٩٤"
+ }
 ]
