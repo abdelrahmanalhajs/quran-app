@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.abdelrahmanalhajs.quranapp</string>
+		<string>group.com.abdelrahmanalhajs.quranapp.shared</string>
 	</array>
 </dict>
 </plist>
