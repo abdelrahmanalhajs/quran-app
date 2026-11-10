@@ -787,12 +787,40 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: FilledButton.tonalIcon(
-                    icon: const Icon(Icons.play_arrow, size: 18),
-                    label: Text('quran.play_from_here'.tr()),
+                  child: Builder(
+                    builder: (context) {
+                      // While this very ayah is the one playing (or paused
+                      // on), the button pauses/resumes that same playback —
+                      // which then carries on through the rest of the surah
+                      // — instead of restarting from this ayah.
+                      final audio = context.watch<AudioProvider>();
+                      final reciter = context.watch<SettingsProvider>().reciter;
+                      final onThisAyah =
+                          audio.currentSurah == widget.ayah.surahNumber &&
+                          audio.currentReciter?.id == reciter.id &&
+                          audio.currentAbsoluteAyah == widget.ayah.numberInSurah;
+                      final playing = onThisAyah && audio.isPlaying;
+                      return FilledButton.tonalIcon(
+                    icon: Icon(
+                      playing ? Icons.pause : Icons.play_arrow,
+                      size: 18,
+                    ),
+                    label: Text(
+                      playing
+                          ? 'quran.pause'.tr()
+                          : (onThisAyah
+                                ? 'quran.resume'.tr()
+                                : 'quran.play_from_here'.tr()),
+                    ),
                     onPressed: () async {
-                      final audio = context.read<AudioProvider>();
-                      final reciter = context.read<SettingsProvider>().reciter;
+                      if (onThisAyah) {
+                        await audio.playSurah(
+                          widget.ayah.surahNumber,
+                          reciter,
+                          surahTitle: widget.surahNameAr,
+                        );
+                        return;
+                      }
                       final messenger = ScaffoldMessenger.of(context);
                       final startedAtAyah = await audio.playFromAyah(
                         surahNumber: widget.ayah.surahNumber,
@@ -812,6 +840,8 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                           ),
                         );
                       }
+                    },
+                      );
                     },
                   ),
                 ),

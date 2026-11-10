@@ -15,6 +15,7 @@ import '../prayer/prayer_screen.dart';
 import '../quran/surah_detail_screen.dart';
 import '../quran/surah_list_screen.dart';
 import '../settings/settings_screen.dart';
+import 'start_menu_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -60,7 +61,15 @@ class _HomeShellState extends State<HomeShell> {
       // ...unless a notification tap launched the app, in which case the
       // page it routes to must stay on top (see
       // [NotificationService.launchedFromNotification]).
-      if (!NotificationService.launchedFromNotification) _resumeLastRead();
+      if (NotificationService.launchedFromNotification) return;
+      // On a returning launch, first let the user choose where to go (see
+      // [StartMenuScreen]); right after onboarding there's nothing to
+      // return to yet, so go straight in.
+      if (context.read<SettingsProvider>().onboardedAtLaunch) {
+        _showStartMenu();
+      } else {
+        _resumeLastRead();
+      }
     });
     // Applies a route from a notification that launched the app from
     // terminated (didn't fire onDidReceiveNotificationResponse) or raced
@@ -99,6 +108,29 @@ class _HomeShellState extends State<HomeShell> {
         builder: (_) => SurahDetailScreen(surah: surah!, startPage: page),
       ),
     );
+  }
+
+  Future<void> _showStartMenu() async {
+    final choice = await Navigator.of(context).push<int>(
+      PageRouteBuilder(
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: const Duration(milliseconds: 150),
+        pageBuilder: (_, _, _) => const StartMenuScreen(),
+        transitionsBuilder: (_, animation, _, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+    if (!mounted) return;
+    final index = choice ?? 0;
+    if (index == 0) {
+      // Quran: back to the last-read Mushaf page.
+      _nav.setIndex(0);
+      _resumeLastRead();
+    } else {
+      // Athkar / prayer reopen their last sub-tab themselves (see
+      // AthkarScreen / PrayerScreen).
+      _nav.setIndex(index);
+    }
   }
 
   void _onDestinationSelected(int i) => _nav.setIndex(i);

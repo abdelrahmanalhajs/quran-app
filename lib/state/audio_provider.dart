@@ -34,6 +34,11 @@ class AudioProvider extends ChangeNotifier {
   static const _kLastSurah = 'audio_last_surah';
   static const _kLastReciter = 'audio_last_reciter';
   static const _kLastPositionMs = 'audio_last_position_ms';
+  // Set instead of [_kLastPositionMs] while playing from an ayah: the
+  // player's position then is inside that one ayah's clip, so saving it as
+  // a whole-surah position resumed the full surah near its start instead
+  // of where the user stopped. The ayah number is what resumes correctly.
+  static const _kLastAyah = 'audio_last_ayah';
 
   AudioProvider() {
     _attachListeners();
@@ -130,11 +135,29 @@ class AudioProvider extends ChangeNotifier {
       return;
     }
     _lastSaveTime = now;
+    final ayah = currentAbsoluteAyah;
     SharedPreferences.getInstance().then((prefs) {
       prefs.setInt(_kLastSurah, _currentSurah!);
       prefs.setString(_kLastReciter, _currentReciter!.id);
-      prefs.setInt(_kLastPositionMs, pos.inMilliseconds);
+      if (ayah != null) {
+        prefs.setInt(_kLastAyah, ayah);
+        prefs.remove(_kLastPositionMs);
+      } else {
+        prefs.setInt(_kLastPositionMs, pos.inMilliseconds);
+        prefs.remove(_kLastAyah);
+      }
     });
+  }
+
+  /// The ayah (1-based, within [surahNumber]) that playback was last at when
+  /// it was playing from an ayah onward, if that's how it was last left.
+  Future<int?> _savedAyahFor(int surahNumber, Reciter reciter) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getInt(_kLastSurah) == surahNumber &&
+        prefs.getString(_kLastReciter) == reciter.id) {
+      return prefs.getInt(_kLastAyah);
+    }
+    return null;
   }
 
   /// Returns the saved playback position for [surahNumber]/[reciter], if the
@@ -184,6 +207,32 @@ class AudioProvider extends ChangeNotifier {
         await _player.play();
       }
       return;
+    }
+
+    // Last left mid-surah while playing from an ayah (e.g. paused, then the
+    // app was closed): carry on from that same ayah through to the end of
+    // the surah, rather than restarting the whole surah from the top.
+    if (resume && reciter.supportsAyahPlayback) {
+      final savedAyah = await _savedAyahFor(surahNumber, reciter);
+      if (savedAyah != null) {
+        int? total;
+        try {
+          final list = await QuranRepository().getSurahList();
+          for (final s in list) {
+            if (s.number == surahNumber) total = s.numberOfAyahs;
+          }
+        } catch (_) {}
+        if (total != null && savedAyah <= total) {
+          await playFromAyah(
+            surahNumber: surahNumber,
+            ayahNumberInSurah: savedAyah,
+            totalAyahsInSurah: total,
+            reciter: reciter,
+            surahTitle: surahTitle,
+          );
+          return;
+        }
+      }
     }
 
     _isLoading = true;

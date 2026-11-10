@@ -9,6 +9,7 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/arabic_numbers.dart';
 import '../../core/responsive.dart';
 import '../../state/navigation_provider.dart';
@@ -30,6 +31,20 @@ class _PrayerScreenState extends State<PrayerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Reopen on whichever tab the user was last on (e.g. after picking this
+    // section from the start menu), and remember each switch.
+    SharedPreferences.getInstance().then((prefs) {
+      final last = prefs.getInt('prayer_last_tab');
+      if (mounted && last != null && last >= 0 && last < 2) {
+        _tabController.index = last;
+      }
+    });
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
+      SharedPreferences.getInstance().then(
+        (prefs) => prefs.setInt('prayer_last_tab', _tabController.index),
+      );
+    });
   }
 
   @override

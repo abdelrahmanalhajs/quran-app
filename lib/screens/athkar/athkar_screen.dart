@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/responsive.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/athkar_repository.dart';
 import '../../models/thikr.dart';
@@ -24,6 +26,22 @@ class _AthkarScreenState extends State<AthkarScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
+    // Reopen on whichever tab the user was last on (e.g. after picking this
+    // section from the start menu), and remember each switch.
+    SharedPreferences.getInstance().then((prefs) {
+      final last = prefs.getInt('athkar_last_tab');
+      // A notification tap that opened a specific athkar tab wins.
+      if (NotificationService.launchedFromNotification) return;
+      if (mounted && last != null && last >= 0 && last < 7) {
+        _tabController.index = last;
+      }
+    });
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
+      SharedPreferences.getInstance().then(
+        (prefs) => prefs.setInt('athkar_last_tab', _tabController.index),
+      );
+    });
   }
 
   @override

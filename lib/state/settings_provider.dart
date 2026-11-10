@@ -107,6 +107,12 @@ class SettingsProvider extends ChangeNotifier {
   /// once per install rather than on every cold start.
   bool get onboardingDone => _onboardingDone;
 
+  /// Whether onboarding had already been completed when the app started —
+  /// i.e. this is a returning launch, not the one that just finished
+  /// onboarding. HomeShell shows its start menu only then.
+  bool get onboardedAtLaunch => _onboardedAtLaunch;
+  bool _onboardedAtLaunch = false;
+
   /// The surah/Mushaf-page the user was last reading, persisted so the
   /// Quran tab can resume there instead of the surah list — both when
   /// switching back to the tab after visiting another one, and after
@@ -156,6 +162,7 @@ class SettingsProvider extends ChangeNotifier {
     _lastReadSurah = prefs.getInt(_kLastReadSurah);
     _lastReadPage = prefs.getInt(_kLastReadPage);
     _onboardingDone = prefs.getBool(_kOnboardingDone) ?? false;
+    _onboardedAtLaunch = _onboardingDone;
     _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? false;
     _bookmarkSurah = prefs.getInt(_kBookmarkSurah);
     _bookmarkPage = prefs.getInt(_kBookmarkPage);
