@@ -11,7 +11,9 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'state/audio_provider.dart';
 import 'state/navigation_provider.dart';
 import 'state/prayer_provider.dart';
+import 'state/hifz_provider.dart';
 import 'state/quran_provider.dart';
+import 'state/reading_plan_provider.dart';
 import 'state/settings_provider.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -70,6 +72,8 @@ Future<void> main() async {
           ChangeNotifierProvider.value(value: audioProvider),
           ChangeNotifierProvider(create: (_) => PrayerProvider()),
           ChangeNotifierProvider(create: (_) => HomeNavigationProvider()),
+          ChangeNotifierProvider(create: (_) => ReadingPlanProvider()),
+          ChangeNotifierProvider(create: (_) => HifzProvider()),
         ],
         child: const QuranApp(),
       ),

@@ -109,3 +109,34 @@ class ReminderSchedulePrefs {
   static Future<void> setJumaaTime(ReminderTime t) async =>
       (await SharedPreferences.getInstance()).setInt(_kJumaaTime, t.minutes);
 }
+
+const fastingReminderSetting = BoolNotificationSetting(
+  'fasting_reminders_enabled',
+);
+
+const ayahOfDayNotificationSetting = BoolNotificationSetting(
+  'ayah_of_day_notifications_enabled',
+);
+
+const readingReminderSetting = BoolNotificationSetting(
+  'reading_reminder_enabled',
+);
+const hifzReminderSetting = BoolNotificationSetting('hifz_reminder_enabled');
+
+/// Times for the reading-plan and Hifz-review daily reminders.
+class PlanReminderPrefs {
+  static const _kReading = 'reading_reminder_time';
+  static const _kHifz = 'hifz_reminder_time';
+
+  static Future<ReminderTime> readingTime() async => ReminderTime(
+    (await SharedPreferences.getInstance()).getInt(_kReading) ?? 20 * 60,
+  );
+  static Future<void> setReadingTime(ReminderTime t) async =>
+      (await SharedPreferences.getInstance()).setInt(_kReading, t.minutes);
+
+  static Future<ReminderTime> hifzTime() async => ReminderTime(
+    (await SharedPreferences.getInstance()).getInt(_kHifz) ?? 18 * 60,
+  );
+  static Future<void> setHifzTime(ReminderTime t) async =>
+      (await SharedPreferences.getInstance()).setInt(_kHifz, t.minutes);
+}

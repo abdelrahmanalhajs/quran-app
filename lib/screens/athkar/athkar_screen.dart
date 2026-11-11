@@ -9,6 +9,7 @@ import '../../data/athkar_repository.dart';
 import '../../models/thikr.dart';
 import '../../state/navigation_provider.dart';
 import '../../widgets/responsive_center.dart';
+import 'tasbih_view.dart';
 
 class AthkarScreen extends StatefulWidget {
   const AthkarScreen({super.key});
@@ -25,14 +26,14 @@ class _AthkarScreenState extends State<AthkarScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
+    _tabController = TabController(length: 8, vsync: this);
     // Reopen on whichever tab the user was last on (e.g. after picking this
     // section from the start menu), and remember each switch.
     SharedPreferences.getInstance().then((prefs) {
       final last = prefs.getInt('athkar_last_tab');
       // A notification tap that opened a specific athkar tab wins.
       if (NotificationService.launchedFromNotification) return;
-      if (mounted && last != null && last >= 0 && last < 7) {
+      if (mounted && last != null && last >= 0 && last < 8) {
         _tabController.index = last;
       }
     });
@@ -84,6 +85,7 @@ class _AthkarScreenState extends State<AthkarScreen>
             Tab(text: 'athkar.jumaa'.tr()),
             Tab(text: 'athkar.general'.tr()),
             Tab(text: 'athkar.khatm_quran'.tr()),
+            Tab(text: 'athkar.tasbih'.tr()),
           ],
         ),
       ),
@@ -97,6 +99,7 @@ class _AthkarScreenState extends State<AthkarScreen>
           _AthkarList(future: _repo.getJumaaAthkar()),
           _AthkarList(future: _repo.getGeneralDuaa(), classified: true),
           _AthkarList(future: _repo.getKhatmQuranDuaa()),
+          const TasbihView(),
         ],
       ),
     );

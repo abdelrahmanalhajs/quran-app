@@ -9,6 +9,9 @@ import '../../models/surah.dart';
 import '../../state/quran_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../widgets/responsive_center.dart';
+import '../hifz/hifz_screens.dart';
+import 'quran_home_cards.dart';
+import 'reading_plan_screen.dart';
 import 'surah_detail_screen.dart';
 
 enum _ListMode { surahs, juz }
@@ -62,6 +65,20 @@ class _SurahListScreenState extends State<SurahListScreen> {
       appBar: AppBar(
         title: Text('app_name'.tr()),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.school_outlined),
+            tooltip: 'hifz.title'.tr(),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const HifzHubScreen())),
+          ),
+          IconButton(
+            icon: const Icon(Icons.flag_outlined),
+            tooltip: 'plan.title'.tr(),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ReadingPlanScreen()),
+            ),
+          ),
           if (hasBookmark)
             IconButton(
               icon: const Icon(Icons.bookmark),
@@ -132,6 +149,9 @@ class _SurahListScreenState extends State<SurahListScreen> {
         if (list.isEmpty) {
           return Center(child: Text('quran.no_results'.tr()));
         }
+        // Ayah of the day / reading plan only on the plain list, not while
+        // searching.
+        final showHeader = provider.query.trim().isEmpty;
         return RefreshIndicator(
           onRefresh: provider.loadSurahs,
           child: ListView.separated(
@@ -139,9 +159,15 @@ class _SurahListScreenState extends State<SurahListScreen> {
               horizontal: responsiveHorizontalPadding(context) - 4,
               vertical: 4,
             ),
-            itemCount: list.length,
+            itemCount: list.length + (showHeader ? 1 : 0),
             separatorBuilder: (context, index) => const SizedBox(height: 6),
-            itemBuilder: (context, index) => _SurahTile(surah: list[index]),
+            itemBuilder: (context, index) {
+              if (showHeader) {
+                if (index == 0) return const QuranHomeHeader();
+                index -= 1;
+              }
+              return _SurahTile(surah: list[index]);
+            },
           ),
         );
     }

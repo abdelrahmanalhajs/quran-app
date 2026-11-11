@@ -31,6 +31,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _zikrEnabled = false;
   bool _sleepEnabled = false;
   bool _jumaaEnabled = false;
+  bool _fastingEnabled = false;
+  bool _ayahOfDayEnabled = false;
   bool _athkarPrayerRemindersEnabled = false;
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
@@ -79,6 +81,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final zikrEnabled = await hourlyZikrNotificationSetting.isEnabled();
     final sleepEnabled = await sleepAthkarNotificationSetting.isEnabled();
     final jumaaEnabled = await jumaaAthkarNotificationSetting.isEnabled();
+    final fastingEnabled = await fastingReminderSetting.isEnabled();
+    final ayahOfDayEnabled = await ayahOfDayNotificationSetting.isEnabled();
     final zikrInterval = await ReminderSchedulePrefs.zikrIntervalMinutes();
     final zikrStart = await ReminderSchedulePrefs.zikrStart();
     final zikrEnd = await ReminderSchedulePrefs.zikrEnd();
@@ -95,6 +99,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _zikrEnabled = zikrEnabled;
       _sleepEnabled = sleepEnabled;
       _jumaaEnabled = jumaaEnabled;
+      _fastingEnabled = fastingEnabled;
+      _ayahOfDayEnabled = ayahOfDayEnabled;
       _athanEnabled = athanEnabled;
       _athanReciter = athanReciter;
       _athkarPrayerRemindersEnabled = athkarPrayerRemindersEnabled;
@@ -450,6 +456,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                 },
               ),
+            SwitchListTile(
+              title: Text('settings.ayah_of_day_notif'.tr()),
+              subtitle: Text('settings.ayah_of_day_notif_hint'.tr()),
+              value: _ayahOfDayEnabled,
+              onChanged: (value) async {
+                setState(() => _ayahOfDayEnabled = value);
+                await ayahOfDayNotificationSetting.setEnabled(value);
+                if (kIsWeb) return;
+                if (value) {
+                  final granted = await NotificationService.requestPermission();
+                  if (granted) {
+                    await NotificationService.scheduleAyahOfDay(
+                      arabic: isArabic,
+                    );
+                  }
+                } else {
+                  await NotificationService.cancelAyahOfDay();
+                }
+              },
+            ),
+            SwitchListTile(
+              title: Text('settings.fasting_reminders'.tr()),
+              subtitle: Text('settings.fasting_reminders_hint'.tr()),
+              value: _fastingEnabled,
+              onChanged: (value) async {
+                setState(() => _fastingEnabled = value);
+                await fastingReminderSetting.setEnabled(value);
+                if (kIsWeb) return;
+                if (value) {
+                  final granted = await NotificationService.requestPermission();
+                  if (granted) {
+                    await NotificationService.scheduleFastingReminders(
+                      arabic: isArabic,
+                    );
+                  }
+                } else {
+                  await NotificationService.cancelFastingReminders();
+                }
+              },
+            ),
             SwitchListTile(
               title: Text('settings.athkar_prayer_reminders'.tr()),
               subtitle: Text('settings.athkar_prayer_reminders_hint'.tr()),

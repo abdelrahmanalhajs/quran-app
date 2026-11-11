@@ -16,6 +16,8 @@ import '../../state/audio_provider.dart';
 import '../../state/navigation_provider.dart';
 import '../constants/athan.dart';
 import 'notification_prefs.dart';
+import '../ayah_of_day.dart';
+import '../islamic_calendar.dart';
 
 /// Payload values used to route a notification tap to the right page — see
 /// [NotificationService._onNotificationTapped]. Distinct from the old scheme
@@ -30,6 +32,7 @@ class _NotifRoute {
   static const morningAthkar = 'route:morning_athkar';
   static const eveningAthkar = 'route:evening_athkar';
   static const athkar = 'route:athkar';
+  static const quran = 'route:quran';
 }
 
 class NotificationService {
@@ -164,6 +167,8 @@ class NotificationService {
         nav.goToAthkarTab(1);
       case _NotifRoute.athkar:
         nav.setIndex(2);
+      case _NotifRoute.quran:
+        nav.showQuranList();
     }
   }
 
@@ -330,10 +335,11 @@ class NotificationService {
   static const int _zikrIdBase = 5000;
   // Old ids from the previous fixed every-hour implementation (1100..1123).
   static const int _hourlyZikrIdBase = 1100;
-  // iOS keeps at most 64 pending notifications per app; with athans (5),
-  // athkar reminders (2), sleep (1), Jumu'ah (1) and a week of hadith (7),
-  // 40 zikr slots stays safely under it. Android has no such cap.
-  static int get _zikrMaxPending => _isIOS ? 40 : 300;
+  // iOS keeps at most 64 pending notifications per app. Budget: athans 5,
+  // athkar reminders 2, sleep 1, Jumu'ah 1, hadith 7, fasting 6, ayah of
+  // the day 3, reading plan 1, hifz review 1 = 27, so 30 zikr slots stays
+  // safely under it. Android has no such cap.
+  static int get _zikrMaxPending => _isIOS ? 30 : 300;
   static const int _zikrIdRange = 300;
   static const int _zikrDaysAhead = 7;
   static const _kLastRollingRefresh = 'notif_rolling_refresh_at';
@@ -435,6 +441,214 @@ class NotificationService {
     }
   }
 
+  static const int _ayahIdBase = 7000;
+  static const int _ayahDaysMax = 7;
+  static int get _ayahDaysAhead => _isIOS ? 3 : _ayahDaysMax;
+
+  /// One notification each morning (8 AM) with that day's ayah — the same
+  /// one shown on the Quran tab (see [dailyAyahFor]).
+  static Future<void> scheduleAyahOfDay({required bool arabic}) async {
+    await cancelAyahOfDay();
+    final first = _nextInstanceOf(8, 0);
+    for (var i = 0; i < _ayahDaysAhead; i++) {
+      final when = first.add(Duration(days: i));
+      final d = await dailyAyahFor(DateTime(when.year, when.month, when.day));
+      final body = arabic
+          ? '${d.textAr}\n\n${d.refAr}'
+          : '${d.textEn}\n\n${d.refEn}';
+      await _plugin.zonedSchedule(
+        _ayahIdBase + i,
+        arabic ? 'آية اليوم' : 'Ayah of the Day',
+        body,
+        when,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'ayah_of_day',
+            'Ayah of the Day',
+            channelDescription: 'A Quran ayah every morning',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+            styleInformation: BigTextStyleInformation(body),
+          ),
+          iOS: const DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: _scheduleMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.quran,
+      );
+    }
+  }
+
+  static Future<void> cancelAyahOfDay() async {
+    for (var i = 0; i < _ayahDaysMax; i++) {
+      await _plugin.cancel(_ayahIdBase + i);
+    }
+  }
+
+  static const int _readingReminderId = 8000;
+  static const int _hifzReminderId = 8100;
+
+  static Future<void> _scheduleDaily({
+    required int id,
+    required ReminderTime time,
+    required String title,
+    required String body,
+    required String channelId,
+    required String channelName,
+    required String payload,
+  }) => _plugin.zonedSchedule(
+    id,
+    title,
+    body,
+    _nextInstanceOf(time.hour, time.minute),
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        channelId,
+        channelName,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(),
+    ),
+    matchDateTimeComponents: DateTimeComponents.time,
+    androidScheduleMode: _scheduleMode,
+    uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
+    payload: payload,
+  );
+
+  /// Daily nudge for the reading goal / khatma portion.
+  static Future<void> scheduleReadingReminder({required bool arabic}) async =>
+      _scheduleDaily(
+        id: _readingReminderId,
+        time: await PlanReminderPrefs.readingTime(),
+        title: arabic ? 'وردك اليومي من القرآن' : 'Your daily Quran reading',
+        body: arabic
+            ? 'حان وقت وردك اليومي، ولو صفحة واحدة'
+            : "It's time for today's portion, even if just one page",
+        channelId: 'reading_reminder',
+        channelName: 'Reading Plan Reminder',
+        payload: _NotifRoute.quran,
+      );
+
+  static Future<void> cancelReadingReminder() =>
+      _plugin.cancel(_readingReminderId);
+
+  /// Daily nudge to review memorized surahs.
+  static Future<void> scheduleHifzReminder({required bool arabic}) async =>
+      _scheduleDaily(
+        id: _hifzReminderId,
+        time: await PlanReminderPrefs.hifzTime(),
+        title: arabic ? 'مراجعة الحفظ' : 'Hifz review',
+        body: arabic
+            ? 'راجع ما حفظته اليوم ليثبت بإذن الله'
+            : 'Review what you have memorized today so it stays firm',
+        channelId: 'hifz_reminder',
+        channelName: 'Hifz Review Reminder',
+        payload: _NotifRoute.quran,
+      );
+
+  static Future<void> cancelHifzReminder() => _plugin.cancel(_hifzReminderId);
+
+  static const int _fastingIdBase = 6000;
+  static const int _fastingIdCount = 6;
+
+  /// Evening-before reminders (9 PM) for the Sunnah fasts: every Monday and
+  /// Thursday, the next two sets of White Days (13–15 of the Hijri month),
+  /// the Day of Arafah, and Tasu'a/Ashura (9th and 10th of Muharram).
+  static Future<void> scheduleFastingReminders({required bool arabic}) async {
+    await cancelFastingReminders();
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'fasting_reminders',
+        'Sunnah Fasting Reminders',
+        channelDescription: 'A reminder the evening before a Sunnah fast day',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+    final title = arabic ? 'تذكير بصيام السنة' : 'Sunnah fast reminder';
+
+    Future<void> weekly(int id, int weekday, String ar, String en) =>
+        _plugin.zonedSchedule(
+          id,
+          title,
+          arabic ? ar : en,
+          _nextInstanceOfWeekday(weekday, 21, 0),
+          details,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+          androidScheduleMode: _scheduleMode,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: _NotifRoute.prayer,
+        );
+
+    Future<void> once(int id, DateTime day, String ar, String en) async {
+      final eve = tz.TZDateTime(
+        tz.local,
+        day.year,
+        day.month,
+        day.day,
+        21,
+      ).subtract(const Duration(days: 1));
+      if (!eve.isAfter(tz.TZDateTime.now(tz.local))) return;
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        arabic ? ar : en,
+        eve,
+        details,
+        androidScheduleMode: _scheduleMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _NotifRoute.prayer,
+      );
+    }
+
+    await weekly(
+      _fastingIdBase,
+      DateTime.sunday,
+      'غدًا الإثنين، يُستحب صيامه',
+      'Tomorrow is Monday, a Sunnah day to fast',
+    );
+    await weekly(
+      _fastingIdBase + 1,
+      DateTime.wednesday,
+      'غدًا الخميس، يُستحب صيامه',
+      'Tomorrow is Thursday, a Sunnah day to fast',
+    );
+    final beed1 = nextAyyamAlBeed();
+    final beed2 = nextAyyamAlBeed(from: beed1.end.add(const Duration(days: 1)));
+    for (final (i, b) in [beed1, beed2].indexed) {
+      await once(
+        _fastingIdBase + 2 + i,
+        b.start,
+        'تبدأ غدًا الأيام البيض (١٣–١٥)، يُستحب صيامها',
+        'The White Days (13th–15th) start tomorrow, a Sunnah to fast',
+      );
+    }
+    await once(
+      _fastingIdBase + 4,
+      nextHijriDate(12, 9),
+      'غدًا يوم عرفة، وصيامه يكفّر السنة الماضية والباقية',
+      'Tomorrow is the Day of Arafah; fasting it expiates the past and coming year',
+    );
+    await once(
+      _fastingIdBase + 5,
+      nextHijriDate(1, 9),
+      'غدًا التاسع من محرم، يُستحب صيام تاسوعاء وعاشوراء',
+      "Tomorrow is the 9th of Muharram; fasting the 9th and 10th (Ashura) is Sunnah",
+    );
+  }
+
+  static Future<void> cancelFastingReminders() async {
+    for (var i = 0; i < _fastingIdCount; i++) {
+      await _plugin.cancel(_fastingIdBase + i);
+    }
+  }
+
   /// Tops up the rolling one-shot reminders (zikr and daily hadith) that
   /// would otherwise run out after their window. Cheap to call often: it
   /// only re-schedules when the last top-up is over [minAge] old.
@@ -453,6 +667,12 @@ class NotificationService {
     }
     if (await hadithNotificationSetting.isEnabled()) {
       await scheduleDailyHadith(arabic: arabic);
+    }
+    if (await fastingReminderSetting.isEnabled()) {
+      await scheduleFastingReminders(arabic: arabic);
+    }
+    if (await ayahOfDayNotificationSetting.isEnabled()) {
+      await scheduleAyahOfDay(arabic: arabic);
     }
   }
 

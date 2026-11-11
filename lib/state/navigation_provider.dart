@@ -31,4 +31,26 @@ class HomeNavigationProvider extends ChangeNotifier {
   void clearAthkarTabRequest() {
     _athkarTabRequest = null;
   }
+
+  // Set to show the surah list itself (e.g. from the ayah-of-the-day
+  // notification) instead of HomeShell's usual resume into the last-read
+  // page when switching to the Quran tab.
+  bool _skipNextQuranResume = false;
+
+  void showQuranList() {
+    _skipNextQuranResume = true;
+    if (_index == 0) {
+      notifyListeners();
+      return;
+    }
+    _index = 0;
+    notifyListeners();
+  }
+
+  /// Consumes the [showQuranList] request.
+  bool takeSkipQuranResume() {
+    final v = _skipNextQuranResume;
+    _skipNextQuranResume = false;
+    return v;
+  }
 }

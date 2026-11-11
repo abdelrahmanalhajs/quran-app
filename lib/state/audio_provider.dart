@@ -140,7 +140,8 @@ class AudioProvider extends ChangeNotifier {
       prefs.setInt(_kLastSurah, _currentSurah!);
       prefs.setString(_kLastReciter, _currentReciter!.id);
       if (ayah != null) {
-        prefs.setInt(_kLastAyah, ayah);
+        // "Ayah 0" is the Basmala lead-in; resuming from it means ayah 1.
+        prefs.setInt(_kLastAyah, ayah < 1 ? 1 : ayah);
         prefs.remove(_kLastPositionMs);
       } else {
         prefs.setInt(_kLastPositionMs, pos.inMilliseconds);
@@ -190,6 +191,7 @@ class AudioProvider extends ChangeNotifier {
     bool resume = false,
     String? surahTitle,
   }) async {
+    _cancelHifz();
     if (!reciter.hasSurah(surahNumber)) {
       throw Exception('This reciter has no recording for this surah');
     }
@@ -232,6 +234,37 @@ class AudioProvider extends ChangeNotifier {
           );
           return;
         }
+      }
+    }
+
+    // Play the whole surah ayah by ayah when the reciter publishes per-ayah
+    // recordings and the surah isn't downloaded for offline use: the
+    // playlist knows which ayah is playing, so the reader highlights it and
+    // turns the page with the recitation (a single whole-surah file has no
+    // per-ayah timing to do that with). A saved mid-file position from a
+    // whole-surah session still resumes in the whole-surah file below.
+    final downloaded =
+        !kIsWeb &&
+        OfflineRecitations.instance.isDownloaded(reciter.id, surahNumber);
+    final hasSavedFilePosition =
+        resume && await savedPositionFor(surahNumber, reciter) != null;
+    if (reciter.supportsAyahPlayback && !downloaded && !hasSavedFilePosition) {
+      int? total;
+      try {
+        final list = await QuranRepository().getSurahList();
+        for (final s in list) {
+          if (s.number == surahNumber) total = s.numberOfAyahs;
+        }
+      } catch (_) {}
+      if (total != null) {
+        await playFromAyah(
+          surahNumber: surahNumber,
+          ayahNumberInSurah: 1,
+          totalAyahsInSurah: total,
+          reciter: reciter,
+          surahTitle: surahTitle,
+        );
+        return;
       }
     }
 
@@ -299,6 +332,7 @@ class AudioProvider extends ChangeNotifier {
     required Reciter reciter,
     String? surahTitle,
   }) async {
+    _cancelHifz();
     if (!reciter.supportsAyahPlayback) {
       await playSurah(surahNumber, reciter, surahTitle: surahTitle);
       return false;
@@ -320,7 +354,23 @@ class AudioProvider extends ChangeNotifier {
       final lastAyah = totalAyahsInSurah < ayahNumberInSurah
           ? ayahNumberInSurah
           : totalAyahsInSurah;
+      // Per-ayah recordings don't include the Basmala that opens every surah
+      // except Al-Fatiha (where it is ayah 1) and At-Tawbah (which has
+      // none), so recite it first when starting from the top. It sits at
+      // playlist index 0 as "ayah 0", which highlights nothing.
+      final withBasmala =
+          ayahNumberInSurah == 1 && surahNumber != 1 && surahNumber != 9;
+      if (withBasmala) _ayahPlaylistStart = 0;
       final sources = [
+        if (withBasmala)
+          _audioSource(
+            reciter.audioUrlForAyah(1, 1)!,
+            MediaItem(
+              id: 'basmala_${surahNumber}_${reciter.id}',
+              title: title,
+              artist: reciter.nameEn,
+            ),
+          ),
         for (var ayah = ayahNumberInSurah; ayah <= lastAyah; ayah++)
           _audioSource(
             reciter.audioUrlForAyah(surahNumber, ayah)!,
@@ -391,6 +441,7 @@ class AudioProvider extends ChangeNotifier {
     required String id,
     required String title,
   }) async {
+    _cancelHifz();
     if (_oneShotId == id) {
       if (_player.playing) {
         await _player.pause();
@@ -427,6 +478,7 @@ class AudioProvider extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    _cancelHifz();
     await _player.stop();
     _currentSurah = null;
     _currentReciter = null;
@@ -434,6 +486,119 @@ class AudioProvider extends ChangeNotifier {
     _ayahPlaylistStart = null;
     _oneShotId = null;
     notifyListeners();
+  }
+
+  // ---- Hifz (memorization) repeat player ----
+
+  int _hifzToken = 0;
+  bool _hifzActive = false;
+  int? _hifzSurah;
+  int? _hifzAyah;
+  int _hifzRepeat = 0;
+  int _hifzRound = 0;
+
+  bool get hifzActive => _hifzActive;
+  int? get hifzSurah => _hifzSurah;
+
+  /// The ayah currently being repeated in a Hifz session.
+  int? get hifzAyah => _hifzAyah;
+
+  /// 1-based repetition of [hifzAyah] in progress.
+  int get hifzRepeat => _hifzRepeat;
+
+  /// 1-based pass over the whole range.
+  int get hifzRound => _hifzRound;
+
+  void _cancelHifz() {
+    if (!_hifzActive && _hifzAyah == null) return;
+    _hifzToken++;
+    _hifzActive = false;
+    _hifzSurah = null;
+    _hifzAyah = null;
+    notifyListeners();
+  }
+
+  /// Memorization playback: each ayah of [fromAyah]..[toAyah] is recited
+  /// [repeatEach] times with [pause] between repetitions, and the whole
+  /// range is gone through [repeatRange] times (0 = until stopped). Runs one
+  /// ayah file at a time on the shared player; anything else starting to
+  /// play (or [stopHifz]) ends the session.
+  Future<void> playHifz({
+    required int surahNumber,
+    required int fromAyah,
+    required int toAyah,
+    required Reciter reciter,
+    required int repeatEach,
+    required int repeatRange,
+    required Duration pause,
+    String? surahTitle,
+  }) async {
+    if (!reciter.supportsAyahPlayback) return;
+    _cancelHifz();
+    final token = ++_hifzToken;
+    // Not a surah session: keeps the auto-advance-to-next-surah listener
+    // and position saving out of the way.
+    await _player.stop();
+    _currentSurah = null;
+    _currentReciter = null;
+    _currentAyahIndex = null;
+    _ayahPlaylistStart = null;
+    _oneShotId = null;
+    _hifzActive = true;
+    _hifzSurah = surahNumber;
+    notifyListeners();
+
+    bool alive() => token == _hifzToken;
+    try {
+      for (var round = 1; repeatRange == 0 || round <= repeatRange; round++) {
+        for (var ayah = fromAyah; ayah <= toAyah; ayah++) {
+          for (var rep = 1; rep <= repeatEach; rep++) {
+            if (!alive()) return;
+            _hifzRound = round;
+            _hifzAyah = ayah;
+            _hifzRepeat = rep;
+            notifyListeners();
+            await _player.setAudioSource(
+              _audioSource(
+                reciter.audioUrlForAyah(surahNumber, ayah)!,
+                MediaItem(
+                  id: 'hifz_${surahNumber}_${ayah}_$rep',
+                  title: '${surahTitle ?? 'Surah $surahNumber'} · $ayah',
+                  artist: reciter.nameEn,
+                ),
+              ),
+            );
+            if (!alive()) return;
+            await _player.play();
+            // play() returns once playback completes, pauses or stops; only
+            // a natural completion carries on.
+            if (!alive() ||
+                _player.processingState != ProcessingState.completed) {
+              if (alive()) _cancelHifz();
+              return;
+            }
+            final lastOfAll =
+                ayah == toAyah && rep == repeatEach && round == repeatRange;
+            if (!lastOfAll && pause > Duration.zero) {
+              await Future.delayed(pause);
+            }
+          }
+        }
+      }
+    } catch (_) {
+      // Network failure mid-session: end it cleanly.
+    } finally {
+      if (alive()) {
+        _hifzActive = false;
+        _hifzAyah = null;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> stopHifz() async {
+    _cancelHifz();
+    await _player.stop();
   }
 
   @override

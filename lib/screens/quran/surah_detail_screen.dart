@@ -21,6 +21,9 @@ import '../../state/quran_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../widgets/reciter_picker_sheet.dart';
 import '../../widgets/responsive_center.dart';
+import 'ayah_image_card.dart';
+import '../../state/reading_plan_provider.dart';
+import '../hifz/hifz_screens.dart';
 
 /// Whether [text] contains any word built on the س-ج-د (prostration) root —
 /// used both to find the actual word to overline within an obligatory-sajda
@@ -755,6 +758,21 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                 );
               },
             ),
+            IconButton(
+              icon: const Icon(Icons.image_outlined),
+              tooltip: 'quran.share_image'.tr(),
+              onPressed: () {
+                final a = widget.ayah;
+                showAyahImageShare(
+                  context,
+                  textAr: _copyText(),
+                  refAr:
+                      '${widget.surahNameAr}: ${arabicIndicNumber(a.numberInSurah)}',
+                  translation: isArabic ? null : a.textEn,
+                  refEn: '${a.surahNumber}:${a.numberInSurah}',
+                );
+              },
+            ),
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.close),
@@ -841,6 +859,19 @@ class _AyahDetailSheetState extends State<_AyahDetailSheet> {
                           }
                         },
                       );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.school_outlined, size: 18),
+                    label: Text('hifz.memorize_from_here'.tr()),
+                    onPressed: () {
+                      final ayah = widget.ayah;
+                      Navigator.of(context).pop();
+                      openHifzFromAyah(context, ayah);
                     },
                   ),
                 ),
@@ -1368,6 +1399,38 @@ class _MushafPageViewState extends State<_MushafPageView>
     }
   }
 
+  /// Follows the recitation: when the ayah being recited moves onto a
+  /// different Mushaf page than the one on screen, turn to that page (only
+  /// while nothing else — zoom, a page-turn, a surah hand-off — is going on).
+  @override
+  void didUpdateWidget(covariant _MushafPageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final ayah = widget.activeAyahNumber;
+    if (ayah == null ||
+        ayah == oldWidget.activeAyahNumber ||
+        widget.activeSurahNumber != widget.surahNumber ||
+        _navigating ||
+        _zoomScale != 1.0 ||
+        !_pageController.hasClients) {
+      return;
+    }
+    for (var i = 0; i < _screenPages.length; i++) {
+      final hit = _screenPages[i].any(
+        (a) => a.surahNumber == widget.surahNumber && a.numberInSurah == ayah,
+      );
+      if (!hit) continue;
+      final target = _realPagesStart + i;
+      if (target != _currentIndex) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _pageController.hasClients) {
+            _pageController.jumpToPage(target);
+          }
+        });
+      }
+      return;
+    }
+  }
+
   @override
   void dispose() {
     _holdTimer?.cancel();
@@ -1446,6 +1509,8 @@ class _MushafPageViewState extends State<_MushafPageView>
       widget.surahNumber,
       pageAyahs.first.page,
     );
+    // Counts towards the daily reading goal and the khatma.
+    context.read<ReadingPlanProvider>().recordPage(pageAyahs.first.page);
   }
 
   /// The real Mushaf page number currently on screen — used by the

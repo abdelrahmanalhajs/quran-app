@@ -146,6 +146,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     final newIndex = _nav.index;
     final wasQuranTab = _lastIndex == 0;
     _lastIndex = newIndex;
+    if (_nav.takeSkipQuranResume()) return;
     if (!wasQuranTab && newIndex == 0) {
       _resumeLastRead();
     }
@@ -176,9 +177,22 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       hourlyZikrNotificationSetting.isEnabled(),
       sleepAthkarNotificationSetting.isEnabled(),
       jumaaAthkarNotificationSetting.isEnabled(),
+      fastingReminderSetting.isEnabled(),
+      ayahOfDayNotificationSetting.isEnabled(),
+      readingReminderSetting.isEnabled(),
+      hifzReminderSetting.isEnabled(),
     ]);
-    final [hadithOn, zikrOn, sleepOn, jumaaOn] = results;
-    if (!(hadithOn || zikrOn || sleepOn || jumaaOn)) return;
+    final [
+      hadithOn,
+      zikrOn,
+      sleepOn,
+      jumaaOn,
+      fastingOn,
+      ayahOn,
+      readingOn,
+      hifzOn,
+    ] = results;
+    if (!results.any((on) => on)) return;
 
     // A toggle's own onChanged requests permission before scheduling; a
     // setting enabled by default (daily hadith) or from a previous session
@@ -189,7 +203,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     if (!granted || !mounted) return;
 
     final arabic = context.locale.languageCode == 'ar';
-    if (hadithOn || zikrOn) {
+    if (hadithOn || zikrOn || fastingOn || ayahOn) {
       // Zikr and daily hadith are rolling one-shot windows; schedule them
       // fresh on every launch (and top up on resume, see
       // [didChangeAppLifecycleState]).
@@ -203,6 +217,12 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     }
     if (jumaaOn) {
       await NotificationService.scheduleJumaaReminder(arabic: arabic);
+    }
+    if (readingOn) {
+      await NotificationService.scheduleReadingReminder(arabic: arabic);
+    }
+    if (hifzOn) {
+      await NotificationService.scheduleHifzReminder(arabic: arabic);
     }
   }
 

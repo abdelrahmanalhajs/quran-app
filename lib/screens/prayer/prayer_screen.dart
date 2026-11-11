@@ -10,11 +10,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'qada_view.dart';
+import '../../core/islamic_calendar.dart';
 import '../../core/arabic_numbers.dart';
 import '../../core/responsive.dart';
 import '../../state/navigation_provider.dart';
 import '../../state/prayer_provider.dart';
 import '../../widgets/responsive_center.dart';
+import '../../core/plural_text.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -30,12 +33,12 @@ class _PrayerScreenState extends State<PrayerScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     // Reopen on whichever tab the user was last on (e.g. after picking this
     // section from the start menu), and remember each switch.
     SharedPreferences.getInstance().then((prefs) {
       final last = prefs.getInt('prayer_last_tab');
-      if (mounted && last != null && last >= 0 && last < 2) {
+      if (mounted && last != null && last >= 0 && last < 3) {
         _tabController.index = last;
       }
     });
@@ -87,13 +90,14 @@ class _PrayerScreenState extends State<PrayerScreen>
           tabs: [
             Tab(text: 'prayer.times'.tr()),
             Tab(text: 'prayer.qibla'.tr()),
+            Tab(text: 'prayer.qada'.tr()),
           ],
         ),
       ),
       body: ResponsiveCenter(
         child: TabBarView(
           controller: _tabController,
-          children: const [_PrayerTimesTab(), _QiblaTab()],
+          children: const [_PrayerTimesTab(), _QiblaTab(), QadaView()],
         ),
       ),
     );
@@ -240,12 +244,13 @@ class _PrayerTimesTab extends StatelessWidget {
           provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
       child: ListView.separated(
         padding: EdgeInsets.all(responsiveHorizontalPadding(context)),
-        itemCount: entries.length + 1,
+        itemCount: entries.length + 2,
         separatorBuilder: (context, index) => const SizedBox(height: 8),
         itemBuilder: (context, i) {
           if (i == entries.length) {
             return _LocationAndHijriDate(placeName: provider.placeName);
           }
+          if (i == entries.length + 1) return const _UpcomingIslamicDays();
           final (key, time, icon) = entries[i];
           return Card(
             child: ListTile(
@@ -525,4 +530,114 @@ class _QiblaTabState extends State<_QiblaTab> {
       ],
     );
   }
+}
+
+/// The coming Islamic occasions (Ramadan, the two Eids, Arafah, Ashura, the
+/// Hijri new year) and Sunnah fast days, each with how far away it is.
+class _UpcomingIslamicDays extends StatelessWidget {
+  const _UpcomingIslamicDays();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final locale = context.locale.languageCode;
+    final today = DateTime.now();
+    final todayDay = DateTime(today.year, today.month, today.day);
+    final events = upcomingIslamicEvents();
+
+    String when(IslamicEvent e) {
+      if (!todayDay.isBefore(e.date) && !todayDay.isAfter(e.endDate)) {
+        return 'prayer.today'.tr();
+      }
+      final days = e.date.difference(todayDay).inDays;
+      if (days == 1) return 'prayer.tomorrow'.tr();
+      return 'prayer.in_days'.tr(args: [daysText(context, days)]);
+    }
+
+    String hijriLabel(DateTime d) {
+      HijriCalendar.setLocal(locale == 'ar' ? 'ar' : 'en');
+      final h = HijriCalendar.fromDate(d);
+      return '${localizedNumber(context, h.hDay)} ${h.longMonthName}';
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'prayer.upcoming_days'.tr(),
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            for (final e in events)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                leading: Icon(
+                  e.isFast ? Icons.nights_stay_outlined : Icons.event_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                title: Text('prayer.${e.key}'.tr()),
+                subtitle: Text(
+                  '${hijriLabel(e.date)} · '
+                  '${_gregorianLabel(context, e.date)}'
+                  '${e.isFast ? ' · ${'prayer.sunnah_fast'.tr()}' : ''}',
+                ),
+                trailing: Text(
+                  when(e),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 4),
+            Text(
+              'prayer.dates_note'.tr(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+const _kMonthsAr = [
+  'يناير',
+  'فبراير',
+  'مارس',
+  'أبريل',
+  'مايو',
+  'يونيو',
+  'يوليو',
+  'أغسطس',
+  'سبتمبر',
+  'أكتوبر',
+  'نوفمبر',
+  'ديسمبر',
+];
+const _kMonthsEn = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/// "12 Mar" / "١٢ مارس" without needing intl's locale date data.
+String _gregorianLabel(BuildContext context, DateTime d) {
+  final ar = context.locale.languageCode == 'ar';
+  return '${localizedNumber(context, d.day)} '
+      '${(ar ? _kMonthsAr : _kMonthsEn)[d.month - 1]}';
 }
