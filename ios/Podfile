@@ -51,4 +51,14 @@ post_install do |installer|
       end
     end
   end
+  # Mark the generated Pods project as already upgraded for this Xcode, so
+  # Xcode doesn't offer "Update to recommended settings" for it — accepting
+  # that turns ENABLE_MODULE_VERIFIER back on for every pod and breaks the
+  # build with "'Flutter/Flutter.h' file not found".
+  installer.pods_project.root_object.attributes['LastUpgradeCheck'] = '2700'
+  installer.pods_project.root_object.attributes['LastSwiftUpdateCheck'] = '2700'
+  # Project-level setting too, so a target that doesn't set it inherits NO.
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
+  end
 end
