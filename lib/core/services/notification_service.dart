@@ -1,16 +1,21 @@
+import 'dart:convert';
+import 'dart:math';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/hadith_repository.dart';
 import '../../state/audio_provider.dart';
 import '../../state/navigation_provider.dart';
 import '../constants/athan.dart';
+import 'notification_prefs.dart';
 
 /// Payload values used to route a notification tap to the right page — see
 /// [NotificationService._onNotificationTapped]. Distinct from the old scheme
@@ -72,28 +77,6 @@ class NotificationService {
   // fires, just not to the exact minute) so scheduling always succeeds.
   static AndroidScheduleMode _scheduleMode =
       AndroidScheduleMode.exactAllowWhileIdle;
-
-  static const List<Map<String, String>> _zikrPhrases = [
-    {
-      'ar': 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
-      'en': 'Glory be to Allah and praise be to Him.',
-    },
-    {
-      'ar': 'لَا إِلَهَ إِلَّا اللَّهُ',
-      'en': 'There is no deity except Allah.',
-    },
-    {'ar': 'اللَّهُ أَكْبَرُ', 'en': 'Allah is the Greatest.'},
-    {'ar': 'الْحَمْدُ لِلَّهِ', 'en': 'Praise be to Allah.'},
-    {'ar': 'أَسْتَغْفِرُ اللَّهَ', 'en': 'I seek the forgiveness of Allah.'},
-    {
-      'ar': 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ',
-      'en': 'There is no power and no strength except with Allah.',
-    },
-    {
-      'ar': 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ',
-      'en': 'Allah is sufficient for me; there is no deity except Him.',
-    },
-  ];
 
   static Future<void> init() async {
     tz_data.initializeTimeZones();
@@ -277,7 +260,8 @@ class NotificationService {
   /// separate one-shot notification carrying that day's hadith; they're
   /// re-queued on every app launch (see HomeShell), so the window keeps
   /// rolling forward. Kept well under iOS's 64-pending-notification cap.
-  static const int _hadithDaysAhead = 14;
+  static int get _hadithDaysAhead => _isIOS ? 7 : _hadithDaysMax;
+  static const int _hadithDaysMax = 14;
   static const int _hadithIdBase = 3000;
 
   static Future<void> scheduleDailyHadith({
@@ -332,52 +316,143 @@ class NotificationService {
 
   static Future<void> cancelDailyHadith() async {
     await _plugin.cancel(_dailyHadithId);
-    for (var i = 0; i < _hadithDaysAhead; i++) {
+    for (var i = 0; i < _hadithDaysMax; i++) {
       await _plugin.cancel(_hadithIdBase + i);
     }
   }
 
-  // 24 ids (one per hour of the day) so each hour can carry its own zikr,
-  // cycling through [_zikrPhrases]. periodicallyShow can't do this — it
-  // repeats one fixed message — so a different remembrance every hour means
-  // scheduling a separate daily-repeating notification at each hour.
+  // Zikr reminders are one-shot notifications, one per slot (every N
+  // minutes inside the user's chosen hours), each carrying its own zikr from
+  // assets/data/zikr_pool.json in a shuffled order. A repeating notification
+  // would show the same text in the same slot every day; one-shots let every
+  // slot differ, at the cost of having to be topped up — which happens on
+  // every app launch/resume (see [refreshRollingReminders]).
+  static const int _zikrIdBase = 5000;
+  // Old ids from the previous fixed every-hour implementation (1100..1123).
   static const int _hourlyZikrIdBase = 1100;
+  // iOS keeps at most 64 pending notifications per app; with athans (5),
+  // athkar reminders (2), sleep (1), Jumu'ah (1) and a week of hadith (7),
+  // 40 zikr slots stays safely under it. Android has no such cap.
+  static int get _zikrMaxPending => _isIOS ? 40 : 300;
+  static const int _zikrIdRange = 300;
+  static const int _zikrDaysAhead = 7;
+  static const _kLastRollingRefresh = 'notif_rolling_refresh_at';
+
+  static bool get _isIOS =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  static List<Map<String, dynamic>>? _zikrPool;
+
+  static Future<List<Map<String, dynamic>>> _loadZikrPool() async {
+    if (_zikrPool != null) return _zikrPool!;
+    final raw = await rootBundle.loadString('assets/data/zikr_pool.json');
+    _zikrPool = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+    return _zikrPool!;
+  }
+
+  /// Which zikr goes in global slot [slot]: walks the pool in a shuffled
+  /// order, visiting every entry once before any repeats, with a fresh
+  /// order for each pass.
+  static int _zikrIndexFor(int slot, int n) {
+    final cycle = slot ~/ n;
+    final order = List<int>.generate(n, (i) => i)
+      ..shuffle(Random(cycle * 7919 + 17));
+    return order[slot % n];
+  }
 
   static Future<void> scheduleHourlyZikr({bool arabic = true}) async {
     await cancelHourlyZikr();
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'hourly_zikr',
-        'Hourly Zikr',
-        channelDescription: 'A short remembrance of Allah every hour',
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
-    for (var hour = 0; hour < 24; hour++) {
-      final phrase = _zikrPhrases[hour % _zikrPhrases.length];
-      await _plugin.zonedSchedule(
-        _hourlyZikrIdBase + hour,
-        arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
-        arabic ? phrase['ar'] : phrase['en'],
-        _nextInstanceOf(hour, 0),
-        details,
-        matchDateTimeComponents: DateTimeComponents.time,
-        androidScheduleMode: _scheduleMode,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: _NotifRoute.athkar,
-      );
+    final pool = await _loadZikrPool();
+    if (pool.isEmpty) return;
+    final interval = await ReminderSchedulePrefs.zikrIntervalMinutes();
+    final start = (await ReminderSchedulePrefs.zikrStart()).minutes;
+    var end = (await ReminderSchedulePrefs.zikrEnd()).minutes;
+    if (end <= start) end += 24 * 60; // window runs past midnight
+    // Inclusive of the end time ("7:00 to 22:00" includes 22:00), except
+    // for a full 24-hour window, where the last slot would collide with the
+    // next day's first.
+    final span = end - start;
+    final slotsPerDay = span >= 24 * 60
+        ? (24 * 60) ~/ interval
+        : span ~/ interval + 1;
+
+    final now = tz.TZDateTime.now(tz.local);
+    final today = tz.TZDateTime(tz.local, now.year, now.month, now.day);
+    // Day number for a stable global slot index across launches.
+    final epochDay =
+        DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+        Duration.millisecondsPerDay;
+    var scheduled = 0;
+    // Start one day back so a past-midnight window that began yesterday
+    // still gets tonight's remaining slots.
+    for (var d = -1; d < _zikrDaysAhead && scheduled < _zikrMaxPending; d++) {
+      final dayStart = today.add(Duration(days: d));
+      for (var k = 0; k < slotsPerDay && scheduled < _zikrMaxPending; k++) {
+        final when = dayStart.add(Duration(minutes: start + k * interval));
+        if (!when.isAfter(now)) continue;
+        final z =
+            pool[_zikrIndexFor((epochDay + d) * slotsPerDay + k, pool.length)];
+        final text = (arabic ? z['ar'] : z['en']) as String;
+        final src = (arabic ? z['src_ar'] : z['src_en']) as String? ?? '';
+        final body = src.isEmpty ? text : '$text\n\n$src';
+        await _plugin.zonedSchedule(
+          _zikrIdBase + scheduled,
+          arabic ? 'تذكير بالذكر' : 'Zikr Reminder',
+          body,
+          when,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              'hourly_zikr',
+              'Zikr Reminders',
+              channelDescription:
+                  'A short remembrance of Allah through the day',
+              importance: Importance.high,
+              priority: Priority.high,
+              // Show the whole zikr, not one truncated line.
+              styleInformation: BigTextStyleInformation(body),
+            ),
+            iOS: const DarwinNotificationDetails(),
+          ),
+          androidScheduleMode: _scheduleMode,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: _NotifRoute.athkar,
+        );
+        scheduled++;
+      }
     }
   }
 
   static Future<void> cancelHourlyZikr() async {
-    // Cancel the old single periodic id too, for users upgrading from the
-    // previous one-message-an-hour implementation.
+    // Ids from earlier versions: the single periodic id and the 24
+    // daily-repeating hourly ones.
     await _plugin.cancel(_hourlyZikrId);
     for (var hour = 0; hour < 24; hour++) {
       await _plugin.cancel(_hourlyZikrIdBase + hour);
+    }
+    for (var i = 0; i < _zikrIdRange; i++) {
+      await _plugin.cancel(_zikrIdBase + i);
+    }
+  }
+
+  /// Tops up the rolling one-shot reminders (zikr and daily hadith) that
+  /// would otherwise run out after their window. Cheap to call often: it
+  /// only re-schedules when the last top-up is over [minAge] old.
+  static Future<void> refreshRollingReminders({
+    required bool arabic,
+    Duration minAge = const Duration(hours: 3),
+  }) async {
+    if (kIsWeb) return;
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getInt(_kLastRollingRefresh);
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (last != null && nowMs - last < minAge.inMilliseconds) return;
+    await prefs.setInt(_kLastRollingRefresh, nowMs);
+    if (await hourlyZikrNotificationSetting.isEnabled()) {
+      await scheduleHourlyZikr(arabic: arabic);
+    }
+    if (await hadithNotificationSetting.isEnabled()) {
+      await scheduleDailyHadith(arabic: arabic);
     }
   }
 
@@ -502,12 +577,15 @@ class NotificationService {
     return scheduled;
   }
 
-  /// Daily reminder (default 10 PM) to recite the sleep athkar before bed.
+  /// Daily reminder (at the user's chosen time, default 10 PM) to recite the sleep athkar before bed.
   static Future<void> scheduleSleepReminder({
-    int hour = 22,
-    int minute = 0,
+    int? hour,
+    int? minute,
     bool arabic = false,
   }) async {
+    final t = await ReminderSchedulePrefs.sleepTime();
+    hour ??= t.hour;
+    minute ??= t.minute;
     await _plugin.zonedSchedule(
       _sleepReminderId,
       arabic ? 'أذكار النوم' : 'Sleep Athkar',
@@ -535,13 +613,16 @@ class NotificationService {
 
   static Future<void> cancelSleepReminder() => _plugin.cancel(_sleepReminderId);
 
-  /// Weekly reminder (Friday, default 10 AM) to read the Jumu'ah sunan
+  /// Weekly reminder (Friday, at the user's chosen time, default 10 AM) to read the Jumu'ah sunan
   /// (including Surah Al-Kahf and abundant salawat upon the Prophet ﷺ).
   static Future<void> scheduleJumaaReminder({
-    int hour = 10,
-    int minute = 0,
+    int? hour,
+    int? minute,
     bool arabic = false,
   }) async {
+    final t = await ReminderSchedulePrefs.jumaaTime();
+    hour ??= t.hour;
+    minute ??= t.minute;
     await _plugin.zonedSchedule(
       _jumaaReminderId,
       arabic ? 'التذكير بسنن الجمعة' : "Jumu'ah Sunan Reminder",

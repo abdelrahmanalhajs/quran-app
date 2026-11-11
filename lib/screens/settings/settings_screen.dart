@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/athan.dart';
+import '../../core/arabic_numbers.dart';
 import '../../core/constants/reciters.dart';
 import '../../core/responsive.dart';
 import '../../core/services/athan_settings.dart';
@@ -33,6 +34,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _athkarPrayerRemindersEnabled = false;
   bool _athanEnabled = false;
   AthanOption _athanReciter = kAthanMakkah;
+  int _zikrInterval = 60;
+  ReminderTime _zikrStart = const ReminderTime(7 * 60);
+  ReminderTime _zikrEnd = const ReminderTime(22 * 60);
+  ReminderTime _sleepTime = const ReminderTime(22 * 60);
+  ReminderTime _jumaaTime = const ReminderTime(10 * 60);
 
   static String _previewId(AthanOption athan) => 'athan_preview_${athan.id}';
 
@@ -73,7 +79,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final zikrEnabled = await hourlyZikrNotificationSetting.isEnabled();
     final sleepEnabled = await sleepAthkarNotificationSetting.isEnabled();
     final jumaaEnabled = await jumaaAthkarNotificationSetting.isEnabled();
+    final zikrInterval = await ReminderSchedulePrefs.zikrIntervalMinutes();
+    final zikrStart = await ReminderSchedulePrefs.zikrStart();
+    final zikrEnd = await ReminderSchedulePrefs.zikrEnd();
+    final sleepTime = await ReminderSchedulePrefs.sleepTime();
+    final jumaaTime = await ReminderSchedulePrefs.jumaaTime();
+    if (!mounted) return;
     setState(() {
+      _zikrInterval = zikrInterval;
+      _zikrStart = zikrStart;
+      _zikrEnd = zikrEnd;
+      _sleepTime = sleepTime;
+      _jumaaTime = jumaaTime;
       _notifEnabled = notifEnabled;
       _zikrEnabled = zikrEnabled;
       _sleepEnabled = sleepEnabled;
@@ -82,6 +99,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _athanReciter = athanReciter;
       _athkarPrayerRemindersEnabled = athkarPrayerRemindersEnabled;
     });
+  }
+
+  /// "07:30" with Arabic-Indic digits when the app is in Arabic.
+  String _timeLabel(ReminderTime t) {
+    final hh = t.hour.toString().padLeft(2, '0');
+    final mm = t.minute.toString().padLeft(2, '0');
+    final s = '$hh:$mm';
+    return context.locale.languageCode == 'ar'
+        ? s.replaceAllMapped(
+            RegExp(r'\d'),
+            (m) => arabicIndicNumber(int.parse(m[0]!)),
+          )
+        : s;
+  }
+
+  Future<ReminderTime?> _pickTime(ReminderTime current) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
+    );
+    if (picked == null) return null;
+    return ReminderTime(picked.hour * 60 + picked.minute);
+  }
+
+  String _intervalLabel(int minutes) => switch (minutes) {
+    15 => 'settings.every_15_min'.tr(),
+    30 => 'settings.every_30_min'.tr(),
+    60 => 'settings.every_1_hour'.tr(),
+    120 => 'settings.every_2_hours'.tr(),
+    _ => 'settings.every_3_hours'.tr(),
+  };
+
+  /// Re-queues the zikr reminders after a timing change, if they're on.
+  Future<void> _rescheduleZikr() async {
+    if (kIsWeb || !_zikrEnabled || !mounted) return;
+    await NotificationService.scheduleHourlyZikr(
+      arabic: context.locale.languageCode == 'ar',
+    );
+  }
+
+  Widget _optionTile({
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsetsDirectional.only(
+        start: responsiveHorizontalPadding(context) + 24,
+        end: responsiveHorizontalPadding(context),
+      ),
+      dense: true,
+      title: Text(title),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+      onTap: onTap,
+    );
   }
 
   @override
@@ -245,6 +328,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
+            if (_zikrEnabled) ...[
+              _optionTile(
+                title: 'settings.zikr_every'.tr(),
+                value: _intervalLabel(_zikrInterval),
+                onTap: () async {
+                  final choice = await showModalBottomSheet<int>(
+                    context: context,
+                    showDragHandle: true,
+                    builder: (sheetContext) => SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final m
+                              in ReminderSchedulePrefs.zikrIntervalChoices)
+                            ListTile(
+                              title: Text(_intervalLabel(m)),
+                              trailing: m == _zikrInterval
+                                  ? const Icon(Icons.check)
+                                  : null,
+                              onTap: () => Navigator.of(sheetContext).pop(m),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                  if (choice == null || choice == _zikrInterval) return;
+                  setState(() => _zikrInterval = choice);
+                  await ReminderSchedulePrefs.setZikrIntervalMinutes(choice);
+                  await _rescheduleZikr();
+                },
+              ),
+              _optionTile(
+                title: 'settings.zikr_from'.tr(),
+                value: _timeLabel(_zikrStart),
+                onTap: () async {
+                  final t = await _pickTime(_zikrStart);
+                  if (t == null) return;
+                  setState(() => _zikrStart = t);
+                  await ReminderSchedulePrefs.setZikrStart(t);
+                  await _rescheduleZikr();
+                },
+              ),
+              _optionTile(
+                title: 'settings.zikr_to'.tr(),
+                value: _timeLabel(_zikrEnd),
+                onTap: () async {
+                  final t = await _pickTime(_zikrEnd);
+                  if (t == null) return;
+                  setState(() => _zikrEnd = t);
+                  await ReminderSchedulePrefs.setZikrEnd(t);
+                  await _rescheduleZikr();
+                },
+              ),
+            ],
             SwitchListTile(
               title: Text('settings.sleep_athkar_notif'.tr()),
               value: _sleepEnabled,
@@ -264,6 +401,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
+            if (_sleepEnabled)
+              _optionTile(
+                title: 'settings.reminder_time'.tr(),
+                value: _timeLabel(_sleepTime),
+                onTap: () async {
+                  final t = await _pickTime(_sleepTime);
+                  if (t == null) return;
+                  setState(() => _sleepTime = t);
+                  await ReminderSchedulePrefs.setSleepTime(t);
+                  if (kIsWeb) return;
+                  await NotificationService.scheduleSleepReminder(
+                    arabic: isArabic,
+                  );
+                },
+              ),
             SwitchListTile(
               title: Text('settings.jumaa_athkar_notif'.tr()),
               value: _jumaaEnabled,
@@ -283,6 +435,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
+            if (_jumaaEnabled)
+              _optionTile(
+                title: 'settings.reminder_time'.tr(),
+                value: _timeLabel(_jumaaTime),
+                onTap: () async {
+                  final t = await _pickTime(_jumaaTime);
+                  if (t == null) return;
+                  setState(() => _jumaaTime = t);
+                  await ReminderSchedulePrefs.setJumaaTime(t);
+                  if (kIsWeb) return;
+                  await NotificationService.scheduleJumaaReminder(
+                    arabic: isArabic,
+                  );
+                },
+              ),
             SwitchListTile(
               title: Text('settings.athkar_prayer_reminders'.tr()),
               subtitle: Text('settings.athkar_prayer_reminders_hint'.tr()),
@@ -381,8 +548,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-const _kAppStoreUrl =
-    'https://apps.apple.com/app/id6802260993';
+const _kAppStoreUrl = 'https://apps.apple.com/app/id6802260993';
 const _kPlayStoreUrl =
     'https://play.google.com/store/apps/details?id=com.abdelrahmanalhajs.quranapp';
 

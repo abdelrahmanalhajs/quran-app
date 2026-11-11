@@ -24,7 +24,7 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   late HomeNavigationProvider _nav;
   int _lastIndex = 0;
 
@@ -40,6 +40,7 @@ class _HomeShellState extends State<HomeShell> {
     // is what notices that kind of external switch so resuming into the
     // Quran tab (see [_resumeLastRead]) keeps working from there too.
     _nav.addListener(_handleNavChange);
+    WidgetsBinding.instance.addObserver(this);
     if (!kIsWeb) {
       // Each of these notifications is otherwise only (re-)scheduled from
       // inside its Settings toggle's onChanged — so a setting that's
@@ -151,7 +152,20 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The zikr and hadith reminders are queued a limited window ahead
+    // (iOS caps pending notifications at 64), so top them up whenever the
+    // app comes back to the foreground.
+    if (state == AppLifecycleState.resumed && !kIsWeb) {
+      NotificationService.refreshRollingReminders(
+        arabic: context.locale.languageCode == 'ar',
+      );
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nav.removeListener(_handleNavChange);
     super.dispose();
   }
@@ -175,11 +189,14 @@ class _HomeShellState extends State<HomeShell> {
     if (!granted || !mounted) return;
 
     final arabic = context.locale.languageCode == 'ar';
-    if (hadithOn) {
-      await NotificationService.scheduleDailyHadith(arabic: arabic);
-    }
-    if (zikrOn) {
-      await NotificationService.scheduleHourlyZikr(arabic: arabic);
+    if (hadithOn || zikrOn) {
+      // Zikr and daily hadith are rolling one-shot windows; schedule them
+      // fresh on every launch (and top up on resume, see
+      // [didChangeAppLifecycleState]).
+      await NotificationService.refreshRollingReminders(
+        arabic: arabic,
+        minAge: Duration.zero,
+      );
     }
     if (sleepOn) {
       await NotificationService.scheduleSleepReminder(arabic: arabic);
