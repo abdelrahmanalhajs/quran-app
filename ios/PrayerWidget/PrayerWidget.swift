@@ -26,8 +26,6 @@ struct PrayerEntry: TimelineEntry {
     let nextDate: Date?
     /// "Next prayer" header label (localized by Dart).
     let label: String
-    /// "Remaining" label (localized by Dart).
-    let remainingLabel: String
     /// Shown when no data exists yet (localized by Dart).
     let placeholder: String
     let isArabic: Bool
@@ -65,7 +63,6 @@ struct PrayerTimelineProvider: TimelineProvider {
             nextIndex: 2,
             nextDate: Date().addingTimeInterval(75 * 60),
             label: "الصلاة القادمة",
-            remainingLabel: "متبقٍ",
             placeholder: "افتح التطبيق لتحديد موقعك",
             isArabic: true
         )
@@ -74,7 +71,6 @@ struct PrayerTimelineProvider: TimelineProvider {
     private func currentEntry() -> PrayerEntry {
         let defaults = UserDefaults(suiteName: kAppGroupId)
         let label = defaults?.string(forKey: "prayer_label") ?? "الصلاة القادمة"
-        let remaining = defaults?.string(forKey: "prayer_remaining_label") ?? "متبقٍ"
         let placeholder =
             defaults?.string(forKey: "prayer_placeholder") ?? "افتح التطبيق لتحديد موقعك"
         let isArabic = (defaults?.string(forKey: "prayer_lang") ?? "ar") == "ar"
@@ -82,7 +78,7 @@ struct PrayerTimelineProvider: TimelineProvider {
         func empty() -> PrayerEntry {
             PrayerEntry(
                 date: Date(), names: [], times: [], nextIndex: nil, nextDate: nil,
-                label: label, remainingLabel: remaining, placeholder: placeholder,
+                label: label, placeholder: placeholder,
                 isArabic: isArabic)
         }
 
@@ -110,7 +106,7 @@ struct PrayerTimelineProvider: TimelineProvider {
         func entry(_ i: Int, _ d: Date) -> PrayerEntry {
             PrayerEntry(
                 date: now, names: names, times: times, nextIndex: i, nextDate: d,
-                label: label, remainingLabel: remaining, placeholder: placeholder,
+                label: label, placeholder: placeholder,
                 isArabic: isArabic)
         }
 
@@ -182,9 +178,6 @@ struct NextPrayerBlock: View {
             if let date = entry.nextDate {
                 Countdown(date: date)
                     .font(.headline)
-                Text(entry.remainingLabel)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
             }
         }
         .lineLimit(1)
@@ -241,11 +234,8 @@ struct PrayerWidgetView: View {
                         .font(.headline)
                         .lineLimit(1)
                     if let date = entry.nextDate {
-                        HStack(spacing: 4) {
-                            Text(entry.remainingLabel)
-                            Countdown(date: date)
-                        }
-                        .font(.caption)
+                        Countdown(date: date)
+                            .font(.caption)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

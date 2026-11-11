@@ -51,7 +51,6 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
                 views.setViewVisibility(R.id.widget_placeholder, View.GONE)
                 views.setTextViewText(R.id.widget_label, data.label)
                 views.setTextViewText(R.id.widget_name, "${next.name}  ${next.time}")
-                views.setTextViewText(R.id.widget_remaining, data.remainingLabel)
                 PrayerWidgetCommon.startCountdown(views, R.id.widget_countdown, next)
 
                 for (i in 0 until 5) {

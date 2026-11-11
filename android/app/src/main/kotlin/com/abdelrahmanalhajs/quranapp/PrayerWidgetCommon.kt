@@ -24,7 +24,6 @@ internal object PrayerWidgetCommon {
         val times: List<String>,
         val names: List<String>,
         val label: String,
-        val remainingLabel: String,
         val placeholder: String,
         val isArabic: Boolean,
     )
@@ -33,16 +32,15 @@ internal object PrayerWidgetCommon {
 
     fun read(widgetData: SharedPreferences): Data? {
         val label = widgetData.getString("prayer_label", "Next prayer") ?: "Next prayer"
-        val remaining = widgetData.getString("prayer_remaining_label", "remaining") ?: "remaining"
         val placeholder = widgetData.getString("prayer_placeholder", "Open the app to set your location")
             ?: "Open the app to set your location"
         val isArabic = (widgetData.getString("prayer_lang", "ar") ?: "ar") == "ar"
         val times = widgetData.getString("prayer_times", null)?.split(",")
         val names = widgetData.getString("prayer_names", null)?.split(",")
         if (times == null || names == null || times.size != 5 || names.size != 5) {
-            return Data(emptyList(), emptyList(), label, remaining, placeholder, isArabic)
+            return Data(emptyList(), emptyList(), label, placeholder, isArabic)
         }
-        return Data(times, names, label, remaining, placeholder, isArabic)
+        return Data(times, names, label, placeholder, isArabic)
     }
 
     /** First prayer time still ahead of now; if all have passed, Fajr tomorrow. */

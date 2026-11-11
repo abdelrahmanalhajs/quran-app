@@ -57,14 +57,6 @@
                 android:textColor="#FFD27A"
                 android:textSize="20sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/widget_remaining"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#B8E0CE"
-                android:textSize="11sp"
-                android:text="" />
         </LinearLayout>
     </LinearLayout>
 

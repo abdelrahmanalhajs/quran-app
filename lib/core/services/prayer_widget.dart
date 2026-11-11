@@ -47,10 +47,6 @@ class PrayerWidget {
         'prayer_label',
         arabic ? 'الصلاة القادمة' : 'Next prayer',
       );
-      await HomeWidget.saveWidgetData(
-        'prayer_remaining_label',
-        arabic ? 'متبقٍ' : 'remaining',
-      );
       await HomeWidget.saveWidgetData('prayer_lang', arabic ? 'ar' : 'en');
       await HomeWidget.saveWidgetData(
         'prayer_placeholder',
