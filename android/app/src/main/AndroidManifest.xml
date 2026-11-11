@@ -89,9 +89,10 @@
             android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
             android:exported="false" />
 
-        <!-- Home-screen "next prayer" countdown widget. -->
+        <!-- Home-screen "next prayer" countdown widget (small, 2x1). -->
         <receiver
             android:name=".PrayerWidgetProvider"
+            android:label="@string/widget_next_prayer_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -99,6 +100,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/prayer_widget_info" />
+        </receiver>
+
+        <!-- Home-screen "prayer times" widget: all five times + countdown. -->
+        <receiver
+            android:name=".PrayerTimesWidgetProvider"
+            android:label="@string/widget_prayer_times_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/prayer_times_widget_info" />
         </receiver>
 
     </application>

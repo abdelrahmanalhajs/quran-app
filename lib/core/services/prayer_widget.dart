@@ -7,13 +7,17 @@ import 'package:home_widget/home_widget.dart';
 /// through the day on its own — this just needs to be called whenever the
 /// times are (re)computed.
 class PrayerWidget {
-  static const _androidProvider = 'PrayerWidgetProvider';
+  // Small "next prayer" widget and the larger "prayer times" widget.
+  static const _androidProviders = [
+    'PrayerWidgetProvider',
+    'PrayerTimesWidgetProvider',
+  ];
   // Must match the widget `kind` in ios/PrayerWidget/PrayerWidget.swift.
   static const _iosWidgetKind = 'PrayerWidget';
   // Must match the App Group in both Runner.entitlements and
   // PrayerWidget.entitlements — it's the shared UserDefaults suite the
   // widget reads these keys from on iOS.
-  static const _appGroupId = 'group.com.abdelrahmanalhajs.quranapp';
+  static const _appGroupId = 'group.com.abdelrahmanalhajs.quranapp.shared';
 
   static bool _appGroupConfigured = false;
 
@@ -44,15 +48,22 @@ class PrayerWidget {
         arabic ? 'الصلاة القادمة' : 'Next prayer',
       );
       await HomeWidget.saveWidgetData(
+        'prayer_remaining_label',
+        arabic ? 'متبقٍ' : 'remaining',
+      );
+      await HomeWidget.saveWidgetData('prayer_lang', arabic ? 'ar' : 'en');
+      await HomeWidget.saveWidgetData(
         'prayer_placeholder',
         arabic
             ? 'افتح التطبيق لتحديد موقعك'
             : 'Open the app to set your location',
       );
-      await HomeWidget.updateWidget(
-        androidName: _androidProvider,
-        iOSName: _iosWidgetKind,
-      );
+      for (final provider in _androidProviders) {
+        await HomeWidget.updateWidget(
+          androidName: provider,
+          iOSName: _iosWidgetKind,
+        );
+      }
     } catch (_) {
       // No widget added / platform without home widgets — ignore.
     }

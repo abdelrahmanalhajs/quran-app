@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Larger "Prayer times" widget: next prayer + live countdown on top, then
+     all five of today's times with the next one highlighted. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/prayer_widget_bg"
+    android:padding="10dp">
+
+    <LinearLayout
+        android:id="@+id/widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="6dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#B8E0CE"
+                android:textSize="11sp"
+                android:text="" />
+
+            <TextView
+                android:id="@+id/widget_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:text="—" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <Chronometer
+                android:id="@+id/widget_countdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFD27A"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_remaining"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#B8E0CE"
+                android:textSize="11sp"
+                android:text="" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_rows"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/row_0"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/prayer_widget_row_plain">
+
+            <TextView
+                android:id="@+id/name_0"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:textAlignment="viewStart"
+                android:text="—" />
+
+            <TextView
+                android:id="@+id/time_0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:fontFeatureSettings="tnum"
+                android:text="" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row_1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/prayer_widget_row_plain">
+
+            <TextView
+                android:id="@+id/name_1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:textAlignment="viewStart"
+                android:text="—" />
+
+            <TextView
+                android:id="@+id/time_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:fontFeatureSettings="tnum"
+                android:text="" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row_2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/prayer_widget_row_plain">
+
+            <TextView
+                android:id="@+id/name_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:textAlignment="viewStart"
+                android:text="—" />
+
+            <TextView
+                android:id="@+id/time_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:fontFeatureSettings="tnum"
+                android:text="" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row_3"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/prayer_widget_row_plain">
+
+            <TextView
+                android:id="@+id/name_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:textAlignment="viewStart"
+                android:text="—" />
+
+            <TextView
+                android:id="@+id/time_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:fontFeatureSettings="tnum"
+                android:text="" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row_4"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/prayer_widget_row_plain">
+
+            <TextView
+                android:id="@+id/name_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:textAlignment="viewStart"
+                android:text="—" />
+
+            <TextView
+                android:id="@+id/time_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#D6F0E4"
+                android:textSize="14sp"
+                android:fontFeatureSettings="tnum"
+                android:text="" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textColor="#B8E0CE"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+</LinearLayout>

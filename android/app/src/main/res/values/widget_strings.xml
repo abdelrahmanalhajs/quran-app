@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_next_prayer_name">Next prayer</string>
+    <string name="widget_next_prayer_desc">The next prayer and the time remaining until it</string>
+    <string name="widget_prayer_times_name">Prayer times</string>
+    <string name="widget_prayer_times_desc">All of today\'s prayer times with a countdown to the next one</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_next_prayer_name">الصلاة القادمة</string>
+    <string name="widget_next_prayer_desc">الصلاة القادمة والوقت المتبقي لها</string>
+    <string name="widget_prayer_times_name">مواقيت الصلاة</string>
+    <string name="widget_prayer_times_desc">مواقيت صلوات اليوم مع العدّ التنازلي للصلاة القادمة</string>
+</resources>

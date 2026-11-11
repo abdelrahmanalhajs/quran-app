@@ -381,7 +381,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-const _kAppStoreUrl = 'https://apps.apple.com/app/id6802260993';
+const _kAppStoreUrl =
+    'https://apps.apple.com/sa/app/quran-awaab-%D9%85%D8%B5%D8%AD%D9%81-%D8%A3%D9%88-%D8%A7%D8%A8/id6802260993';
 const _kPlayStoreUrl =
     'https://play.google.com/store/apps/details?id=com.abdelrahmanalhajs.quranapp';
 
