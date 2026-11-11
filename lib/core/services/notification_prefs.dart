@@ -112,14 +112,17 @@ class ReminderSchedulePrefs {
 
 const fastingReminderSetting = BoolNotificationSetting(
   'fasting_reminders_enabled',
+  defaultValue: true,
 );
 
 const ayahOfDayNotificationSetting = BoolNotificationSetting(
   'ayah_of_day_notifications_enabled',
+  defaultValue: true,
 );
 
 const readingReminderSetting = BoolNotificationSetting(
   'reading_reminder_enabled',
+  defaultValue: true,
 );
 const hifzReminderSetting = BoolNotificationSetting('hifz_reminder_enabled');
 

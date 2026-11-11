@@ -54,6 +54,16 @@ const _kSections = [
       'guide.reading_ayah_sheet_title',
       'guide.reading_ayah_sheet_body',
     ),
+    _GuideItem(
+      Icons.auto_awesome_outlined,
+      'guide.ayah_of_day_title',
+      'guide.ayah_of_day_body',
+    ),
+    _GuideItem(
+      Icons.image_outlined,
+      'guide.share_image_title',
+      'guide.share_image_body',
+    ),
   ]),
   _GuideSection(Icons.bookmark_outline, 'guide.section_bookmarks', [
     _GuideItem(
@@ -72,6 +82,45 @@ const _kSections = [
       'guide.khatm_page_body',
     ),
   ]),
+  _GuideSection(Icons.school_outlined, 'guide.section_hifz', [
+    _GuideItem(
+      Icons.play_circle_outline,
+      'guide.hifz_start_title',
+      'guide.hifz_start_body',
+    ),
+    _GuideItem(
+      Icons.repeat,
+      'guide.hifz_repeat_title',
+      'guide.hifz_repeat_body',
+    ),
+    _GuideItem(
+      Icons.visibility_off_outlined,
+      'guide.hifz_hide_title',
+      'guide.hifz_hide_body',
+    ),
+    _GuideItem(
+      Icons.event_repeat,
+      'guide.hifz_review_title',
+      'guide.hifz_review_body',
+    ),
+  ]),
+  _GuideSection(Icons.flag_outlined, 'guide.section_plan', [
+    _GuideItem(
+      Icons.local_fire_department_outlined,
+      'guide.plan_goal_title',
+      'guide.plan_goal_body',
+    ),
+    _GuideItem(
+      Icons.menu_book_outlined,
+      'guide.plan_khatma_title',
+      'guide.plan_khatma_body',
+    ),
+    _GuideItem(
+      Icons.notifications_active_outlined,
+      'guide.plan_reminder_title',
+      'guide.plan_reminder_body',
+    ),
+  ]),
   _GuideSection(Icons.headphones_outlined, 'guide.section_audio', [
     _GuideItem(
       Icons.record_voice_over_outlined,
@@ -88,6 +137,11 @@ const _kSections = [
       'guide.audio_offline_title',
       'guide.audio_offline_body',
     ),
+    _GuideItem(
+      Icons.graphic_eq,
+      'guide.audio_highlight_title',
+      'guide.audio_highlight_body',
+    ),
   ]),
   _GuideSection(Icons.explore_outlined, 'guide.section_prayer', [
     _GuideItem(
@@ -100,6 +154,12 @@ const _kSections = [
       'guide.prayer_qiblah_title',
       'guide.prayer_qiblah_body',
     ),
+    _GuideItem(
+      Icons.event_outlined,
+      'guide.islamic_days_title',
+      'guide.islamic_days_body',
+    ),
+    _GuideItem(Icons.checklist, 'guide.qada_title', 'guide.qada_body'),
   ]),
   _GuideSection(Icons.self_improvement_outlined, 'guide.section_athkar', [
     _GuideItem(
@@ -111,6 +171,11 @@ const _kSections = [
       Icons.favorite_outline,
       'guide.athkar_tabs_title',
       'guide.athkar_tabs_body',
+    ),
+    _GuideItem(
+      Icons.touch_app_outlined,
+      'guide.tasbih_title',
+      'guide.tasbih_body',
     ),
     _GuideItem(
       Icons.menu_book_outlined,
@@ -133,6 +198,26 @@ const _kSections = [
       Icons.menu_book,
       'guide.notif_hadith_title',
       'guide.notif_hadith_body',
+    ),
+    _GuideItem(
+      Icons.timer_outlined,
+      'guide.notif_zikr_title',
+      'guide.notif_zikr_body',
+    ),
+    _GuideItem(
+      Icons.bedtime_outlined,
+      'guide.notif_times_title',
+      'guide.notif_times_body',
+    ),
+    _GuideItem(
+      Icons.nights_stay_outlined,
+      'guide.notif_fasting_title',
+      'guide.notif_fasting_body',
+    ),
+    _GuideItem(
+      Icons.wb_sunny_outlined,
+      'guide.notif_ayah_day_title',
+      'guide.notif_ayah_day_body',
     ),
     _GuideItem(
       Icons.touch_app,

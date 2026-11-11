@@ -26,6 +26,14 @@ const _kSteps = [
     'onboarding.step6_title',
     'onboarding.step6_body',
   ),
+  _Step(Icons.school, 'onboarding.hifz_title', 'onboarding.hifz_body'),
+  _Step(Icons.flag, 'onboarding.plan_title', 'onboarding.plan_body'),
+  _Step(
+    Icons.auto_awesome,
+    'onboarding.ayah_day_title',
+    'onboarding.ayah_day_body',
+  ),
+  _Step(Icons.touch_app, 'onboarding.tools_title', 'onboarding.tools_body'),
   _Step(
     Icons.menu_book_outlined,
     'onboarding.step7_title',
