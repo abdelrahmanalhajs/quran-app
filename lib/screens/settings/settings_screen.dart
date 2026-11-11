@@ -371,15 +371,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               leading: const Icon(Icons.share_outlined),
               title: Text('settings.share_app'.tr()),
-              onTap: () => SharePlus.instance.share(
-                ShareParams(text: 'settings.share_app_text'.tr()),
-              ),
+              subtitle: Text('settings.share_app_subtitle'.tr()),
+              onTap: () => _showShareAppSheet(context),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+const _kAppStoreUrl = 'https://apps.apple.com/app/id6802260993';
+const _kPlayStoreUrl =
+    'https://play.google.com/store/apps/details?id=com.abdelrahmanalhajs.quranapp';
+
+/// Lets the user pick which store link to share: the App Store (iPhone),
+/// Google Play (Android), or both.
+void _showShareAppSheet(BuildContext context) {
+  // iPad presents the share sheet as a popover, which needs an anchor.
+  final box = context.findRenderObject() as RenderBox?;
+  final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+  final intro = 'settings.share_app_intro'.tr();
+
+  Future<void> share(String text) => SharePlus.instance.share(
+    ShareParams(text: text, sharePositionOrigin: origin),
+  );
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      Widget option(
+        IconData icon,
+        String title,
+        String subtitle,
+        String text,
+      ) => ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        onTap: () {
+          Navigator.of(sheetContext).pop();
+          share(text);
+        },
+      );
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'settings.share_app'.tr(),
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+            ),
+            option(
+              Icons.apple,
+              'settings.share_app_store'.tr(),
+              'settings.share_app_store_hint'.tr(),
+              '$intro\n\n$_kAppStoreUrl',
+            ),
+            option(
+              Icons.android,
+              'settings.share_play_store'.tr(),
+              'settings.share_play_store_hint'.tr(),
+              '$intro\n\n$_kPlayStoreUrl',
+            ),
+            option(
+              Icons.share_outlined,
+              'settings.share_both_stores'.tr(),
+              'settings.share_both_stores_hint'.tr(),
+              'settings.share_app_text'.tr(),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 /// 3 tappable dots (Small/Medium/Large), growing in size left-to-right, for

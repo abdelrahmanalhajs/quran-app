@@ -150,7 +150,15 @@
     "athan_notifications_hint": "تلقَّ إشعارًا بصوت الأذان عند دخول كل وقت من أوقات الصلاة الخمس",
     "preview_athan": "استماع",
     "preview_athan_failed": "تعذّر تشغيل الأذان، حاول مرة أخرى",
-    "user_guide": "دليل الاستخدام"
+    "user_guide": "دليل الاستخدام",
+    "share_app_subtitle": "رابط App Store ورابط Google Play",
+    "share_app_intro": "جرّب تطبيق القرآن الكريم — تلاوة وترجمة وتفسير ومواقيت الصلاة والقبلة والأذكار في مكان واحد.",
+    "share_app_store": "مشاركة رابط App Store",
+    "share_app_store_hint": "لأجهزة آيفون وآيباد",
+    "share_play_store": "مشاركة رابط Google Play",
+    "share_play_store_hint": "لأجهزة أندرويد",
+    "share_both_stores": "مشاركة الرابطين",
+    "share_both_stores_hint": "إذا لم تكن متأكدًا من نوع الجهاز"
   },
   "guide": {
     "title": "دليل الاستخدام",

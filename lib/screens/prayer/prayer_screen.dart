@@ -225,6 +225,16 @@ class _PrayerTimesTab extends StatelessWidget {
         (_) => provider.refreshPlaceName(arabic: lang == 'ar'),
       );
     }
+    // Read the theme here, in this widget's own build, rather than inside
+    // the list's itemBuilder: the builder's context belongs to the list's
+    // internal element, which doesn't rebuild its items when the theme
+    // changes — so the times kept the old colour after a light/dark switch
+    // until a manual refresh. Depending on the theme here rebuilds the whole
+    // list with the new colours immediately.
+    final theme = Theme.of(context);
+    final timeStyle = theme.textTheme.titleMedium?.copyWith(
+      color: theme.colorScheme.onSurface,
+    );
     return RefreshIndicator(
       onRefresh: () =>
           provider.load(arabicAthanLabels: context.locale.languageCode == 'ar'),
@@ -239,12 +249,14 @@ class _PrayerTimesTab extends StatelessWidget {
           final (key, time, icon) = entries[i];
           return Card(
             child: ListTile(
-              leading: Icon(icon),
-              title: Text(key.tr()),
-              trailing: Text(
-                time,
-                style: Theme.of(context).textTheme.titleMedium,
+              leading: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
+              title: Text(
+                key.tr(),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
+              trailing: Text(time, style: timeStyle),
             ),
           );
         },

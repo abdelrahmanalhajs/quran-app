@@ -150,7 +150,15 @@
     "athan_notifications_hint": "Get notified with the athan sound at each of the 5 daily prayer times",
     "preview_athan": "Preview",
     "preview_athan_failed": "Couldn't play the athan, try again",
-    "user_guide": "User Guide"
+    "user_guide": "User Guide",
+    "share_app_subtitle": "App Store and Google Play links",
+    "share_app_intro": "Check out this Quran app — recitation, translation, tafsir, prayer times, qiblah and athkar, all in one place.",
+    "share_app_store": "Share App Store link",
+    "share_app_store_hint": "For iPhone and iPad",
+    "share_play_store": "Share Google Play link",
+    "share_play_store_hint": "For Android phones",
+    "share_both_stores": "Share both links",
+    "share_both_stores_hint": "When you're not sure which phone they have"
   },
   "guide": {
     "title": "User Guide",
