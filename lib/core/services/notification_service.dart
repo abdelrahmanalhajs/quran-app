@@ -107,7 +107,16 @@ class NotificationService {
     // PlatformException(invalid_icon) at startup, before the app ever
     // renders anything, since that resource doesn't exist.
     const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
-    const iosInit = DarwinInitializationSettings();
+    // The plugin's defaults request alert/badge/sound permission inside
+    // initialize(), which put the iOS system prompt on screen at first
+    // launch, before onboarding explained why. Permission is requested
+    // later, explicitly, by requestPermission() (after onboarding in
+    // HomeShell, or when the user turns a reminder on in Settings).
+    const iosInit = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
     await _plugin.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
       onDidReceiveNotificationResponse: _onNotificationTapped,
