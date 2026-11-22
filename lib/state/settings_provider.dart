@@ -70,6 +70,7 @@ class SettingsProvider extends ChangeNotifier {
   static const _kLastReadSurah = 'last_read_surah';
   static const _kLastReadPage = 'last_read_page';
   static const _kOnboardingDone = 'onboarding_done';
+  static const _kNotifDeferred = 'notif_prompt_deferred';
   static const _kQuranSignsColored = 'quran_signs_colored';
   static const _kBookmarkSurah = 'bookmark_surah';
   static const _kBookmarkPage = 'bookmark_page';
@@ -83,6 +84,12 @@ class SettingsProvider extends ChangeNotifier {
   int? _lastReadSurah;
   int? _lastReadPage;
   bool _onboardingDone = false;
+
+  /// True when the user chose "Not now" on onboarding's notification
+  /// explainer, so HomeShell must not pop the system permission prompt on
+  /// their behalf. Turning a reminder on in Settings still asks.
+  bool get notificationsDeferred => _notificationsDeferred;
+  bool _notificationsDeferred = false;
   bool _quranSignsColored = false;
   int? _bookmarkSurah;
   int? _bookmarkPage;
@@ -162,6 +169,7 @@ class SettingsProvider extends ChangeNotifier {
     _lastReadSurah = prefs.getInt(_kLastReadSurah);
     _lastReadPage = prefs.getInt(_kLastReadPage);
     _onboardingDone = prefs.getBool(_kOnboardingDone) ?? false;
+    _notificationsDeferred = prefs.getBool(_kNotifDeferred) ?? false;
     _onboardedAtLaunch = _onboardingDone;
     _quranSignsColored = prefs.getBool(_kQuranSignsColored) ?? false;
     _bookmarkSurah = prefs.getInt(_kBookmarkSurah);
@@ -208,6 +216,13 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kOnboardingDone, true);
+  }
+
+  Future<void> setNotificationsDeferred(bool value) async {
+    _notificationsDeferred = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kNotifDeferred, value);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
