@@ -332,7 +332,11 @@
     "ayah_day_title": "Ayah of the day",
     "ayah_day_body": "A new ayah every day on the Quran tab and each morning as a notification. Share any ayah as a beautiful image.",
     "tools_title": "Everyday tools",
-    "tools_body": "A tasbih counter in Athkar, a missed-prayers (qada) tracker and upcoming Islamic days with Sunnah fasting reminders in Prayer. The recited ayah is highlighted and pages turn with the recitation."
+    "tools_body": "A tasbih counter in Athkar, a missed-prayers (qada) tracker and upcoming Islamic days with Sunnah fasting reminders in Prayer. The recited ayah is highlighted and pages turn with the recitation.",
+    "notif_title": "Stay on time with reminders",
+    "notif_body": "Allow notifications for prayer times, athkar, the daily hadith and the ayah of the day. You can change or turn off each reminder in Settings anytime.",
+    "notif_allow": "Allow notifications",
+    "notif_later": "Not now"
   },
   "plan": {
     "title": "Reading Plan",

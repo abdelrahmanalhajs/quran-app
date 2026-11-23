@@ -193,6 +193,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       hifzOn,
     ] = results;
     if (!results.any((on) => on)) return;
+    // The user said "Not now" on onboarding's notification explainer; don't
+    // surprise them with the system prompt here.
+    if (!mounted || context.read<SettingsProvider>().notificationsDeferred) {
+      return;
+    }
 
     // A toggle's own onChanged requests permission before scheduling; a
     // setting enabled by default (daily hadith) or from a previous session

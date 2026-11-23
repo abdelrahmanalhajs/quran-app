@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/services/notification_service.dart';
 import '../../state/settings_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../home/home_shell.dart';
 
 class _Step {
@@ -58,7 +60,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
-  final int _totalPages = _kSteps.length + 1;
+  final int _totalPages = _kSteps.length + 2;
 
   @override
   void dispose() {
@@ -82,11 +84,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
   }
 
-  void _next() {
-    if (_page == _totalPages - 1) {
-      _finish();
-      return;
+  Future<void> _answerNotifications({required bool allow}) async {
+    final settings = context.read<SettingsProvider>();
+    if (allow) {
+      if (!kIsWeb) await NotificationService.requestPermission();
+    } else {
+      await settings.setNotificationsDeferred(true);
     }
+    if (!mounted) return;
+    await _finish();
+  }
+
+  void _next() {
     _controller.nextPage(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
@@ -107,10 +116,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   _LanguagePage(onChoose: _chooseLanguage),
                   for (final step in _kSteps) _FeatureStep(step: step),
+                  _NotificationPage(onAnswer: _answerNotifications),
                 ],
               ),
             ),
-            if (_page > 0)
+            if (_page > 0 && _page < _totalPages - 1)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: Row(
@@ -139,11 +149,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     const Spacer(),
                     FilledButton(
                       onPressed: _next,
-                      child: Text(
-                        _page == _totalPages - 1
-                            ? 'onboarding.get_started'.tr()
-                            : 'onboarding.next'.tr(),
-                      ),
+                      child: Text('onboarding.next'.tr()),
                     ),
                   ],
                 ),
@@ -258,6 +264,75 @@ class _FeatureStep extends StatelessWidget {
                       color: scheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Last onboarding page: explains why reminders need notification access
+/// *before* iOS/Android shows the system prompt, which only appears when
+/// the user taps Allow.
+class _NotificationPage extends StatelessWidget {
+  final Future<void> Function({required bool allow}) onAnswer;
+  const _NotificationPage({required this.onAnswer});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.notifications_active_outlined,
+                    size: 72,
+                    color: scheme.primary,
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    'onboarding.notif_title'.tr(),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'onboarding.notif_body'.tr(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => onAnswer(allow: true),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: Text('onboarding.notif_allow'.tr()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => onAnswer(allow: false),
+                    child: Text('onboarding.notif_later'.tr()),
                   ),
                 ],
               ),
