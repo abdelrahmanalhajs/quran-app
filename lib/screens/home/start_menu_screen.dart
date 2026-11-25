@@ -1,6 +1,12 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/arabic_numbers.dart';
+import '../../models/surah.dart';
+import '../../state/quran_provider.dart';
+import '../../state/settings_provider.dart';
 
 /// Shown each time the app is opened again: lets the user pick which part
 /// of the app to go to (Quran, prayer, athkar, hadith, settings). Pops with
@@ -52,6 +58,7 @@ class StartMenuScreen extends StatelessWidget {
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 28),
+                  _ResumeCard(onTap: () => Navigator.of(context).pop(0)),
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
@@ -112,6 +119,119 @@ class _MenuTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// "Continue reading" shortcut: shows the last-read surah and Mushaf page and
+/// opens the Quran tab (which resumes at that page). Hidden until the user has
+/// read something, or if the surah can't be resolved.
+class _ResumeCard extends StatefulWidget {
+  const _ResumeCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_ResumeCard> createState() => _ResumeCardState();
+}
+
+class _ResumeCardState extends State<_ResumeCard> {
+  Future<List<SurahSummary>>? _surahs;
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = context.read<SettingsProvider>();
+    if (settings.lastReadSurah != null && settings.lastReadPage != null) {
+      _surahs = context.read<QuranProvider>().repository
+          .getSurahList()
+          .catchError((_) => <SurahSummary>[]);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final future = _surahs;
+    if (future == null) return const SizedBox.shrink();
+    final settings = context.watch<SettingsProvider>();
+    final number = settings.lastReadSurah;
+    final page = settings.lastReadPage;
+    if (number == null || page == null) return const SizedBox.shrink();
+    return FutureBuilder<List<SurahSummary>>(
+      future: future,
+      builder: (context, snap) {
+        SurahSummary? surah;
+        for (final s in snap.data ?? const <SurahSummary>[]) {
+          if (s.number == number) surah = s;
+        }
+        if (surah == null) return const SizedBox.shrink();
+        final isArabic = context.locale.languageCode == 'ar';
+        final scheme = Theme.of(context).colorScheme;
+        final name = isArabic ? surah.nameAr : surah.englishName;
+        final pageText = 'start.resume_page'.tr(
+          args: [localizedNumber(context, page)],
+        );
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Semantics(
+            button: true,
+            label: '${'start.resume_title'.tr()}: $name, $pageText',
+            excludeSemantics: true,
+            child: Material(
+              color: scheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: widget.onTap,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 64),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.bookmark_outline,
+                          size: 30,
+                          color: scheme.onSecondaryContainer,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'start.resume_title'.tr(),
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: scheme.onSecondaryContainer,
+                                    ),
+                              ),
+                              Text(
+                                '$name · $pageText',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: scheme.onSecondaryContainer,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: scheme.onSecondaryContainer,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
