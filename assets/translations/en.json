@@ -1,5 +1,9 @@
 {
   "app_name": "Quran",
+  "start": {
+    "resume_title": "Continue reading",
+    "resume_page": "Page {}"
+  },
   "nav": {
     "quran": "Quran",
     "prayer": "Prayer",

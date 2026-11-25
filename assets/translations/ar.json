@@ -1,5 +1,9 @@
 {
   "app_name": "القرآن الكريم",
+  "start": {
+    "resume_title": "تابع القراءة",
+    "resume_page": "صفحة {}"
+  },
   "nav": {
     "quran": "القرآن",
     "prayer": "الصلاة",
